@@ -86,8 +86,8 @@ fun SettingsScreen(
     currency: Currency,
     selectedLanguage: AppLanguage,
     isProUnlocked: Boolean,
-    monthlyPrice: String = "4.79 €",
-    yearlyPrice: String = "19.99 €",
+    monthlyPrice: String = "€3.99",
+    yearlyPrice: String = "€34.99",
     whaleSettings: WhaleAlertSettings = WhaleAlertSettings(),
     btcPrice: Double = 0.0,
     onCurrencyChanged: (Currency) -> Unit,
@@ -480,7 +480,7 @@ fun SettingsScreen(
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = if (isProUnlocked) strings.proActive else "4.79 € / mo",
+                                text = if (isProUnlocked) strings.proActive else monthlyPrice,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isProUnlocked) palette.gainColor else palette.primary
@@ -501,6 +501,7 @@ fun SettingsScreen(
                         ProBenefitRow(strings.proBenefit3)
                         ProBenefitRow(strings.proBenefit4)
                         ProBenefitRow(strings.proBenefit5)
+                        ProBenefitRow(strings.proBenefit6)
                     }
 
                     if (onTogglePro != null && developerTapCount >= 7) {
@@ -557,7 +558,7 @@ fun SettingsScreen(
                             .testTag("settings_upgrade_pro_button")
                     ) {
                         Text(
-                            text = if (isProUnlocked) "Manage Pro Subscription" else "${strings.upgradeToPro} (7-Day Trial)",
+                            text = if (isProUnlocked) strings.manageProSubscription else "${strings.upgradeToPro} (${strings.planMonthlyBadge})",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isProUnlocked) palette.textPrimary else (if (palette.isLight) Color.White else Color(0xFF05050F))

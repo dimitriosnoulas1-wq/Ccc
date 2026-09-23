@@ -223,7 +223,7 @@ fun ProUpgradeModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Plan Selectors: Monthly (with 7-Day Trial) vs Yearly (Best Value 19.99€)
+            // Plan Selectors: Monthly (with 7-Day Trial) vs Yearly
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -245,7 +245,7 @@ fun ProUpgradeModal(
                         .testTag("plan_monthly_selector")
                 )
 
-                // Yearly Best Value (19.99€)
+                // Yearly
                 PlanOptionCard(
                     title = strings.planAnnualTitle,
                     price = yearlyPrice,
