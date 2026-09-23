@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,7 +120,7 @@ data class ChartPoint(
 /**
  * Data bundle representing past, future, and historical analog curves
  */
-private data class CyclePointsBundle(
+internal data class CyclePointsBundle(
     val pastPoints: List<ChartPoint>,
     val futurePoints: List<ChartPoint>,
     val analog2020Points: List<ChartPoint>,
@@ -213,11 +214,19 @@ fun GrokZigZagChart(
         label = "projectedPulseAlpha"
     )
 
-    // Build timeline points (Past History + Future Projections + Analogs)
+    var dailyCloses by remember(coin.symbol) {
+        mutableStateOf<List<com.example.data.repository.HistoricalMarketRepository.Candle>>(emptyList())
+    }
+    LaunchedEffect(coin.symbol, selectedTimeframe) {
+        dailyCloses = com.example.data.repository.HistoricalMarketRepository.loadRecentDaily(
+            coin.symbol,
+            HorizonChartBuilder.daysFor(selectedTimeframe)
+        ).orEmpty()
+    }
     val cycleData = remember(
-        coin.id, coin.priceUsd, coin.change24h, coin.sparkline, selectedTimeframe, effectiveShowProjection
+        coin.id, coin.priceUsd, coin.change24h, coin.sparkline, selectedTimeframe, dailyCloses
     ) {
-        generateCompleteCyclePoints(coin, selectedTimeframe, effectiveShowProjection)
+        HorizonChartBuilder.bundle(coin, selectedTimeframe, dailyCloses)
     }
 
     val pastPoints = cycleData.pastPoints
@@ -562,15 +571,13 @@ fun GrokZigZagChart(
 
                 if (plotWidth <= 0 || plotHeight <= 0) return@Canvas
 
-                val allPrices = (pastPoints.map { it.price } +
-                        futurePoints.map { it.price } +
-                        (futurePoints.mapNotNull { it.confidenceUpper }) +
-                        (futurePoints.mapNotNull { it.confidenceLower }) +
-                        analog2020Points.map { it.price } +
-                        analog2016Points.map { it.price }).filter { it > 0f }
+                val allPrices = pastPoints.map { it.price }.filter { it > 0f }
 
-                val minRawPrice = (allPrices.minOrNull() ?: 1f).coerceAtLeast(0.0000001f)
-                val maxRawPrice = (allPrices.maxOrNull() ?: 10f).coerceAtLeast(minRawPrice * 1.05f)
+                val minSeen = (allPrices.minOrNull() ?: 1f).coerceAtLeast(0.0000001f)
+                val maxSeen = (allPrices.maxOrNull() ?: 10f).coerceAtLeast(minSeen)
+                val pad = ((maxSeen - minSeen) * 0.04f).coerceAtLeast(minSeen * 0.01f)
+                val minRawPrice = (minSeen - pad).coerceAtLeast(minSeen * 0.92f)
+                val maxRawPrice = (maxSeen + pad).coerceAtLeast(minRawPrice * 1.01f)
 
                 val logMin = log10(minRawPrice.toDouble()).toFloat()
                 val logMax = log10(maxRawPrice.toDouble()).toFloat()
@@ -592,18 +599,10 @@ fun GrokZigZagChart(
                 val nowPoint = pastPoints.lastOrNull() ?: ChartPoint(0.65f, coin.priceUsd.toFloat(), isNowMarker = true)
                 val nowX = getX(nowPoint.normalizedX)
 
-                // 1. Shaded Background Zones: "PAST (Realized)" vs "FUTURE (Projected)"
-                // Past zone
                 drawRect(
                     color = QuantumCyan.copy(alpha = 0.04f),
                     topLeft = Offset(leftAxisWidth, 0f),
-                    size = Size(nowX - leftAxisWidth, plotHeight)
-                )
-                // Future zone
-                drawRect(
-                    color = if (isProjectedBullish) TachyonMint.copy(alpha = 0.06f) else SoftCrimson.copy(alpha = 0.06f),
-                    topLeft = Offset(nowX, 0f),
-                    size = Size(leftAxisWidth + plotWidth - nowX, plotHeight)
+                    size = Size(plotWidth, plotHeight)
                 )
 
                 // 2. Y-Axis Grid Lines & Price Labels
@@ -630,48 +629,7 @@ fun GrokZigZagChart(
                     drawContext.canvas.nativeCanvas.drawText(priceLabel, 0f, y + 8f, axisTextPaint)
                 }
 
-                // 3. X-Axis Time & Projection Phase Labels
-                val xTicks = when (selectedTimeframe) {
-                    ChartTimeframe.DAY_1 -> listOf(
-                        0.0f to "00:00",
-                        0.32f to "10:00",
-                        0.65f to "LIVE",
-                        0.82f to "+6h",
-                        1.0f to "+12h"
-                    )
-                    ChartTimeframe.WEEK_1 -> listOf(
-                        0.0f to "Mon",
-                        0.32f to "Thu",
-                        0.65f to "TODAY",
-                        0.82f to "+3D",
-                        1.0f to "+7D"
-                    )
-                    ChartTimeframe.MONTH_1 -> listOf(
-                        0.0f to "Wk 1",
-                        0.32f to "Wk 3",
-                        0.65f to "NOW",
-                        0.82f to "+1W",
-                        1.0f to "+4W"
-                    )
-                    ChartTimeframe.YEAR_1 -> listOf(
-                        0.0f to "Q1",
-                        0.32f to "Q3",
-                        0.65f to "NOW",
-                        0.82f to "+3M",
-                        1.0f to "+6M"
-                    )
-                    ChartTimeframe.CYCLE -> {
-                        val dLabel = if (coin.symbol == "BTC") "D${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}" else "D${coin.calculatedAthDaysAgo}"
-                        val midLabel = if (coin.symbol == "BTC") "Halving" else "Cycle Low"
-                        listOf(
-                            0.0f to "Genesis",
-                            0.32f to midLabel,
-                            0.65f to "NOW ($dLabel)",
-                            0.82f to "+4W Target",
-                            1.0f to "Cycle Apex"
-                        )
-                    }
-                }
+                val xTicks = realizedAxisTicks(pastPoints)
 
                 xTicks.forEach { (normX, label) ->
                     val x = getX(normX)
@@ -1210,63 +1168,6 @@ fun GrokZigZagChart(
                     )
                 }
 
-                // Projected Future
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .width(14.dp)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(trendColor)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isProjectedBullish) "Projected Trend ➔ (Bullish)" else "Projected Retest ➔ (Correction)",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = trendColor
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Analog 1
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .width(12.dp)
-                            .height(2.5.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(PhotonGold)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (coin.symbol == "BTC") "2020 Halving Analog" else "2022 Cycle Low Analog",
-                        fontSize = 11.sp,
-                        color = PhotonGold
-                    )
-                }
-
-                // Analog 2
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .width(12.dp)
-                            .height(2.5.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(MauveAurora)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (coin.symbol == "BTC") "2016 Halving Analog" else "2018 Bear Low Analog",
-                        fontSize = 11.sp,
-                        color = MauveAurora
-                    )
-                }
             }
         }
 
@@ -1285,7 +1186,7 @@ fun GrokZigZagChart(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "Drag finger on chart to inspect historical points and future cycle milestones.",
+                text = "These closes already happened. They are not a forecast.",
                 fontSize = 11.sp,
                 color = TextMuted
             )
@@ -1295,247 +1196,22 @@ fun GrokZigZagChart(
 
 private fun formatAxisPrice(value: Float, symbol: String): String {
     return when {
-        value >= 1000000f -> "${symbol}${String.format("%.2fM", value / 1000000f)}"
-        value >= 1000f -> "${symbol}${String.format("%.1fk", value / 1000f)}"
-        value >= 1f -> "${symbol}${String.format("%.2f", value)}"
-        value >= 0.01f -> "${symbol}${String.format("%.3f", value)}"
-        else -> "${symbol}${String.format("%.5f", value)}"
+        value >= 1_000_000f -> "${symbol}${String.format(java.util.Locale.US, "%.2f", value / 1_000_000f)}M"
+        value >= 1_000f -> "${symbol}${String.format(java.util.Locale.US, "%.1f", value / 1_000f)}k"
+        value >= 1f -> "${symbol}${String.format(java.util.Locale.US, "%.2f", value)}"
+        value >= 0.01f -> "${symbol}${String.format(java.util.Locale.US, "%.3f", value)}"
+        else -> "${symbol}${String.format(java.util.Locale.US, "%.5f", value)}"
     }
 }
 
-/**
- * Intelligent and fully individualized point generator:
- * - Employs coin's actual live price, 24h change, sparklines, ATH drawdown, and historical cycle analytics.
- * - Dynamic trend detection: Bullish gains project upward expansions; Bearish pullbacks project support floors/re-tests.
- * - Real historical 2020 and 2016 cycle fractals tailored to the specific coin.
- */
-private fun generateCompleteCyclePoints(
-    coin: CryptoCoin,
-    timeframe: ChartTimeframe,
-    showProjection: Boolean
-): CyclePointsBundle {
-    val currentPrice = coin.priceUsd.toFloat().coerceAtLeast(0.00000001f)
-    val ath = coin.athUsd.toFloat().coerceAtLeast(currentPrice)
-    val atl = coin.atlUsd.toFloat().coerceAtLeast(0.00000001f)
-    val change = coin.change24h.toFloat()
-    val changeRatio = (change / 100f).coerceIn(-0.40f, 0.60f)
-    val phase = coin.analog.cyclePhase
-
-    // Normalized X = 0.65 represents "NOW" (Present Time)
-    val nowX = 0.65f
-
-    val isBullish = when (timeframe) {
-        ChartTimeframe.DAY_1 -> change >= 0.0f
-        ChartTimeframe.WEEK_1 -> change >= -1.5f
-        ChartTimeframe.MONTH_1 -> phase != CyclePhase.BEAR_CAPITULATION && change >= -4.0f
-        ChartTimeframe.YEAR_1 -> phase != CyclePhase.BEAR_CAPITULATION
-        ChartTimeframe.CYCLE -> phase != CyclePhase.BEAR_CAPITULATION
-    }
-
-    var trajectorySummary = ""
-    var projectedTargetPrice = currentPrice
-    var projectedTargetLabel = "Projected Target"
-
-    val (past, future) = when (timeframe) {
-        ChartTimeframe.DAY_1 -> {
-            val startPrice = currentPrice / (1f + change / 100f).coerceAtLeast(0.01f)
-            val pList = if (coin.sparkline.size >= 6) {
-                // Downsample real sparkline to intraday curve
-                val sp = coin.sparkline
-                val step = sp.size / 5
-                val s0 = sp.firstOrNull()?.toFloat() ?: startPrice
-                val s1 = sp.getOrNull(step)?.toFloat() ?: ((startPrice * 2 + currentPrice) / 3f)
-                val s2 = sp.getOrNull(step * 2)?.toFloat() ?: ((startPrice + currentPrice) / 2f)
-                val s3 = sp.getOrNull(step * 3)?.toFloat() ?: ((startPrice + currentPrice * 2) / 3f)
-                listOf(
-                    ChartPoint(0.0f, s0, timeLabel = "00:00"),
-                    ChartPoint(0.18f, s1, isKeyPivot = true, label = if (s1 > s0) "High" else "Low", timeLabel = "05:00"),
-                    ChartPoint(0.36f, s2, isKeyPivot = true, label = "Mid", timeLabel = "11:00"),
-                    ChartPoint(0.52f, s3, isKeyPivot = true, label = if (s3 > s2) "Push" else "Pullback", timeLabel = "17:00"),
-                    ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live", timeLabel = "Now")
-                )
-            } else {
-                // Authentic mathematical intraday wave based on true change24h
-                if (change >= 0) {
-                    listOf(
-                        ChartPoint(0.0f, startPrice, timeLabel = "00:00"),
-                        ChartPoint(0.18f, startPrice * 0.994f, isKeyPivot = true, label = "Dip", timeLabel = "04:00"),
-                        ChartPoint(0.38f, (startPrice + currentPrice) * 0.51f, isKeyPivot = true, label = "Rally", timeLabel = "11:00"),
-                        ChartPoint(0.52f, currentPrice * 1.008f, isKeyPivot = true, label = "High", timeLabel = "17:00"),
-                        ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live", timeLabel = "Now")
-                    )
-                } else {
-                    listOf(
-                        ChartPoint(0.0f, startPrice, timeLabel = "00:00"),
-                        ChartPoint(0.18f, startPrice * 1.006f, isKeyPivot = true, label = "Peak", timeLabel = "04:00"),
-                        ChartPoint(0.38f, (startPrice + currentPrice) * 0.49f, isKeyPivot = true, label = "Break", timeLabel = "11:00"),
-                        ChartPoint(0.52f, currentPrice * 0.992f, isKeyPivot = true, label = "Low", timeLabel = "17:00"),
-                        ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live", timeLabel = "Now")
-                    )
-                }
-            }
-
-            val fList = if (showProjection) {
-                if (change >= 0.0f) {
-                    val t6h = currentPrice * (1f + (0.008f + changeRatio * 0.25f).coerceIn(0.004f, 0.05f))
-                    val t12h = currentPrice * (1f + (0.018f + changeRatio * 0.50f).coerceIn(0.008f, 0.09f))
-                    trajectorySummary = "24h Breakout: Testing Local Highs (+${String.format("%.1f", change)}%)"
-                    projectedTargetPrice = t12h
-                    projectedTargetLabel = "Projected 12h Target"
-                    listOf(
-                        ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Now"),
-                        ChartPoint(0.82f, t6h, isFutureProjection = true, isKeyPivot = true, label = "+6h Target", timeLabel = "+6h", confidenceUpper = t6h * 1.025f, confidenceLower = currentPrice * 1.002f),
-                        ChartPoint(1.0f, t12h, isFutureProjection = true, isKeyPivot = true, label = "+12h Target", timeLabel = "+12h", confidenceUpper = t12h * 1.045f, confidenceLower = currentPrice * 1.005f)
-                    )
-                } else {
-                    val t6h = currentPrice * (1f - (0.008f + abs(changeRatio) * 0.20f).coerceIn(0.004f, 0.045f))
-                    val t12h = currentPrice * (1f - (0.016f + abs(changeRatio) * 0.40f).coerceIn(0.008f, 0.08f))
-                    trajectorySummary = "24h Retracement: Testing Support (${String.format("%.1f", change)}%)"
-                    projectedTargetPrice = t12h
-                    projectedTargetLabel = "Projected Support Floor"
-                    listOf(
-                        ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Now"),
-                        ChartPoint(0.82f, t6h, isFutureProjection = true, isKeyPivot = true, label = "Support Test", timeLabel = "+6h", confidenceUpper = currentPrice * 0.998f, confidenceLower = t6h * 0.975f),
-                        ChartPoint(1.0f, t12h, isFutureProjection = true, isKeyPivot = true, label = "Floor Retest", timeLabel = "+12h", confidenceUpper = currentPrice * 0.995f, confidenceLower = t12h * 0.965f)
-                    )
-                }
-            } else emptyList()
-
-            Pair(pList, fList)
-        }
-        ChartTimeframe.WEEK_1 -> {
-            val weekBase = currentPrice * (1f - (changeRatio * 0.6f)).coerceIn(currentPrice * 0.75f, currentPrice * 1.35f)
-            val pList = listOf(
-                ChartPoint(0.0f, weekBase * (if (change >= 0) 0.96f else 1.04f), timeLabel = "Mon"),
-                ChartPoint(0.22f, weekBase * (if (change >= 0) 1.02f else 0.98f), isKeyPivot = true, label = "Mid-Wk", timeLabel = "Wed"),
-                ChartPoint(0.44f, weekBase * (if (change >= 0) 0.99f else 1.01f), isKeyPivot = true, label = "Retest", timeLabel = "Fri"),
-                ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live", timeLabel = "Today")
-            )
-            val fList = if (showProjection) {
-                if (isBullish) {
-                    val t3d = currentPrice * (1f + (0.025f + changeRatio * 0.20f).coerceIn(0.012f, 0.08f))
-                    val t7d = currentPrice * (1f + (0.055f + changeRatio * 0.45f).coerceIn(0.025f, 0.16f))
-                    trajectorySummary = "${coin.category.displayName} 7D Momentum: Ascending Wave"
-                    projectedTargetPrice = t7d
-                    projectedTargetLabel = "Projected 7D Target"
-                    listOf(
-                        ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Today"),
-                        ChartPoint(0.82f, t3d, isFutureProjection = true, isKeyPivot = true, label = "+3D Target", timeLabel = "+3 Days", confidenceUpper = t3d * 1.035f, confidenceLower = currentPrice * 1.005f),
-                        ChartPoint(1.0f, t7d, isFutureProjection = true, isKeyPivot = true, label = "+7D Apex", timeLabel = "+7 Days", confidenceUpper = t7d * 1.065f, confidenceLower = currentPrice * 1.015f)
-                    )
-                } else {
-                    val t3d = currentPrice * (1f - (0.020f + abs(changeRatio) * 0.15f).coerceIn(0.010f, 0.06f))
-                    val t7d = currentPrice * (1f - (0.038f + abs(changeRatio) * 0.30f).coerceIn(0.020f, 0.10f))
-                    trajectorySummary = "${coin.category.displayName} 7D Momentum: Support Consolidation"
-                    projectedTargetPrice = t7d
-                    projectedTargetLabel = "Projected 7D Support"
-                    listOf(
-                        ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Today"),
-                        ChartPoint(0.82f, t3d, isFutureProjection = true, isKeyPivot = true, label = "Support Test", timeLabel = "+3 Days", confidenceUpper = currentPrice * 0.995f, confidenceLower = t3d * 0.975f),
-                        ChartPoint(1.0f, t7d, isFutureProjection = true, isKeyPivot = true, label = "Local Floor", timeLabel = "+7 Days", confidenceUpper = currentPrice * 0.990f, confidenceLower = t7d * 0.960f)
-                    )
-                }
-            } else emptyList()
-
-            Pair(pList, fList)
-        }
-        ChartTimeframe.MONTH_1 -> {
-            val mBase = currentPrice * 0.92f
-            val pList = listOf(
-                ChartPoint(0.0f, mBase * 0.94f, timeLabel = "Wk 1"),
-                ChartPoint(0.24f, mBase * 1.10f, isKeyPivot = true, label = "Run", timeLabel = "Wk 2"),
-                ChartPoint(0.45f, mBase * 1.02f, isKeyPivot = true, label = "Retest", timeLabel = "Wk 3"),
-                ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live", timeLabel = "Wk 4")
-            )
-            val fList = if (showProjection) {
-                val t2w = currentPrice * (1f + (if (isBullish) 0.085f else -0.035f))
-                val t4w = currentPrice * (1f + (if (isBullish) 0.185f else -0.065f))
-                trajectorySummary = "30D Horizon: ${coin.analog.cyclePhaseName}"
-                projectedTargetPrice = t4w
-                projectedTargetLabel = if (isBullish) "Projected 30D Target" else "Projected 30D Floor"
-                listOf(
-                    ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Now"),
-                    ChartPoint(0.82f, t2w, isFutureProjection = true, isKeyPivot = true, label = if (isBullish) "+2W Target" else "Wk 2 Floor", timeLabel = "+2 Weeks", confidenceUpper = t2w * 1.06f, confidenceLower = t2w * 0.94f),
-                    ChartPoint(1.0f, t4w, isFutureProjection = true, isKeyPivot = true, label = if (isBullish) "+4W Target" else "Monthly Base", timeLabel = "+4 Weeks", confidenceUpper = t4w * 1.12f, confidenceLower = t4w * 0.90f)
-                )
-            } else emptyList()
-
-            Pair(pList, fList)
-        }
-        ChartTimeframe.YEAR_1 -> {
-            val yBase = max(atl * 1.5f, currentPrice * 0.60f)
-            val pList = listOf(
-                ChartPoint(0.0f, yBase, timeLabel = "Q1"),
-                ChartPoint(0.24f, ath * 0.88f, isKeyPivot = true, label = "Pre-Peak", timeLabel = "Q2"),
-                ChartPoint(0.45f, currentPrice * 0.82f, isKeyPivot = true, label = "Reset", timeLabel = "Q3"),
-                ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live", timeLabel = "Now")
-            )
-            val fList = if (showProjection) {
-                val t3m = currentPrice * (if (isBullish) 1.35f else 0.92f)
-                val t6m = currentPrice * (if (isBullish) 1.75f else 1.15f)
-                trajectorySummary = "1-Year Projection: ${coin.analog.cyclePhase.title} Expansion"
-                projectedTargetPrice = t6m
-                projectedTargetLabel = "Projected 6M Target"
-                listOf(
-                    ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Now"),
-                    ChartPoint(0.82f, t3m, isFutureProjection = true, isKeyPivot = true, label = "+3M Target", timeLabel = "+3 Months", confidenceUpper = t3m * 1.15f, confidenceLower = t3m * 0.88f),
-                    ChartPoint(1.0f, t6m, isFutureProjection = true, isKeyPivot = true, label = "+6M Target", timeLabel = "+6 Months", confidenceUpper = t6m * 1.25f, confidenceLower = t6m * 0.85f)
-                )
-            } else emptyList()
-
-            Pair(pList, fList)
-        }
-        ChartTimeframe.CYCLE -> {
-            val dLabel = if (coin.symbol == "BTC") "D${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}" else "D${coin.calculatedAthDaysAgo}"
-            val pList = listOf(
-                ChartPoint(0.0f, atl, isKeyPivot = true, label = "ATL", timeLabel = "Genesis"),
-                ChartPoint(0.18f, ath * 0.22f, isKeyPivot = true, label = "2017 Top", timeLabel = "2017"),
-                ChartPoint(0.32f, ath * 0.08f, isKeyPivot = true, label = "Bear Low", timeLabel = "2018"),
-                ChartPoint(0.48f, ath * 0.85f, isKeyPivot = true, label = "2021 Top", timeLabel = "2021"),
-                ChartPoint(0.56f, ath * 0.23f, isKeyPivot = true, label = "Cycle Low", timeLabel = "2022"),
-                ChartPoint(nowX, currentPrice, isNowMarker = true, label = "Live ($dLabel)", timeLabel = "Now")
-            )
-            val cyclePeak = coin.analog.projectedCyclePeak.toFloat().coerceAtLeast(currentPrice * 1.15f)
-            trajectorySummary = "Historical Cycle: ${coin.analog.cyclePhaseName}"
-            projectedTargetPrice = cyclePeak
-            projectedTargetLabel = "2021 Multiplier Scenario (Historical reference only)"
-
-            val fList = if (showProjection) {
-                val t4w = currentPrice * 1.22f
-                val t90d = currentPrice * 1.65f
-                listOf(
-                    ChartPoint(nowX, currentPrice, isFutureProjection = true, timeLabel = "Now"),
-                    ChartPoint(0.78f, t4w, isFutureProjection = true, isKeyPivot = true, label = "+4W Run", timeLabel = "+4 Weeks", confidenceUpper = t4w * 1.15f, confidenceLower = t4w * 0.88f),
-                    ChartPoint(0.90f, t90d, isFutureProjection = true, isKeyPivot = true, label = "Parabolic", timeLabel = "+90 Days", confidenceUpper = t90d * 1.25f, confidenceLower = t90d * 0.85f),
-                    ChartPoint(1.0f, cyclePeak, isFutureProjection = true, isKeyPivot = true, label = "Cycle Apex", timeLabel = "Apex Top", confidenceUpper = cyclePeak * 1.30f, confidenceLower = cyclePeak * 0.80f)
-                )
-            } else emptyList()
-
-            Pair(pList, fList)
-        }
-    }
-
-    val analog2020 = emptyList<ChartPoint>()
-    val analog2016 = emptyList<ChartPoint>()
-
-    val honestSummary = if (!showProjection) {
-        if (coin.priceUpdatedAtMs > 0L) {
-            "Live 24h ${String.format(java.util.Locale.US, "%+.1f%%", change)}"
-        } else {
-            "Awaiting live price"
-        }
-    } else trajectorySummary
-    val honestTarget = if (!showProjection) currentPrice else projectedTargetPrice
-    val honestLabel = if (!showProjection) "Live" else projectedTargetLabel
-
-    return CyclePointsBundle(
-        pastPoints = past,
-        futurePoints = future,
-        analog2020Points = analog2020,
-        analog2016Points = analog2016,
-        isProjectedBullish = isBullish,
-        trajectorySummary = honestSummary,
-        projectedTargetPrice = honestTarget,
-        projectedTargetLabel = honestLabel
-    )
+private fun realizedAxisTicks(points: List<ChartPoint>): List<Pair<Float, String>> {
+    if (points.isEmpty()) return listOf(1f to "Now")
+    val first = points.first()
+    val mid = points[points.size / 2]
+    val last = points.last()
+    return listOf(
+        first.normalizedX to first.timeLabel.ifBlank { "Start" },
+        mid.normalizedX to mid.timeLabel.ifBlank { "Mid" },
+        last.normalizedX to "Now"
+    ).distinctBy { it.first }
 }
