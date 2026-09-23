@@ -107,8 +107,9 @@ class LiveScreensHonestyTest {
         RainbowBand.entries.forEach { band ->
             assertFalse(band.nameEn.contains("BUY!", ignoreCase = false))
             assertFalse(band.nameEn.contains("SELL!", ignoreCase = false))
-            assertFalse(band.descriptionEn.contains("dollar-cost", ignoreCase = true))
+            assertFalse(band.descriptionEn.contains("Favorable risk/reward", ignoreCase = true))
             assertFalse(band.descriptionEn.contains("scaling out", ignoreCase = true))
+            assertFalse(band.nameEn.contains("ΑΓΟΡΑ"))
         }
     }
 
