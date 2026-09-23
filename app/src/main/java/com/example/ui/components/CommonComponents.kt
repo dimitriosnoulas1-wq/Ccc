@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -248,7 +249,8 @@ fun ExplainMetricBadge(
 fun SearchBarField(
     query: String,
     onQueryChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onFocus: (() -> Unit)? = null
 ) {
     val palette = LocalAppColors.current
     val strings = LocalAppStrings.current
@@ -282,7 +284,14 @@ fun SearchBarField(
                 cursorBrush = SolidColor(palette.primary),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("search_coin_input"),
+                    .testTag("search_coin_input")
+                    .then(
+                        if (onFocus != null) {
+                            Modifier.onFocusChanged { if (it.isFocused) onFocus() }
+                        } else {
+                            Modifier
+                        }
+                    ),
                 decorationBox = { innerTextField ->
                     if (query.isEmpty()) {
                         Text(
