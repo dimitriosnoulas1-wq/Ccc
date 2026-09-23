@@ -144,7 +144,7 @@ object HistoricalMarketRepository {
         val before = candles.dropLast(current.size)
         val past = before.takeLast(current.size)
         val earlier = before.dropLast(past.size).takeLast(current.size)
-        val projection = project(current, past)
+        val projection = emptyList<Candle>()
         val currentBase = current.first().close
         val allReturns = returns(current) + returns(past) + returns(earlier) + projection.map { candle ->
             if (currentBase > 0.0) candle.close / currentBase - 1.0 else 0.0
@@ -235,19 +235,9 @@ object HistoricalMarketRepository {
         )
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun project(current: List<Candle>, past: List<Candle>): List<Candle> {
-        if (current.size < 4 || past.size < 4) return emptyList()
-        val steps = (current.size * 0.22).toInt().coerceIn(4, 28)
-        val spacing = if (current.size >= 2) current.last().timeMs - current[current.size - 2].timeMs else 3_600_000L
-        var price = current.last().close
-        val start = (past.size - steps).coerceAtLeast(1)
-        return List(steps) { i ->
-            val idx = (start + i).coerceAtMost(past.lastIndex)
-            val prev = past[(idx - 1).coerceAtLeast(0)].close
-            val ret = if (prev > 0.0) past[idx].close / prev - 1.0 else 0.0
-            price *= 1.0 + ret * 0.5
-            Candle(current.last().timeMs + spacing * (i + 1), price.coerceAtLeast(0.0))
-        }
+        return emptyList()
     }
 
     private fun returns(series: List<Candle>): List<Double> {

@@ -356,7 +356,7 @@ private fun PredictionBadgeCard(
     confidence: String = "85%",
     modifier: Modifier = Modifier
 ) {
-    val isNegative = target.contains("-")
+    val isNegative = target.trim().startsWith("-") && !target.contains("—")
     val targetColor = if (isNegative) SoftCrimson else TachyonMint
     Box(
         modifier = modifier
@@ -840,7 +840,6 @@ private fun AnalyticsTabContent(
                 color = TextPrimary
             )
 
-            // Methodology & Model Transparency
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -852,43 +851,50 @@ private fun AnalyticsTabContent(
                     source = if (coin.priceUpdatedAtMs > 0L) "Market price" else "Connecting..."
                 )
                 Text(
-                    text = "Simulated Scenario Distribution (N=10,000)",
+                    text = if (selectedLanguage == com.example.data.model.AppLanguage.GREEK)
+                        "Ζωντανές κινήσεις · όχι πρόβλεψη"
+                    else
+                        "Live realized moves · not a forecast",
                     fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = QuantumCyan.copy(alpha = 0.85f)
                 )
             }
 
-            // 3 Target Cards (1w, 2w, 4w) with Institutional Scenario Modeling (S1, S2, S3)
+            val liveMoves = CoinLocalization.liveRealizedMoves(coin)
+            val isGreekMoves = selectedLanguage == com.example.data.model.AppLanguage.GREEK
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 PredictionBadgeCard(
-                    timeframe = strings.target1w,
-                    target = CoinLocalization.getProjected1w(coin, selectedLanguage),
-                    probabilityTag = "S1",
-                    confidence = "88%",
+                    timeframe = if (isGreekMoves) "24ω" else "24h",
+                    target = liveMoves.first,
+                    probabilityTag = "LIVE",
+                    confidence = if (coin.priceUpdatedAtMs > 0L) "live" else "—",
                     modifier = Modifier.weight(1f)
                 )
                 PredictionBadgeCard(
-                    timeframe = strings.target2w,
-                    target = CoinLocalization.getProjected2w(coin, selectedLanguage),
-                    probabilityTag = "S2",
-                    confidence = "74%",
+                    timeframe = if (isGreekMoves) "Spark" else "Spark",
+                    target = liveMoves.second,
+                    probabilityTag = "LIVE",
+                    confidence = if (coin.sparkline.size >= 2) "live" else "—",
                     modifier = Modifier.weight(1f)
                 )
                 PredictionBadgeCard(
-                    timeframe = strings.target4w,
-                    target = CoinLocalization.getProjected4w(coin, selectedLanguage),
-                    probabilityTag = "S3",
-                    confidence = "62%",
+                    timeframe = "ATH",
+                    target = liveMoves.third,
+                    probabilityTag = "LIVE",
+                    confidence = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0) "live" else "—",
                     modifier = Modifier.weight(1f)
                 )
             }
 
             Text(
-                text = "Simulated scenarios are calculated via historical volatility modeling. They represent statistical distributions, not guaranteed future price predictions.",
+                text = if (isGreekMoves)
+                    "Οι κάρτες δείχνουν πραγματοποιημένες live κινήσεις. Δεν υπάρχει εφευρεμένο win rate ή σενάριο."
+                else
+                    "Cards show realized live moves. No invented win-rate or scenario distribution.",
                 fontSize = 9.5.sp,
                 lineHeight = 13.sp,
                 color = TextMuted
@@ -913,18 +919,18 @@ private fun AnalyticsTabContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "${strings.projectedPeakLabel}:", fontSize = 11.sp, color = TextMuted)
+                    Text(text = "ATH:", fontSize = 11.sp, color = TextMuted)
                     Text(
-                        text = com.example.util.AppNumberFormatter.formatPrice(coin.analog.projectedCyclePeak, currency, selectedLanguage),
+                        text = if (coin.athUsd > 0.0) coin.formattedAth(currency, selectedLanguage) else "—",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = TachyonMint
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(text = "${strings.projectedBottomLabel}:", fontSize = 11.sp, color = TextMuted)
+                    Text(text = "ATL:", fontSize = 11.sp, color = TextMuted)
                     Text(
-                        text = com.example.util.AppNumberFormatter.formatPrice(coin.analog.projectedCycleBottom, currency, selectedLanguage),
+                        text = if (coin.atlUsd > 0.0) coin.formattedAtl(currency, selectedLanguage) else "—",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = SoftCrimson
@@ -937,6 +943,8 @@ private fun AnalyticsTabContent(
     // 2. CYCLE MOMENTUM & RELATIVE HEALTH
     val momentumMetrics = getCycleMomentumMetrics(coin)
     val isGreek = selectedLanguage == com.example.data.model.AppLanguage.GREEK
+    val rsiValue = momentumMetrics.first
+    val rsiNumber = rsiValue.toDoubleOrNull()
     SectionContainer(
         title = strings.cycleMomentumTitle,
         icon = Icons.Default.Timeline
@@ -947,18 +955,26 @@ private fun AnalyticsTabContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MiniStat(
-                    title = if (isGreek) "14D RSI (Εκτίμηση)" else "14D RSI (Estimated)",
-                    value = "${momentumMetrics.first}",
-                    sub = if (momentumMetrics.first >= 55) (if (isGreek) "Ανοδικό Μομέντουμ" else "Bullish Momentum")
-                          else if (momentumMetrics.first <= 45) (if (isGreek) "Υπερπωλημένο / Πτωτικό" else "Oversold / Weak")
-                          else (if (isGreek) "Ουδέτερη Συσσώρευση" else "Neutral Consolidation"),
-                    valueColor = if (momentumMetrics.first >= 55) TachyonMint else if (momentumMetrics.first <= 45) SoftCrimson else PhotonGold,
+                    title = if (isGreek) "14D RSI" else "14D RSI",
+                    value = rsiValue,
+                    sub = when {
+                        rsiNumber == null -> if (isGreek) "Αναμονή sparkline" else "Awaiting sparkline"
+                        rsiNumber >= 55 -> if (isGreek) "Ανοδικό μομέντουμ" else "Bullish momentum"
+                        rsiNumber <= 45 -> if (isGreek) "Υπερπωλημένο / πτωτικό" else "Oversold / weak"
+                        else -> if (isGreek) "Ουδέτερη συσσώρευση" else "Neutral consolidation"
+                    },
+                    valueColor = when {
+                        rsiNumber == null -> TextMuted
+                        rsiNumber >= 55 -> TachyonMint
+                        rsiNumber <= 45 -> SoftCrimson
+                        else -> PhotonGold
+                    },
                     modifier = Modifier.weight(1f)
                 )
                 MiniStat(
-                    title = if (isGreek) "Φάση Κύκλου" else "Cycle Phase",
+                    title = if (isGreek) "Απόσταση από ATH" else "Distance from ATH",
                     value = momentumMetrics.second,
-                    sub = if (isGreek) "Ιστορικό Analog Fit" else "Historical Analog Fit",
+                    sub = if (isGreek) "Από live τιμή / ATH" else "From live price / ATH",
                     valueColor = QuantumCyan,
                     modifier = Modifier.weight(1f)
                 )
@@ -971,17 +987,21 @@ private fun AnalyticsTabContent(
                 val dd = coin.drawdownPercent
                 MiniStat(
                     title = strings.drawdownAthMetric,
-                    value = com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1),
+                    value = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0)
+                        com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)
+                    else "—",
                     sub = "${coin.calculatedAthDaysAgo}d ${if (isGreek) "από το ATH" else "since ATH"}",
                     valueColor = if (dd < 0) SoftCrimson else TachyonMint,
                     modifier = Modifier.weight(1f)
                 )
-                val change24Formatted = com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
+                val change24Formatted = if (coin.priceUpdatedAtMs > 0L)
+                    com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
+                else "—"
                 MiniStat(
                     title = if (isGreek) "24ωρη Μεταβολή" else "24h Delta",
                     value = change24Formatted,
                     sub = if (isGreek) "Ζωντανή Ροή Αγοράς" else "Real Market Feed",
-                    valueColor = if (coin.change24h >= 0) TachyonMint else SoftCrimson,
+                    valueColor = if (coin.priceUpdatedAtMs <= 0L) TextMuted else if (coin.change24h >= 0) TachyonMint else SoftCrimson,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -1121,15 +1141,15 @@ private fun OnChainTabContent(
                 MiniStat(
                     title = strings.activeAddressesEstimate,
                     value = onChainMetrics.first,
-                    sub = if (isGreek) "Εκτίμηση Δικτύου" else "Network Activity Tier",
+                    sub = if (isGreek) "Χωρίς live feed" else "No live feed",
                     valueColor = QuantumCyan,
                     modifier = Modifier.weight(1f)
                 )
                 MiniStat(
                     title = strings.exchangeNetFlowLabel,
                     value = onChainMetrics.third,
-                    sub = if (isGreek) "Ροές Αποθεμάτων" else "Reserve Inflow/Outflow",
-                    valueColor = if (coin.change24h >= 0) TachyonMint else PhotonGold,
+                    sub = if (isGreek) "Χωρίς live feed" else "No live feed",
+                    valueColor = TextMuted,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -1157,9 +1177,9 @@ private fun OnChainTabContent(
                     )
                     Text(
                         text = if (isGreek)
-                            "Ποσοστό διακράτησης από τα 100 κορυφαία πορτοφόλια (περιλαμβάνει smart contracts & exchanges)."
+                            "Δεν υπάρχει δημόσιο live feed για συγκέντρωση πορτοφολιών. Εμφανίζεται — αντί για εφευρεμένο ποσοστό."
                         else
-                            "Holding share by top 100 on-chain wallets (includes protocol smart contracts & exchange cold storage).",
+                            "No public live feed for wallet concentration. Showing — instead of an invented share.",
                         fontSize = 10.sp,
                         lineHeight = 14.sp,
                         color = TextSecondary
@@ -1539,53 +1559,23 @@ private fun getMilestonesForCoin(coin: CryptoCoin, isGreek: Boolean): List<Proto
 }
 
 private fun getEstimatedOnChainMetrics(coin: CryptoCoin): Triple<String, String, String> {
-    val activeWallets = when (coin.symbol.uppercase()) {
-        "BTC" -> "~940K active/day"
-        "ETH" -> "~510K active/day"
-        "SOL" -> "~1.8M active/day"
-        "BNB" -> "~1.1M active/day"
-        "XRP" -> "~240K active/day"
-        "ADA" -> "~120K active/day"
-        "DOGE" -> "~180K active/day"
-        "SUI" -> "~680K active/day"
-        "AVAX" -> "~95K active/day"
-        "LINK" -> "~42K active/day"
-        else -> when {
-            coin.rank <= 20 -> "~150K - 400K active/day"
-            coin.rank <= 50 -> "~40K - 120K active/day"
-            else -> "~10K - 50K active/day"
-        }
-    }
-    val whaleConcentration = when (coin.symbol.uppercase()) {
-        "BTC" -> "14.2% (Healthy Decentralization)"
-        "ETH" -> "32.8% (Includes Staking Pools)"
-        "SOL" -> "28.4% (Validators & Foundation)"
-        "BNB" -> "44.6% (Binance Custody & Reserves)"
-        "XRP" -> "48.2% (Ripple Escrow & Reserves)"
-        "ADA" -> "19.8% (High Decentralization)"
-        "DOGE" -> "41.5% (Early Wallets Concentration)"
-        else -> when {
-            coin.rank <= 20 -> "22% - 35% (Moderate Distribution)"
-            else -> "35% - 55% (Early / Foundation Share)"
-        }
-    }
-    val exchangeFlow = if (coin.change24h >= 0) {
-        "Net Outflows · Accumulation Phase"
-    } else {
-        "Neutral / Slight Inflows · Distribution Check"
-    }
-    return Triple(activeWallets, whaleConcentration, exchangeFlow)
+    return Triple("—", "—", "—")
 }
 
-private fun getCycleMomentumMetrics(coin: CryptoCoin): Pair<Double, String> {
-    val baseRsi = 50.0 + (coin.change24h * 1.5).coerceIn(-28.0, 28.0)
-    val rsiFormatted = (baseRsi * 10).toInt() / 10.0
-    val phase = when {
-        coin.drawdownPercent > -25.0 -> "Bullish Markup / Price Discovery"
-        coin.drawdownPercent > -50.0 -> "Mid-Cycle Accumulation"
-        coin.drawdownPercent > -75.0 -> "Deep Value / Compression"
-        else -> "Historical Bottom Accumulation"
+private fun getCycleMomentumMetrics(coin: CryptoCoin): Pair<String, String> {
+    val rsi = if (coin.priceUpdatedAtMs > 0L && coin.sparkline.size > 14) {
+        com.example.engine.forecasting.QuantForecastEngine.calculateRsi(coin.sparkline)
+    } else {
+        null
     }
-    return Pair(rsiFormatted, phase)
+    val rsiText = rsi?.let { String.format(Locale.US, "%.1f", it) } ?: "—"
+    val phase = when {
+        coin.priceUsd <= 0.0 || coin.athUsd <= 0.0 -> "—"
+        coin.drawdownPercent > -25.0 -> "Near ATH"
+        coin.drawdownPercent > -50.0 -> "Mid drawdown"
+        coin.drawdownPercent > -75.0 -> "Deep drawdown"
+        else -> "Far from ATH"
+    }
+    return Pair(rsiText, phase)
 }
 
