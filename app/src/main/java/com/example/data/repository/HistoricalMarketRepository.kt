@@ -15,6 +15,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
+import kotlin.math.ln
 
 /**
  * Halving-to-halving closes for the cycle chart.
@@ -197,13 +198,14 @@ object HistoricalMarketRepository {
         val cycle2020 = cycleDrafts(sorted, HALVING_2020, HalvingCycleUtils.HALVING_4TH_TIMESTAMP, axisDays)
         val cycleNow = cycleDrafts(sorted, HalvingCycleUtils.HALVING_4TH_TIMESTAMP, now, axisDays)
         if (cycleNow.size < 2 && cycle2020.size < 2) return null
-        val multiples = (cycle2016 + cycle2020 + cycleNow).map { it.multiple }
-        val minM = multiples.minOrNull() ?: 1.0
-        val maxM = multiples.maxOrNull() ?: minM
-        val span = (maxM - minM).takeIf { abs(it) > 1e-6 } ?: 1.0
+        val logs = (cycle2016 + cycle2020 + cycleNow).map { ln(it.multiple.coerceAtLeast(0.05)) }
+        val minLog = logs.minOrNull() ?: 0.0
+        val maxLog = logs.maxOrNull() ?: minLog
+        val span = (maxLog - minLog).takeIf { abs(it) > 1e-6 } ?: 1.0
 
         fun draw(drafts: List<CycleDraft>): List<FractalPoint> = drafts.map { draft ->
-            val norm = ((draft.multiple - minM) / span).toFloat().coerceIn(0.04f, 0.96f)
+            val logM = ln(draft.multiple.coerceAtLeast(0.05))
+            val norm = ((logM - minLog) / span).toFloat().coerceIn(0.04f, 0.96f)
             FractalPoint(draft.day, norm, draft.price, draft.label)
         }
 
@@ -225,8 +227,8 @@ object HistoricalMarketRepository {
             currentDay = currentDay,
             peakDay = cycleNow.maxByOrNull { it.price }?.day ?: 0,
             floorDay = 0,
-            pastCycleLabel = "2020 halving",
-            earlierCycleLabel = "2016 halving",
+            pastCycleLabel = "2020",
+            earlierCycleLabel = "2016",
             usesHalving = symbol.equals("BTC", ignoreCase = true) || cycle2016.isNotEmpty() || cycle2020.isNotEmpty(),
             eventDays = listOf(0 to "Halving"),
             windowLabel = "Day $currentDay / $axisDays",

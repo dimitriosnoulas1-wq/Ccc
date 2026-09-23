@@ -35,5 +35,7 @@ class HalvingCycleChartTest {
         )
         assertEquals(800, data.currentDay)
         assertEquals(candles.last().close, data.currentPoints.last().price, 0.01)
+        assertTrue(data.currentPoints.last().normalizedValue > 0.07f)
+        assertTrue(data.points2016.maxOf { it.normalizedValue } > data.currentPoints.last().normalizedValue)
     }
 }
