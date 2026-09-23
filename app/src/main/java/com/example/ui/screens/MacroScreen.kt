@@ -995,7 +995,7 @@ fun WeeklyMacroBriefingCard(
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = if (isProUnlocked) "INSTITUTIONAL" else "PRO BRIEFING",
+                        text = if (isProUnlocked) strings.macroRainbowBadge else strings.macroProLockedBadge,
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isProUnlocked) GainGreen else NeonAmber

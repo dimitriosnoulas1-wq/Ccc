@@ -27,6 +27,7 @@ import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.QuantumCyan
 import com.example.ui.theme.SoftCrimson
 import com.example.ui.theme.TachyonMint
+import com.example.util.LocalAppStrings
 
 @Composable
 fun QuantForecastCard(
@@ -35,6 +36,7 @@ fun QuantForecastCard(
     onUpgradeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var showAdvancedDetails by remember { mutableStateOf(false) }
 
     val regimeColor = when (model.direction) {
@@ -275,14 +277,14 @@ fun QuantForecastCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "🔒 PRO TAPE READING",
+                        text = "🔒 ${strings.proTapeTitle}",
                         color = QuantumCyan,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Black
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Unlock the live RSI, EMA, ATR, funding and ETF reading from daily exchange closes.",
+                        text = strings.proTapeDesc,
                         color = Color(0xFFCBD5E1),
                         fontSize = 12.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -292,7 +294,7 @@ fun QuantForecastCard(
                         onClick = onUpgradeClick,
                         colors = ButtonDefaults.buttonColors(containerColor = QuantumCyan)
                     ) {
-                        Text(text = "UPGRADE TO PRO", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(text = strings.upgradeToPro.uppercase(), color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }

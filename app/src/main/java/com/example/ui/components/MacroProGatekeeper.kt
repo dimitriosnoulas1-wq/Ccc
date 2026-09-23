@@ -33,8 +33,6 @@ fun MacroProGatekeeper(
     val strings = LocalAppStrings.current
     val palette = LocalAppColors.current
 
-    val isGreek = strings.language.code == "el"
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -52,13 +50,13 @@ fun MacroProGatekeeper(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isGreek) "Θεσμικά Μοντέλα Macro" else "Institutional Macro Models",
+                    text = strings.macroGateTitle,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.textPrimary
                 )
                 Text(
-                    text = if (isGreek) "Ξεκλείδωμα Pro →" else "Unlock Pro →",
+                    text = "${strings.upgradeToPro} →",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.primary
@@ -66,10 +64,7 @@ fun MacroProGatekeeper(
             }
 
             Text(
-                text = if (isGreek)
-                    "Περιλαμβάνει μαθηματικές ζώνες Pi Cycle Top & Πυθμένα, ιστορικές παλινδρομήσεις Altcoin Season Index και ιστορικές σειρές Fear & Greed."
-                else
-                    "Includes Pi Cycle Top / Bottom mathematical bands, Altcoin Season Index historical regressions, and Fear & Greed historical series.",
+                text = strings.macroGateDesc,
                 fontSize = 12.sp,
                 color = palette.textSecondary,
                 lineHeight = 17.sp
@@ -83,12 +78,12 @@ fun MacroProGatekeeper(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isGreek) "4.79 € / μήνα · 7 ημέρες δωρεάν δοκιμή" else "€4.79 / month · 7-Day Free Trial",
+                    text = strings.proPriceTrialLine,
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )
                 Text(
-                    text = if (isGreek) "Προβολή λεπτομερειών" else "View details",
+                    text = strings.viewDetails,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = palette.primary

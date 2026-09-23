@@ -32,8 +32,6 @@ fun SignalsProGatekeeper(
     val strings = LocalAppStrings.current
     val palette = LocalAppColors.current
 
-    val isGreek = strings.language.code == "el"
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -51,13 +49,13 @@ fun SignalsProGatekeeper(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isGreek) "Μηχανή Σημάτων & Αναλύσεις Κύκλου" else "Signals Engine & Fractal Analytics",
+                    text = strings.signalsGateTitle,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.textPrimary
                 )
                 Text(
-                    text = if (isGreek) "Ξεκλείδωμα Pro →" else "Unlock Pro →",
+                    text = "${strings.upgradeToPro} →",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = palette.primary
@@ -65,10 +63,7 @@ fun SignalsProGatekeeper(
             }
 
             Text(
-                text = if (isGreek)
-                    "Πρόσβαση σε live καμπύλες halving, παλινδρομήσεις κύκλων 2020 & 2016 και σήματα ρευστοποιήσεων υψηλής συχνότητας."
-                else
-                    "Access live institutional halving analog fractal curves, 2020 & 2016 cycle regressions, and high-frequency liquidation signals.",
+                text = strings.signalsGateDesc,
                 fontSize = 12.sp,
                 color = palette.textSecondary,
                 lineHeight = 17.sp
@@ -84,7 +79,7 @@ fun SignalsProGatekeeper(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = if (isGreek) "Live whale radar · live order flow · live liquidations" else "Live whale radar · live order flow · live liquidations",
+                    text = strings.signalsGateBadge,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.primary
@@ -99,12 +94,12 @@ fun SignalsProGatekeeper(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isGreek) "4.79 € / μήνα · 7 ημέρες δωρεάν δοκιμή" else "€4.79 / month · 7-Day Free Trial",
+                    text = strings.proPriceTrialLine,
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )
                 Text(
-                    text = if (isGreek) "Προβολή λεπτομερειών" else "View details",
+                    text = strings.viewDetails,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = palette.primary
