@@ -10,7 +10,7 @@ import org.junit.Test
 class ExampleUnitTest {
   @Test
   fun testGeminiAiServiceDirectQuery() = runBlocking {
-    val service = GeminiAiService()
+    val service = GeminiAiService(apiKeyOverride = "")
     val snapshot = LiveMarketContextSnapshot(
       btcPrice = 85200.0,
       btc24hChange = 2.4,
@@ -41,6 +41,14 @@ class ExampleUnitTest {
     )
     assertNotNull(liveCheckResponse)
     assertTrue("Response should acknowledge being live", liveCheckResponse.contains("live", ignoreCase = true) || liveCheckResponse.contains("online", ignoreCase = true))
+  }
+
+  @Test
+  fun prefersCheapestGeminiModelsFirst() {
+    assertEquals(
+      listOf("gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash"),
+      GeminiAiService.MODELS
+    )
   }
 }
 

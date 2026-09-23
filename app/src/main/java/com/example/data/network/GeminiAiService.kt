@@ -21,14 +21,16 @@ class GeminiAiService(
         .connectTimeout(12, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .writeTimeout(12, TimeUnit.SECONDS)
-        .build()
+        .build(),
+    private val apiKeyOverride: String? = null
 ) {
     companion object {
         private const val TAG = "GeminiAiService"
-        private val MODELS = listOf(
-            "gemini-3.6-flash",
-            "gemini-3.7-flash",
-            "gemini-3.8-flash"
+        // Cheapest working text models first (paid $/1M tokens: 3.1-lite $0.25/$1.50, 3.5-lite $0.30/$2.50, 3.6-flash $0.75/$3.75).
+        internal val MODELS = listOf(
+            "gemini-3.1-flash-lite",
+            "gemini-3.5-flash-lite",
+            "gemini-3.6-flash"
         )
         private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
     }
@@ -38,16 +40,7 @@ class GeminiAiService(
         snapshot: LiveMarketContextSnapshot,
         language: AppLanguage
     ): String = withContext(Dispatchers.IO) {
-        val apiKey = try {
-            val envKey = BuildConfig.GEMINI_API_KEY.trim()
-            if (envKey.isNotBlank() && !envKey.equals("MY_GEMINI_API_KEY", ignoreCase = true)) {
-                envKey
-            } else {
-                ""
-            }
-        } catch (e: Throwable) {
-            ""
-        }
+        val apiKey = resolveApiKey()
 
         val isGreeklishOrGreek = prompt.any { it in '\u0370'..'\u03ff' } ||
                 prompt.contains("pes", ignoreCase = true) ||
@@ -83,18 +76,7 @@ class GeminiAiService(
 
         if (apiKey.isNotBlank()) {
             for (model in MODELS) {
-                // Try with search grounding first
-                try {
-                    val responseText = callGeminiRestApi(apiKey, model, prompt, snapshot, targetLangName, enableSearch = true)
-                    if (responseText.isNotBlank()) {
-                        Log.d(TAG, "Gemini live call with Search Grounding successful with model: $model")
-                        return@withContext responseText
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Gemini search grounding model $model failed, trying standard: ${e.message}")
-                }
-
-                // Fallback to standard generateContent without search tool
+                // Standard generateContent first: search grounding is extra cost and often quota-blocked.
                 try {
                     val responseText = callGeminiRestApi(apiKey, model, prompt, snapshot, targetLangName, enableSearch = false)
                     if (responseText.isNotBlank()) {
@@ -109,6 +91,24 @@ class GeminiAiService(
 
         // Conversational intelligence synthesizer fallback
         generateRealtimeQuantitativeAnalysis(prompt, snapshot, effectiveLanguage)
+    }
+
+    private fun resolveApiKey(): String {
+        if (apiKeyOverride != null) {
+            return sanitizeApiKey(apiKeyOverride)
+        }
+        val buildKey = runCatching { BuildConfig.GEMINI_API_KEY }.getOrDefault("")
+        val injectedKey = runCatching { BuildConfig.GEMINI_INJECTED_API_KEY }.getOrDefault("")
+        return sanitizeApiKey(buildKey).ifBlank { sanitizeApiKey(injectedKey) }
+    }
+
+    private fun sanitizeApiKey(raw: String): String {
+        val key = raw.trim()
+        return if (key.isNotBlank() && !key.equals("MY_GEMINI_API_KEY", ignoreCase = true)) {
+            key
+        } else {
+            ""
+        }
     }
 
     private fun callGeminiRestApi(
