@@ -398,8 +398,8 @@ private fun PredictionBadgeCard(
                 color = targetColor,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            Text(
-                text = "Conf: $confidence",
+                Text(
+                    text = confidence,
                 fontSize = 8.5.sp,
                 fontWeight = FontWeight.Medium,
                 color = TextSecondary

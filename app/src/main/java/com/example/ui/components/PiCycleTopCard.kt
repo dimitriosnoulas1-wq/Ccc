@@ -570,7 +570,7 @@ fun PiCycleTopCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isGreek) "📖 Οδηγός Στρατηγικής & Ιστορικά Σήματα" else "📖 Strategy Guide & Historical Crosses",
+                    text = if (isGreek) "📖 Ιστορικές διασταυρώσεις" else "📖 Historical Crosses",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textPrimary

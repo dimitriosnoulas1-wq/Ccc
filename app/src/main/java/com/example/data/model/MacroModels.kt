@@ -19,18 +19,18 @@ enum class RainbowBand(
         colorHex = 0xFFBE123C,
         color = Color(0xFFBE123C),
         multiplier = 8.10,
-        descriptionEn = "Extreme euphoria, historical cycle top blow-off territory. Heavy profit taking zone.",
-        descriptionEl = "Ακραία ευφορία, ιστορική ζώνη κορυφής κύκλου. Περιοχή μαζικής κατοχύρωσης κερδών."
+        descriptionEn = "Historically the highest rainbow band. A record of past cycle tops, not a sell order.",
+        descriptionEl = "Ιστορικά η υψηλότερη ζώνη Rainbow. Καταγραφή παλιών κορυφών, όχι εντολή πώλησης."
     ),
     SELL_SERIOUSLY(
         id = 7,
-        nameEn = "Sell. Seriously, SELL!",
-        nameEl = "Πούλα. Σοβαρά, ΠΟΥΛΑ!",
+        nameEn = "Historically overheated",
+        nameEl = "Ιστορικά υπερθερμασμένη",
         colorHex = 0xFFEF4444,
         color = Color(0xFFEF4444),
         multiplier = 6.00,
-        descriptionEn = "Severe overvaluation. Historically optimal zone for scaling out substantial positions.",
-        descriptionEl = "Έντονη υπερτίμηση. Ιστορικά βέλτιστη ζώνη για κλιμακωτή έξοδο και ρευστοποίηση."
+        descriptionEn = "Historically an overheated band on prior cycles. A record, not a sell order.",
+        descriptionEl = "Ιστορικά υπερθερμασμένη ζώνη σε παλιούς κύκλους. Καταγραφή, όχι εντολή πώλησης."
     ),
     FOMO_INTENSIFIES(
         id = 6,
@@ -39,8 +39,8 @@ enum class RainbowBand(
         colorHex = 0xFFF97316,
         color = Color(0xFFF97316),
         multiplier = 4.45,
-        descriptionEn = "Retail mania and exponential greed entering the market. Late-stage bull market markup.",
-        descriptionEl = "Είσοδος μαζικής ψυχολογίας FOMO και απληστίας. Προχωρημένο στάδιο bull market."
+        descriptionEn = "Historically a late-cycle band on prior bull markets. A record, not a trade.",
+        descriptionEl = "Ιστορικά ζώνη τέλους κύκλου σε παλιά bull markets. Καταγραφή, όχι συναλλαγή."
     ),
     IS_THIS_A_BUBBLE(
         id = 5,
@@ -49,8 +49,8 @@ enum class RainbowBand(
         colorHex = 0xFFF59E0B,
         color = Color(0xFFF59E0B),
         multiplier = 3.30,
-        descriptionEn = "Price accelerates past fair value. First warning sign for long-term cycle holders.",
-        descriptionEl = "Η τιμή επιταχύνει πάνω από τη δίκαιη αξία. Πρώτη ένδειξη προσοχής για μακροπρόθεσμους κατόχους."
+        descriptionEn = "Historically above the mid-cycle band. A record of past prints, not a warning to sell.",
+        descriptionEl = "Ιστορικά πάνω από τη μεσαία ζώνη. Καταγραφή παλιών τιμών, όχι προειδοποίηση πώλησης."
     ),
     HODL(
         id = 4,
@@ -69,8 +69,8 @@ enum class RainbowBand(
         colorHex = 0xFF84CC16,
         color = Color(0xFF84CC16),
         multiplier = 1.80,
-        descriptionEn = "Undervalued territory. Favorable risk/reward for long-term dollar-cost averaging.",
-        descriptionEl = "Υποτιμημένη περιοχή. Εξαιρετική αναλογία ρίσκου/απόδοσης για σταδιακές αγορές DCA."
+        descriptionEn = "Historically a lower-mid band. A record, not a dollar-cost-average order.",
+        descriptionEl = "Ιστορικά χαμηλότερη-μεσαία ζώνη. Καταγραφή, όχι εντολή DCA."
     ),
     ACCUMULATE(
         id = 2,
@@ -79,18 +79,18 @@ enum class RainbowBand(
         colorHex = 0xFF10B981,
         color = Color(0xFF10B981),
         multiplier = 1.35,
-        descriptionEn = "Prime smart money accumulation zone. Strong multi-year asymmetry to the upside.",
-        descriptionEl = "Προνομιακή ζώνη έξυπνου χρήματος για συσσώρευση. Ισχυρή ασυμμετρία ανόδου."
+        descriptionEn = "Historically a lower band on prior cycles. A record, not an accumulate order.",
+        descriptionEl = "Ιστορικά χαμηλότερη ζώνη σε παλιούς κύκλους. Καταγραφή, όχι εντολή συσσώρευσης."
     ),
     BUY(
         id = 1,
-        nameEn = "BUY!",
-        nameEl = "ΑΓΟΡΑ!",
+        nameEn = "Historically deep floor",
+        nameEl = "Ιστορικά βαθύς πυθμένας",
         colorHex = 0xFF06B6D4,
         color = Color(0xFF06B6D4),
         multiplier = 1.00,
-        descriptionEn = "Generational buying opportunity. Deep bear market capitulation bottom zone.",
-        descriptionEl = "Εξαιρετική ευκαιρία αγοράς. Ζώνη πυθμένα bear market και συνθηκολόγησης."
+        descriptionEn = "Historically a deep floor band on prior bear markets. A record, not a buy order.",
+        descriptionEl = "Ιστορικά βαθύς πυθμένας σε παλιά bear markets. Καταγραφή, όχι εντολή αγοράς."
     ),
     FIRE_SALE(
         id = 0,
@@ -99,8 +99,8 @@ enum class RainbowBand(
         colorHex = 0xFF3B82F6,
         color = Color(0xFF3B82F6),
         multiplier = 0.75,
-        descriptionEn = "Historic multi-year bottom floor. Maximum asymmetry and lowest cycle valuation.",
-        descriptionEl = "Ιστορικός πυθμένας πολλαπλών ετών. Μέγιστη ασυμμετρία κέρδους και χαμηλότερη αποτίμηση."
+        descriptionEn = "Historically the lowest rainbow band. A record of past floors, not a buy order.",
+        descriptionEl = "Ιστορικά η χαμηλότερη ζώνη Rainbow. Καταγραφή παλιών πυθμένων, όχι εντολή αγοράς."
     );
 
     fun localizedName(isGreek: Boolean): String = if (isGreek) nameEl else nameEn
@@ -149,7 +149,8 @@ data class FearAndGreedData(
     val sentimentEl: String = "—",
     val yesterdayScore: Int = 0,
     val lastWeekScore: Int = 0,
-    val lastMonthScore: Int = 0
+    val lastMonthScore: Int = 0,
+    val isLive: Boolean = false
 ) {
     fun localizedSentiment(isGreek: Boolean): String = if (isGreek) sentimentEl else sentiment
 }

@@ -126,7 +126,7 @@ open class AppStrings(
     open val sellMomentRules: String = "Historical model only: 111 DMA crossing 350 DMA x 2, or the old Rainbow red band. This is a past-cycle record, not a sell order."
     open val rainbowFeatureLabel: String = "🌈 Bitcoin Rainbow Chart (Dynamic Power Law Model)"
     open val altSeasonFeatureLabel: String = "⚡ Altcoin Season Index (0-100) & Top 50 Outperformers"
-    open val piCycleFeatureLabel: String = "🎯 Pi Cycle Top Indicator & 200-Week MA Floor (Buy/Sell Rules)"
+    open val piCycleFeatureLabel: String = "🎯 Pi Cycle Top Indicator & 200-Week MA Floor (historical crosses)"
     open val fearGreedFeatureLabel: String = "😱 Fear & Greed Sentiment Multi-Timeframe Analytics"
     open val proAnalyticsTitle: String = "Pro Cycle Analysis"
     open val proAnalyticsDesc: String = "Unlock full 2020 & 2016 curve comparisons and predictive projections for"
@@ -409,7 +409,7 @@ open class AppStrings(
     open val macroRiskBackdropBadge: String = "MACRO BACKDROP"
     open val macroRainbowCardTitle: String = "🌈 Bitcoin Rainbow Price Model"
     open val macroRainbowCardSub: String = "Logarithmic Valuation Bands"
-    open val macroRainbowBadge: String = "HOLD / DCA"
+    open val macroRainbowBadge: String = "HISTORY"
     open val macroAltSeasonCardTitle: String = "⚡ Altcoin Season Index"
     open val macroAltSeasonCardSub: String = "42/100 · Neutral Zone (Bitcoin Season)"
     open val macroFearGreedCardTitle: String = "😱 Fear & Greed Index"
@@ -472,13 +472,13 @@ open class AppStrings(
     open val neutralLabel: String = "Neutral"
     open val greedLabel: String = "Greed"
     open val extremeGreedLabel: String = "Extreme Greed"
-    open val fearGreedAccumulationTip: String = "Historically, readings under 25 (Extreme Fear) represent optimal macro accumulation windows."
+    open val fearGreedAccumulationTip: String = "A live sentiment reading. Missing scores show as a dash. Not a buy or sell window."
 
     // Pi Cycle Strings
     open val piCycleHeaderTitle: String = "Pi Cycle Indicators (Top & Bottom)"
     open val piCycleSubtitle: String = "Top (111SMA vs 350SMA×2) & Bottom (150EMA vs 471SMA×0.745)"
-    open val piCycleTopSectionTitle: String = "🔴 PI CYCLE TOP (PEAK / SELL SIGNAL)"
-    open val piCycleBottomSectionTitle: String = "🟢 PI CYCLE BOTTOM (FLOOR / BUY SIGNAL)"
+    open val piCycleTopSectionTitle: String = "🔴 PI CYCLE TOP (HISTORICAL CROSS)"
+    open val piCycleBottomSectionTitle: String = "🟢 PI CYCLE BOTTOM (HISTORICAL CROSS)"
     open val piCycleDma111: String = "111-Day SMA"
     open val piCycleDma350x2: String = "350-Day SMA × 2 (Top Threshold)"
     open val piCycleEma150: String = "150-Day EMA"
@@ -489,7 +489,7 @@ open class AppStrings(
     open val piCycleStatusSafeText: String = "Accumulation & Expansion Phase (Safe Zone)"
     open val piCycleStatusAlertText: String = "🚨 PI CYCLE TOP CROSS DETECTED (Cycle Peak Risk)"
     open val piCycleBottomStatusSafeText: String = "Above Generational Bottom (Expansion Phase)"
-    open val piCycleBottomStatusAlertText: String = "🚨 PI CYCLE BOTTOM CROSS DETECTED (Generational Floor Buy)"
+    open val piCycleBottomStatusAlertText: String = "🚨 PI CYCLE BOTTOM CROSS DETECTED (historical floor record)"
     open val piCycleGenerationalSupport: String = "Generational Support Floor"
 
     // Futures Terminal Strings

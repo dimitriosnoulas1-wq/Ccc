@@ -290,13 +290,6 @@ class CryptoRepository(context: android.content.Context? = null) {
                     coinUpdated = true
                     val ch = if (tick.change24h != 0.0) tick.change24h else coin.change24h
                     val isNewAth = unitPrice > coin.athUsd
-                    val divisor = if (ch <= -100.0) 0.0001 else (1.0 + ch / 100.0)
-                    val openP = unitPrice / divisor
-                    val intradaySpark = if (ch >= 0) {
-                        listOf(openP, openP * 0.995, openP * 1.008, unitPrice * 0.998, unitPrice * 1.012, unitPrice)
-                    } else {
-                        listOf(openP, openP * 1.005, openP * 0.992, unitPrice * 1.008, unitPrice * 0.994, unitPrice)
-                    }
                     stampLive(
                         coin,
                         coin.copy(
@@ -305,7 +298,7 @@ class CryptoRepository(context: android.content.Context? = null) {
                             volume24h = if ((tick.volumeQuote ?: 0.0) > 0) tick.volumeQuote!! else coin.volume24h,
                             athUsd = if (isNewAth) unitPrice else coin.athUsd,
                             athDate = if (isNewAth) todayStr else coin.athDate,
-                            sparkline = if (intradaySpark.isNotEmpty()) intradaySpark else coin.sparkline
+                            sparkline = coin.sparkline
                         ),
                         tick.tsMillis
                     )
@@ -624,12 +617,6 @@ class CryptoRepository(context: android.content.Context? = null) {
                                 val isNewAth = newPrice > coin.athUsd
                                 val updatedAth = if (isNewAth) newPrice else coin.athUsd
                                 val updatedAthDate = if (isNewAth) todayStr else coin.athDate
-                                val openPrice = newPrice / (1.0 + newChange / 100.0)
-                                val intradaySpark = if (newChange >= 0) {
-                                    listOf(openPrice, openPrice * 0.995, openPrice * 1.008, newPrice * 0.998, newPrice * 1.012, newPrice)
-                                } else {
-                                    listOf(openPrice, openPrice * 1.005, openPrice * 0.992, newPrice * 1.008, newPrice * 0.994, newPrice)
-                                }
                                 stampLive(
                                     coin,
                                     coin.copy(
@@ -638,7 +625,7 @@ class CryptoRepository(context: android.content.Context? = null) {
                                         volume24h = if (newVolume > 0) newVolume else coin.volume24h,
                                         athUsd = updatedAth,
                                         athDate = updatedAthDate,
-                                        sparkline = intradaySpark
+                                        sparkline = coin.sparkline
                                     ),
                                     nowMs
                                 )
@@ -899,13 +886,6 @@ class CryptoRepository(context: android.content.Context? = null) {
                 val p = liveTick.price
                 val ch = if (liveTick.change24h != 0.0) liveTick.change24h else coin.change24h
                 val isNewAth = p > coin.athUsd
-                val divisor = if (ch <= -100.0) 0.0001 else (1.0 + ch / 100.0)
-                val openP = p / divisor
-                val intradaySpark = if (ch >= 0) {
-                    listOf(openP, openP * 0.995, openP * 1.008, p * 0.998, p * 1.012, p)
-                } else {
-                    listOf(openP, openP * 1.005, openP * 0.992, p * 1.008, p * 0.994, p)
-                }
                 stampLive(
                     coin,
                     coin.copy(
@@ -914,7 +894,7 @@ class CryptoRepository(context: android.content.Context? = null) {
                         volume24h = if ((liveTick.volumeQuote ?: 0.0) > 0) liveTick.volumeQuote!! else coin.volume24h,
                         athUsd = if (isNewAth) p else coin.athUsd,
                         athDate = if (isNewAth) todayStr else coin.athDate,
-                        sparkline = if (intradaySpark.isNotEmpty()) intradaySpark else coin.sparkline
+                        sparkline = coin.sparkline
                     ),
                     nowMs
                 )

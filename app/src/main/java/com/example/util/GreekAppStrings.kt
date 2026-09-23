@@ -122,7 +122,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val sellMomentRules: String = "Ιστορικό μοντέλο μόνο: 111 DMA πάνω από 350 DMA x 2, ή η παλιά κόκκινη ζώνη Rainbow. Καταγραφή, όχι εντολή πώλησης."
     override val rainbowFeatureLabel: String = "🌈 Bitcoin Rainbow Chart (Δυναμικό Μοντέλο Power Law)"
     override val altSeasonFeatureLabel: String = "⚡ Δείκτης Altcoin Season (0-100) & Top 50 Outperformers"
-    override val piCycleFeatureLabel: String = "🎯 Δείκτης Pi Cycle Top & Πυθμένας 200W MA (Κανόνες Αγοράς/Πώλησης)"
+    override val piCycleFeatureLabel: String = "🎯 Δείκτης Pi Cycle Top & Πυθμένας 200W MA (ιστορικές διασταυρώσεις)"
     override val fearGreedFeatureLabel: String = "😱 Fear & Greed Πολυ-Χρονική Ανάλυση Συναισθήματος"
     override val proAnalyticsTitle: String = "Ανάλυση Κύκλου Pro"
     override val proAnalyticsDesc: String = "Ξεκλειδώστε πλήρεις συγκρίσεις καμπυλών 2020 & 2016 και προβλέψεις για το"
@@ -405,7 +405,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val macroRiskBackdropBadge: String = "MACRO ΠΛΑΙΣΙΟ"
     override val macroRainbowCardTitle: String = "🌈 Μοντέλο Τιμής Bitcoin Rainbow"
     override val macroRainbowCardSub: String = "Λογαριθμικές Ζώνες Αποτίμησης"
-    override val macroRainbowBadge: String = "HOLD / DCA"
+    override val macroRainbowBadge: String = "ΙΣΤΟΡΙΚΟ"
     override val macroAltSeasonCardTitle: String = "⚡ Δείκτης Altcoin Season"
     override val macroAltSeasonCardSub: String = "42/100 · Ουδέτερη Ζώνη (Bitcoin Season)"
     override val macroFearGreedCardTitle: String = "😱 Δείκτης Fear & Greed"
@@ -468,13 +468,13 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val neutralLabel: String = "Ουδέτερο"
     override val greedLabel: String = "Απληστία"
     override val extremeGreedLabel: String = "Ακραία Απληστία"
-    override val fearGreedAccumulationTip: String = "Ιστορικά, τιμές κάτω από 25 (Ακραίος Φόβος) αποτελούν βέλτιστα παράθυρα μακροοικονομικής συσσώρευσης."
+    override val fearGreedAccumulationTip: String = "Ζωντανή μέτρηση συναισθήματος. Αν λείπει ο αριθμός, εμφανίζεται παύλα. Όχι εντολή αγοράς ή πώλησης."
 
     // Pi Cycle Strings
     override val piCycleHeaderTitle: String = "Δείκτες Pi Cycle (Κορυφή & Πυθμένας)"
     override val piCycleSubtitle: String = "Κορυφή (111SMA vs 350SMA×2) & Πυθμένας (150EMA vs 471SMA×0.745)"
-    override val piCycleTopSectionTitle: String = "🔴 PI CYCLE TOP (ΚΟΡΥΦΗ / ΣΗΜΑ ΠΩΛΗΣΗΣ)"
-    override val piCycleBottomSectionTitle: String = "🟢 PI CYCLE BOTTOM (ΠΥΘΜΕΝΑΣ / ΣΗΜΑ ΑΓΟΡΑΣ)"
+    override val piCycleTopSectionTitle: String = "🔴 PI CYCLE TOP (ΙΣΤΟΡΙΚΗ ΔΙΑΣΤΑΥΡΩΣΗ)"
+    override val piCycleBottomSectionTitle: String = "🟢 PI CYCLE BOTTOM (ΙΣΤΟΡΙΚΗ ΔΙΑΣΤΑΥΡΩΣΗ)"
     override val piCycleDma111: String = "111-Ημερών SMA"
     override val piCycleDma350x2: String = "350-Ημερών SMA × 2 (Όριο Κορυφής)"
     override val piCycleEma150: String = "150-Ημερών EMA"
@@ -485,7 +485,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val piCycleStatusSafeText: String = "Φάση Συσσώρευσης & Επέκτασης (Ασφαλής Ζώνη)"
     override val piCycleStatusAlertText: String = "🚨 ΑΝΙΧΝΕΥΤΗΚΕ ΔΙΑΣΤΑΥΡΩΣΗ PI CYCLE TOP (Κίνδυνος Κορυφής Κύκλου)"
     override val piCycleBottomStatusSafeText: String = "Πάνω από τον Ιστορικό Πυθμένα (Φάση Επέκτασης)"
-    override val piCycleBottomStatusAlertText: String = "🚨 ΑΝΙΧΝΕΥΤΗΚΕ ΔΙΑΣΤΑΥΡΩΣΗ PI CYCLE BOTTOM (Ιστορική Αγορά Πυθμένα)"
+    override val piCycleBottomStatusAlertText: String = "🚨 ΑΝΙΧΝΕΥΤΗΚΕ ΔΙΑΣΤΑΥΡΩΣΗ PI CYCLE BOTTOM (ιστορικός πυθμένας)"
     override val piCycleGenerationalSupport: String = "Ιστορικό Επίπεδο Στήριξης Γενεάς"
 
     // Futures Terminal Strings

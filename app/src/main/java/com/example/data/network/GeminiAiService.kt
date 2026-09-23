@@ -400,7 +400,7 @@ class GeminiAiService(
             • Rainbow Band: ${snapshot.rainbowBand ?: "N/A"}
             • 200W SMA Distance: ${snapshot.distance200w ?: "N/A"}
             • Pi Cycle Gap: ${snapshot.piCycleGap ?: "N/A"}
-            • Market Sentiment: ${snapshot.fearAndGreedScore}/100 (${snapshot.fearAndGreedSentiment})
+            • Market Sentiment: ${if (snapshot.fearAndGreedScore > 0) "${snapshot.fearAndGreedScore}/100 (${snapshot.fearAndGreedSentiment})" else "missing"}
             • BTC Dominance: $btcDomFormatted
             • Altcoin Season Index: ${snapshot.altcoinSeasonIndex}
             • Perpetual Funding Rate: $fundingFormatted (Mark: ${snapshot.futuresMarkPrice})
@@ -497,19 +497,17 @@ class GeminiAiService(
                 """.trimIndent()
 
                 isSolana -> """
-                    **🟣 Solana (SOL) Ζωντανή Ανάλυση**
+                    **🟣 Solana (SOL) στην οθόνη**
                     
                     • **Τιμή Spot:** `$solPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.sol24hChange, includeSign = true, decimals = 2, language = language)} 24h)
-                    • **Δίκτυο & Οικοσύστημα:** Το Solana παραμένει στην αιχμή των συναλλαγών retail, DeFi και meme liquidity.
-                    • **Τεχνική Εικόνα:** Παρακολουθούμε τα επίπεδα στήριξης και τη σχετική ισχύ έναντι του Ethereum (SOL/ETH pair).
+                    • Διαβάζω μόνο ό,τι είναι στο snapshot. Δεν εφευρίσκω στήριξη, στόχο ή πρόβλεψη.
                 """.trimIndent()
 
                 isEthereum -> """
-                    **🔷 Ethereum (ETH) Ζωντανή Ανάλυση**
+                    **🔷 Ethereum (ETH) στην οθόνη**
                     
                     • **Τιμή Spot:** `$ethPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.eth24hChange, includeSign = true, decimals = 2, language = language)} 24h)
-                    • **Spot ETFs & L2s:** Τα Layer 2 δίκτυα (Arbitrum, Base, Optimism) συνεχίζουν να απορροφούν όγκο συναλλαγών.
-                    • **Συσχέτιση:** Η επιτάχυνση του ETH αποτελεί ιστορικά το έναυσμα για ευρύτερο Altseason.
+                    • Διαβάζω μόνο ό,τι είναι στο snapshot. Δεν εφευρίσκω στήριξη, στόχο ή πρόβλεψη.
                 """.trimIndent()
                 isGreetingOrLiveCheck -> presenceReply(language)
 
@@ -522,54 +520,52 @@ class GeminiAiService(
                 """.trimIndent()
 
                 isPeakOrAth -> """
-                    **📊 Ανάλυση Ιστορικών Κορυφών & ATH**
+                    **Στην οθόνη, όχι πρόβλεψη κορυφής**
                     
-                    • **Τρέχουσα Τιμή BTC:** `$btcPriceFormatted` (24h: ${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = true, decimals = 2, language = language)})
-                    • **Ιστορικό Μοτίβο Κύκλων:**
-                      - Οι ιστορικοί κύκλοι (2012, 2016, 2020) σημείωσαν τις απόλυτες κορυφές τους **500 έως 550 ημέρες μετά το εκάστοτε Halving**.
-                      - Στον τρέχοντα κύκλο, η είσοδος θεσμικών κεφαλαίων μέσω Spot ETFs επιτάχυνε τη ρευστότητα.
-                    • **Σήματα Κορυφής:** Παρακολουθούμε ακραίο Fear & Greed (>85), υπερβολικό Funding Rate (>0.03%) και επιθετική διανομή από μακροχρόνιους κατόχους (Whales).
+                    • **BTC:** `$btcPriceFormatted` (24h: ${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = true, decimals = 2, language = language)})
+                    • **Ημέρες από το 4ο halving:** `$halvingDays`
+                    • Δεν εφευρίσκω ημέρα κορυφής, ATH-στόχο ή σήμα πώλησης.
                 """.trimIndent()
 
                 isHalvingOrCycle -> """
-                    **⏳ Ανάλυση 4ετούς Κύκλου Halving**
+                    **Ρολόι κύκλου στην οθόνη**
                     
-                    • **Χρόνος από το 4ο Halving (20 Απριλίου 2024):** `$halvingDays`
-                    • **Τιμές Αναφοράς:** BTC `$btcPriceFormatted` | ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
-                    • **Φάση Κύκλου:** Βρισκόμαστε στη φάση μακροοικονομικής επέκτασης μετά το halving. Η ιστορική εμπειρία δείχνει ότι η περίοδος 12-18 μήνες μετά τη μείωση της παραγωγής Bitcoin συνοδεύεται από τις μεγαλύτερες κινήσεις ρευστότητας.
+                    • **Ημέρες από το 4ο Halving (20 Απριλίου 2024):** `$halvingDays`
+                    • **Τιμές:** BTC `$btcPriceFormatted` | ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
+                    • Καταγραφή ημερών μόνο. Δεν προβλέπω 12-18 μήνες ή κορυφή.
                 """.trimIndent()
 
                 isFuturesOrLeverage -> """
-                    **⚡ Παράγωγα, Funding Rates & Μόχλευση (${snapshot.activeFuturesSymbol})**
+                    **Παράγωγα στην οθόνη (${snapshot.activeFuturesSymbol})**
                     
-                    • **Funding Rate:** `$fundingFormatted` (${if (snapshot.fundingRatePct > 0.01) "Υπερθέρμανση θέσεων Long" else "Ισορροπημένο επίπεδο χωρίς ακραία μόχλευση"})
-                    • **Open Interest:** `$oiFormatted` συνολικά ενεργά συμβόλαια.
-                    • **Εκτίμηση Ρίσκου:** ${if (snapshot.fundingRatePct > 0.012) "Υψηλός κίνδυνος Long Squeeze σε απότομο pullback. Συνιστάται συντηρητική μόχλευση." else "Υγιής δομή παραγώγων, χαμηλός κίνδυνος αλυσιδωτών ρευστοποιήσεων."}
+                    • **Funding:** `$fundingFormatted`
+                    • **Open Interest:** `$oiFormatted`
+                    • Χωρίς συμβουλή μόχλευσης. Αν λείπει αριθμός, λείπει.
                 """.trimIndent()
 
                 isAltcoins -> """
-                    **🚀 Altcoins, Ethereum, Solana & Altseason**
+                    **Altcoins στην οθόνη**
                     
-                    • **BTC Dominance:** `$btcDomFormatted` (Κρίσιμο σημείο καμπής: πτώση κάτω από 54%)
-                    • **Altcoin Season Index:** `$altIndex / 100` (${if (altIndex >= 75) "Ενεργό Altseason!" else "Κυριαρχία Bitcoin"})
+                    • **BTC Dominance:** `$btcDomFormatted`
+                    • **Altcoin Season Index:** ${if (altIndex > 0) "`$altIndex / 100`" else "`—`"}
                     • **Τιμές:** ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
-                    • **Συμπέρασμα:** Η πραγματική έκρηξη των Altcoins ξεκινά όταν το Bitcoin σταθεροποιείται σε νέα υψηλά και η κυριαρχία του (Dominance) αρχίζει να υποχωρεί σταθερά.
+                    • Δεν εφευρίσκω σημείο καμπής dominance ούτε προβλέπω altseason.
                 """.trimIndent()
 
                 isSentiment -> """
-                    **🎭 Δείκτης Fear & Greed & Ψυχολογία Αγοράς**
+                    **Fear & Greed στην οθόνη**
                     
-                    • **Μέτρηση:** `$fng / 100` (${snapshot.fearAndGreedSentiment})
-                    • **Ερμηνεία:** ${if (fng < 30) "Ακραίος Φόβος (Extreme Fear) - Ιστορικά εξαιρετική ζώνη συσσώρευσης." else if (fng > 75) "Ακραία Απληστία (Extreme Greed) - Αυξημένος κίνδυνος διόρθωσης." else "Ουδέτερη ισορροπία συναισθήματος."}
+                    • **Μέτρηση:** ${if (fng > 0) "`$fng / 100` (${snapshot.fearAndGreedSentiment})" else "`—`"}
+                    • Καταγραφή μόνο. Δεν είναι εντολή συσσώρευσης ή πώλησης.
                 """.trimIndent()
 
                 isPriceOrPrediction -> """
-                    **📈 Τάση Τιμών & Τεχνικά Επίπεδα**
+                    **Τιμές στην οθόνη, όχι στόχος**
                     
                     • **Bitcoin (BTC):** `$btcPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = true, decimals = 2, language = language)} 24h)
                     • **Ethereum (ETH):** `$ethPriceFormatted` | **Solana (SOL):** `$solPriceFormatted`
                     • **Κυριαρχία:** `$btcDomFormatted` | **Funding:** `$fundingFormatted`
-                    • **Σύνοψη:** Παρακολουθούμε τα επίπεδα στήριξης και τη ροή στα Spot ETFs για επιβεβαίωση της επόμενης ανοδικής κίνησης.
+                    • Δεν εφευρίσκω στήριξη, αντίσταση ή πρόβλεψη.
                 """.trimIndent()
 
                 else -> presenceReply(language)
@@ -598,19 +594,17 @@ class GeminiAiService(
             """.trimIndent()
 
             isSolana -> """
-                **🟣 Solana (SOL) Live Market Analysis**
+                **🟣 Solana (SOL) on screen**
                 
                 • **Spot Price:** `$solPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.sol24hChange, includeSign = true, decimals = 2, language = language)} 24h)
-                • **Network Activity:** Solana continues leading high-frequency decentralized trading and app liquidity.
-                • **Technical Setup:** Monitoring critical reaction levels and relative strength against the SOL/ETH pair.
+                • I only read this snapshot. I do not invent support, a target, or a forecast.
             """.trimIndent()
 
             isEthereum -> """
-                **🔷 Ethereum (ETH) Live Market Analysis**
+                **🔷 Ethereum (ETH) on screen**
                 
                 • **Spot Price:** `$ethPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.eth24hChange, includeSign = true, decimals = 2, language = language)} 24h)
-                • **Ecosystem Health:** Layer 2 rollups (Base, Arbitrum, Optimism) anchor active user volume.
-                • **Altseason Trigger:** A sustained breakout in ETH/BTC historically serves as the catalyst for broad altcoin liquidity expansion.
+                • I only read this snapshot. I do not invent support, a target, or a forecast.
             """.trimIndent()
 
             isGreetingOrLiveCheck -> presenceReply(language)
@@ -624,54 +618,52 @@ class GeminiAiService(
             """.trimIndent()
 
             isPeakOrAth -> """
-                **📊 Cycle Peak & ATH Projections**
+                **On-screen reading, not a peak forecast**
                 
-                • **Current BTC Price:** `$btcPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = true, decimals = 2, language = language)} 24h)
-                • **Historical Cycle Blueprint:**
-                  - Cycles in 2012, 2016, and 2020 reached macro peaks between **500 and 550 days post-Halving**.
-                  - Spot ETF institutional adoption in this cycle provides sustained structural demand.
-                • **Top Signals:** We monitor peak greed (>85), elevated funding rates (>0.03%), and distribution from long-term whale wallets.
+                • **BTC:** `$btcPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = true, decimals = 2, language = language)} 24h)
+                • **Days since the 4th halving:** `$halvingDays`
+                • I do not invent a peak day, an ATH target, or a sell signal.
             """.trimIndent()
 
             isHalvingOrCycle -> """
-                **⏳ 4-Year Halving Cycle Temporal Analytics**
+                **Cycle clock on screen**
                 
-                • **Days Elapsed Since 4th Halving (April 20, 2024):** `$halvingDays`
-                • **Spot Prices:** BTC `$btcPriceFormatted` | ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
-                • **Cycle Stage:** We are progressing through the post-halving structural expansion phase where historical supply constraints typically exert maximum upward price pressure.
+                • **Days since the 4th Halving (April 20, 2024):** `$halvingDays`
+                • **Spot prices:** BTC `$btcPriceFormatted` | ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
+                • Day count only. I do not forecast a 12–18 month window or a top.
             """.trimIndent()
 
             isFuturesOrLeverage -> """
-                **⚡ Derivatives, Funding Rate & Leverage Structure (${snapshot.activeFuturesSymbol})**
+                **Derivatives on screen (${snapshot.activeFuturesSymbol})**
                 
-                • **Funding Rate:** `$fundingFormatted` (${if (snapshot.fundingRatePct > 0.01) "Elevated Long premium" else "Neutral and healthy leverage"})
-                • **Open Interest:** `$oiFormatted` active perpetual contracts.
-                • **Risk Assessment:** ${if (snapshot.fundingRatePct > 0.012) "Elevated risk of Long Squeezes on sudden dips. Keep leverage disciplined." else "Orderly derivatives positioning with low systemic liquidation risk."}
+                • **Funding:** `$fundingFormatted`
+                • **Open Interest:** `$oiFormatted`
+                • No leverage advice. If a number is missing, it is missing.
             """.trimIndent()
 
             isAltcoins -> """
-                **🚀 Altcoins, ETH, SOL & Altseason Radar**
+                **Altcoins on screen**
                 
-                • **BTC Dominance:** `$btcDomFormatted` (Key rotation inflection trigger: sub-54%)
-                • **Altcoin Season Index:** `$altIndex / 100` (${if (altIndex >= 75) "Altseason Active!" else "Bitcoin Dominance Leading"})
-                • **Spot Prices:** ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
-                • **Key Takeaway:** Major altcoin runs historically ignite when Bitcoin establishes a consolidation range at highs and BTC Dominance decisively breaks downward.
+                • **BTC Dominance:** `$btcDomFormatted`
+                • **Altcoin Season Index:** ${if (altIndex > 0) "`$altIndex / 100`" else "`—`"}
+                • **Spot prices:** ETH `$ethPriceFormatted` | SOL `$solPriceFormatted`
+                • I do not invent a dominance trigger or an altseason call.
             """.trimIndent()
 
             isSentiment -> """
-                **🎭 Fear & Greed Index & Sentiment Dynamics**
+                **Fear & Greed on screen**
                 
-                • **Current Score:** `$fng / 100` (${snapshot.fearAndGreedSentiment})
-                • **Interpretation:** ${if (fng < 30) "Extreme Fear — Historically an optimal value accumulation window." else if (fng > 75) "Extreme Greed — Heightened caution for short-term corrective pullbacks." else "Balanced / Neutral sentiment."}
+                • **Score:** ${if (fng > 0) "`$fng / 100` (${snapshot.fearAndGreedSentiment})" else "`—`"}
+                • A reading only. Not an accumulate or sell order.
             """.trimIndent()
 
             isPriceOrPrediction -> """
-                **📈 Price Action & Trend Analysis**
+                **On-screen prices, not a target**
                 
                 • **Bitcoin (BTC):** `$btcPriceFormatted` (${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = true, decimals = 2, language = language)} 24h)
                 • **Ethereum (ETH):** `$ethPriceFormatted` | **Solana (SOL):** `$solPriceFormatted`
                 • **BTC Dominance:** `$btcDomFormatted` | **Funding:** `$fundingFormatted`
-                • **Summary:** Watch key support levels and ETF spot flows to gauge continuation momentum.
+                • I do not invent support, resistance, or a forecast.
             """.trimIndent()
 
             else -> presenceReply(language)

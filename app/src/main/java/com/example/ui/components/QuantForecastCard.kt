@@ -69,7 +69,7 @@ fun QuantForecastCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${model.asset} QUANT FORECAST",
+                        text = "${model.asset} TAPE READING",
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
@@ -133,26 +133,34 @@ fun QuantForecastCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = "Bull: ${model.probabilities.bullPct}%", color = TachyonMint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "Base: ${model.probabilities.basePct}%", color = NeonAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "Bear: ${model.probabilities.bearPct}%", color = SoftCrimson, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            if (model.hasLiveTape) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Bull: ${model.probabilities.bullPct}%", color = TachyonMint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Base: ${model.probabilities.basePct}%", color = NeonAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Bear: ${model.probabilities.bearPct}%", color = SoftCrimson, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                    ) {
+                        Box(modifier = Modifier.weight(model.probabilities.bullPct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(TachyonMint))
+                        Box(modifier = Modifier.weight(model.probabilities.basePct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(NeonAmber))
+                        Box(modifier = Modifier.weight(model.probabilities.bearPct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(SoftCrimson))
+                    }
                 }
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                ) {
-                    Box(modifier = Modifier.weight(model.probabilities.bullPct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(TachyonMint))
-                    Box(modifier = Modifier.weight(model.probabilities.basePct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(NeonAmber))
-                    Box(modifier = Modifier.weight(model.probabilities.bearPct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(SoftCrimson))
-                }
+            } else {
+                Text(
+                    text = "Bull / Base / Bear — until 30 daily closes arrive",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 11.sp
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -226,11 +234,11 @@ fun QuantForecastCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Key Support: $${String.format(java.util.Locale.US, "%.2f", model.keySupport)}", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                        Text(text = "Resistance: $${String.format(java.util.Locale.US, "%.2f", model.keyResistance)}", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                        Text(text = "Key Support: ${moneyOrDash(model.keySupport)}", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                        Text(text = "Resistance: ${moneyOrDash(model.keyResistance)}", color = Color(0xFF94A3B8), fontSize = 11.sp)
                     }
                     Text(
-                        text = "Invalidation: $${String.format(java.util.Locale.US, "%.2f", model.invalidationLevel)}",
+                        text = "Lowest print: ${moneyOrDash(model.invalidationLevel)}",
                         color = SoftCrimson,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -249,7 +257,7 @@ fun QuantForecastCard(
 
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Educational quantitative model output. Not financial advice. Past performance does not guarantee future results.",
+                text = "Live reading of daily closes, funding, and ETF when those feeds are up. Not a forecast and not a trade.",
                 color = Color(0xFF64748B),
                 fontSize = 9.sp,
                 lineHeight = 12.sp
@@ -267,14 +275,14 @@ fun QuantForecastCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "🔒 PRO FORECAST ENGINE",
+                        text = "🔒 PRO TAPE READING",
                         color = QuantumCyan,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Black
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Tap to unlock institutional multi-timeframe regime scores, probabilities & invalidation levels.",
+                        text = "Unlock the live RSI, EMA, ATR, funding and ETF reading from daily exchange closes.",
                         color = Color(0xFFCBD5E1),
                         fontSize = 12.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -291,3 +299,6 @@ fun QuantForecastCard(
         }
     }
 }
+
+private fun moneyOrDash(value: Double): String =
+    if (value > 0.0) "$${String.format(java.util.Locale.US, "%.2f", value)}" else "—"
