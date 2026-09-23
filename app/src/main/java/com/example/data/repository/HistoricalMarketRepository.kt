@@ -24,7 +24,12 @@ import kotlin.math.ln
  */
 object HistoricalMarketRepository {
 
-    data class Candle(val timeMs: Long, val close: Double)
+    data class Candle(
+        val timeMs: Long,
+        val close: Double,
+        val high: Double = 0.0,
+        val low: Double = 0.0
+    )
 
     private val cache = ConcurrentHashMap<String, Pair<Long, CycleFractalData>>()
     private val candleCache = ConcurrentHashMap<String, Pair<Long, List<Candle>>>()
@@ -62,6 +67,23 @@ object HistoricalMarketRepository {
         if (days <= 0) return@withContext all
         val cutoff = now - days.toLong() * DAY_MS
         all.filter { it.timeMs >= cutoff }.ifEmpty { all.takeLast(days.coerceAtLeast(2)) }
+    }
+
+    /**
+     * Daily OHLC for models that need real highs/lows (QuantForecast ATR).
+     * Prefers Binance klines even for BTC so high/low are exchange prints, not close-only.
+     */
+    suspend fun loadRecentDailyOhlc(symbol: String, days: Int): List<Candle>? = withContext(Dispatchers.IO) {
+        val binance = fetchBinanceDaily(symbol)
+        val source = if (!binance.isNullOrEmpty() && binance.count { it.high > 0.0 && it.low > 0.0 } >= 30) {
+            binance
+        } else {
+            loadRecentDaily(symbol, days) ?: return@withContext null
+        }
+        if (days <= 0) return@withContext source
+        val now = System.currentTimeMillis()
+        val cutoff = now - days.toLong() * DAY_MS
+        source.filter { it.timeMs >= cutoff }.ifEmpty { source.takeLast(days.coerceAtLeast(2)) }
     }
 
     private fun fetchDailyHistory(symbol: String): List<Candle>? {
@@ -161,8 +183,19 @@ object HistoricalMarketRepository {
                 for (i in 0 until arr.length()) {
                     val row = arr.optJSONArray(i) ?: continue
                     val time = row.optLong(0)
+                    val high = row.optString(2).toDoubleOrNull() ?: 0.0
+                    val low = row.optString(3).toDoubleOrNull() ?: 0.0
                     val close = row.optString(4).toDoubleOrNull() ?: continue
-                    if (time > 0L && close > 0.0) add(Candle(time, close / divisor))
+                    if (time > 0L && close > 0.0) {
+                        add(
+                            Candle(
+                                timeMs = time,
+                                close = close / divisor,
+                                high = if (high > 0.0) high / divisor else 0.0,
+                                low = if (low > 0.0) low / divisor else 0.0
+                            )
+                        )
+                    }
                 }
             }
         } catch (_: Exception) {

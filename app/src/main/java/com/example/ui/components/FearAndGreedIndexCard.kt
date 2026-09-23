@@ -61,14 +61,16 @@ fun FearAndGreedIndexCard(
     val isGreek = strings.language.code == "el"
 
     val sentimentColor = when {
-        fearGreedData.score >= 75 -> SoftEmerald // Extreme Greed
-        fearGreedData.score >= 55 -> Color(0xFF84CC16) // Greed
-        fearGreedData.score >= 45 -> PhotonGoldBright // Neutral
-        fearGreedData.score >= 25 -> PhotonGold // Fear
-        else -> SoftCrimson // Extreme Fear
+        !fearGreedData.isLive -> Color(0xFF64748B)
+        fearGreedData.score >= 75 -> SoftEmerald
+        fearGreedData.score >= 55 -> Color(0xFF84CC16)
+        fearGreedData.score >= 45 -> PhotonGoldBright
+        fearGreedData.score >= 25 -> PhotonGold
+        else -> SoftCrimson
     }
 
     val sentimentLabel = when {
+        !fearGreedData.isLive -> "—"
         fearGreedData.score >= 75 -> strings.extremeGreedLabel
         fearGreedData.score >= 55 -> strings.greedLabel
         fearGreedData.score >= 45 -> strings.neutralLabel
@@ -82,7 +84,7 @@ fun FearAndGreedIndexCard(
             .holographicCard(
                 shape = RoundedCornerShape(24.dp),
                 glowColor = sentimentColor,
-                pulseColor = if (fearGreedData.score >= 50) QuantumCyan else SoftCrimson
+                pulseColor = if (!fearGreedData.isLive) Color(0xFF64748B) else if (fearGreedData.score >= 50) QuantumCyan else SoftCrimson
             )
             .padding(18.dp)
             .testTag("fear_greed_index_card")
@@ -131,9 +133,10 @@ fun FearAndGreedIndexCard(
 
         // Futuristic Holographic Speedometer Radial Gauge
         HolographicRadialGauge(
-            value = fearGreedData.score.toFloat(),
+            value = if (fearGreedData.isLive) fearGreedData.score.toFloat() else 0f,
             height = 155.dp,
             statusLabel = sentimentLabel,
+            valueLabel = if (fearGreedData.isLive) fearGreedData.score.toString() else "—",
             startLabel = "0 (FEAR)",
             endLabel = "100 (GREED)",
             gaugeColors = listOf(
@@ -201,7 +204,9 @@ private fun HistoricalPill(
     modifier: Modifier = Modifier,
     palette: com.example.ui.theme.AppThemePalette
 ) {
+    val hasScore = score > 0
     val pillColor = when {
+        !hasScore -> Color(0xFF64748B)
         score >= 75 -> Color(0xFF00FF88)
         score >= 55 -> Color(0xFF84CC16)
         score >= 45 -> Color(0xFFF59E0B)
@@ -226,7 +231,7 @@ private fun HistoricalPill(
             )
             Spacer(modifier = Modifier.height(3.dp))
             Text(
-                text = "$score",
+                text = if (hasScore) "$score" else "—",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Black,
                 color = pillColor

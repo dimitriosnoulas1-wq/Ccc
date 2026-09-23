@@ -106,9 +106,14 @@ object MarketIntelligenceEngine {
         val oiObserved: Double? = agg?.openInterestUsd?.takeIf { it > 0.0 }
             ?: openInterest?.openInterestUsd?.takeIf { openInterest.isAvailable && it > 0.0 }
         val oiUsd: Double = oiObserved ?: 0.0
-        val bidQty = bookTicker?.bidQty ?: 1.0
-        val askQty = bookTicker?.askQty ?: 1.0
-        val bidRatio = (bidQty / (bidQty + askQty)).coerceIn(0.05, 0.95)
+        val liveBook = bookTicker?.takeIf { it.fromExchange }
+        val bidQty = liveBook?.bidQty
+        val askQty = liveBook?.askQty
+        val bidRatio = if (bidQty != null && askQty != null && bidQty + askQty > 0.0) {
+            (bidQty / (bidQty + askQty)).coerceIn(0.05, 0.95)
+        } else {
+            null
+        }
 
         val buyTrades = recentTrades.count { !it.isBuyerMaker }
         val sellTrades = recentTrades.count { it.isBuyerMaker }
@@ -128,19 +133,22 @@ object MarketIntelligenceEngine {
         val hasLiquidationPrints = symbolLiqs.isNotEmpty() ||
             ((agg?.longLiqUsd ?: 0.0) + (agg?.shortLiqUsd ?: 0.0)) > 0.0
 
-        val fearGreed = macroSentiment.fearAndGreedValue ?: 55
+        val fearGreed = macroSentiment.fearAndGreedValue
 
-        // Determine Market Drivers
-        // 1. Spot Demand
+        // Determine Market Drivers from live prints only
         val spotImpact = when {
-            bidRatio > 0.62 || buyRatio > 0.62 -> DriverImpact.HIGH
-            bidRatio < 0.38 || buyRatio < 0.38 -> DriverImpact.LOW
+            bidRatio == null && buyTrades + sellTrades == 0 && takerRatio == null -> DriverImpact.LOW
+            (bidRatio != null && bidRatio > 0.62) || buyRatio > 0.62 -> DriverImpact.HIGH
+            (bidRatio != null && bidRatio < 0.38) || buyRatio < 0.38 -> DriverImpact.LOW
             else -> DriverImpact.MEDIUM
         }
-        val spotDetail = when (spotImpact) {
-            DriverImpact.HIGH -> "Bids absorbing ask liquidity (${(bidRatio * 100).toInt()}% depth)"
-            DriverImpact.LOW -> "Ask inventory dominating order book"
-            else -> "Balanced spot book participation"
+        val spotDetail = when {
+            bidRatio == null && buyTrades + sellTrades == 0 && takerRatio == null ->
+                "Waiting for live book or prints"
+            bidRatio != null ->
+                "Book bid share ${(bidRatio * 100).toInt()}%"
+            else ->
+                "Tape buy share ${(buyRatio * 100).toInt()}%"
         }
 
         // 2. Open Interest
@@ -164,9 +172,10 @@ object MarketIntelligenceEngine {
             else -> DriverImpact.LOW
         }
         val fundingDetail = when {
-            fundingRate > 0.00015 -> "Longs paying premium (+${"%.4f".format(Locale.US, fundingRate * 100)}%)"
-            fundingRate < -0.00005 -> "Shorts paying longs (${"%.4f".format(Locale.US, fundingRate * 100)}%)"
-            else -> "Neutral baseline equilibrium (+${"%.4f".format(Locale.US, fundingRate * 100)}%)"
+            fundingObserved == null -> "Waiting for live funding"
+            fundingRate > 0.00015 -> "Longs paying ${"%.4f".format(Locale.US, fundingRate * 100)}%"
+            fundingRate < -0.00005 -> "Shorts paying ${"%.4f".format(Locale.US, fundingRate * 100)}%"
+            else -> "Funding ${"%.4f".format(Locale.US, fundingRate * 100)}%"
         }
 
         // 4. Liquidations
@@ -176,119 +185,80 @@ object MarketIntelligenceEngine {
             else -> DriverImpact.LOW
         }
         val liqDetail = when {
-            shortLiqs > longLiqs && shortLiqs > 10_000 -> "Short stops swept into market buys"
-            longLiqs > shortLiqs && longLiqs > 10_000 -> "Long margin calls triggering forced sells"
-            else -> "No major cascading liquidations detected"
+            !hasLiquidationPrints -> "Waiting for live liquidation prints"
+            else -> "Long prints ${compactUsd(longLiqs)} · Short prints ${compactUsd(shortLiqs)}"
         }
 
-        // 5. Macro
         val macroImpact = when {
+            fearGreed == null -> DriverImpact.LOW
             fearGreed >= 70 || fearGreed <= 30 -> DriverImpact.HIGH
             else -> DriverImpact.LOW
         }
-        val macroDetail = "F&G Index at $fearGreed (${macroSentiment.fearAndGreedClassification ?: "Neutral"})"
+        val macroDetail = if (fearGreed != null) {
+            "F&G $fearGreed (${macroSentiment.fearAndGreedClassification ?: "—"})"
+        } else {
+            "Fear & Greed offline"
+        }
 
         val drivers = listOf(
-            MarketDriver("Spot Demand", spotImpact, spotDetail, isBullish = spotImpact == DriverImpact.HIGH),
-            MarketDriver("Open Interest", oiImpact, oiDetail, isBullish = change24h >= 0),
-            MarketDriver("Funding Skew", fundingImpact, fundingDetail, isBullish = fundingRate >= 0),
-            MarketDriver("Liquidations", liqImpact, liqDetail, isBullish = shortLiqs >= longLiqs),
-            MarketDriver("Macro Regime", macroImpact, macroDetail, isBullish = fearGreed >= 50)
+            MarketDriver("Spot book / prints", spotImpact, spotDetail, isBullish = null),
+            MarketDriver("Open Interest", oiImpact, oiDetail, isBullish = null),
+            MarketDriver("Funding", fundingImpact, fundingDetail, isBullish = null),
+            MarketDriver("Liquidations", liqImpact, liqDetail, isBullish = null),
+            MarketDriver("Fear & Greed", macroImpact, macroDetail, isBullish = null)
         )
 
-        // Regime Classification
-        val regime: MarketRegimeState
-        val interpretationEn: String
-        val interpretationGr: String
-        val cascadeRiskEn: String
-        val cascadeRiskGr: String
-        val invalidationEn: String
-        val invalidationGr: String
-        val confidence: Int
-
-        when {
-            change24h > 1.2 && fundingRate > 0.00012 && oiImpact == DriverImpact.HIGH -> {
-                regime = MarketRegimeState.LEVERAGE_EXPANSION
-                confidence = 82
-                interpretationEn = "Long positioning is increasing aggressively alongside derivatives leverage. Buy orders are leading, but positions are becoming crowded."
-                interpretationGr = "Οι θέσεις Long αυξάνονται επιθετικά παράλληλα με τη μόχλευση παραγώγων. Οι αγορές κυριαρχούν, αλλά η αγορά γίνεται υπερφορτωμένη."
-                cascadeRiskEn = "Above-average long cascade risk if spot bid absorption falters at resistance."
-                cascadeRiskGr = "Αυξημένος κίνδυνος εκκαθάρισης Long εάν η απορρόφηση των αγοραστών εξασθενήσει."
-                val invPrice = "%.2f".format(Locale.US, price * 0.982)
-                invalidationEn = "Slipping below $$invPrice on contracting Open Interest."
-                invalidationGr = "Πτώση κάτω από $$invPrice με συρρίκνωση του Ανοικτού Ενδιαφέροντος (OI)."
-            }
-            change24h > 0.5 && fundingRate <= 0.00012 && spotImpact == DriverImpact.HIGH -> {
-                regime = MarketRegimeState.SPOT_ACCUMULATION
-                confidence = 86
-                interpretationEn = "Spot buyers absorbing available liquidity without over-leveraging perpetual futures. Organic accumulation signature."
-                interpretationGr = "Οι αγοραστές spot απορροφούν τη διαθέσιμη ρευστότητα χωρίς υπερβολική μόχλευση. Οργανική συσσώρευση."
-                cascadeRiskEn = "Low systemic leverage risk; shallow pullbacks expected to find strong bid support."
-                cascadeRiskGr = "Χαμηλός συστημικός κίνδυνος μόχλευσης. Οι διορθώσεις αναμένεται να βρουν ισχυρή στήριξη."
-                val invPrice = "%.2f".format(Locale.US, price * 0.975)
-                invalidationEn = "Loss of $$invPrice with heavy spot selling walls."
-                invalidationGr = "Απώλεια των $$invPrice με έντονους τοίχους πώλησης spot."
-            }
-            change24h > 1.5 && shortLiqs > 25_000 -> {
-                regime = MarketRegimeState.SHORT_SQUEEZE
-                confidence = 79
-                interpretationEn = "Forced short liquidation orders accelerating upside momentum into overhead resting liquidity."
-                interpretationGr = "Αναγκαστικές ρευστοποιήσεις Short επιταχύνουν την ανοδική ορμή προς τη ρευστότητα κορυφής."
-                cascadeRiskEn = "Exhaustion risk once trapped shorts are cleared; watch for local blow-off wick."
-                cascadeRiskGr = "Κίνδυνος εξάντλησης μόλις εκκαθαριστούν τα παγιδευμένα shorts. Προσοχή σε τοπικό blow-off wick."
-                val invPrice = "%.2f".format(Locale.US, price * 0.985)
-                invalidationEn = "Rapid volume fade and rejection below $$invPrice."
-                invalidationGr = "Ταχεία υποχώρηση όγκου και απόρριψη κάτω από $$invPrice."
-            }
-            change24h < -1.2 && longLiqs > 25_000 -> {
-                regime = MarketRegimeState.LONG_CASCADE
-                confidence = 84
-                interpretationEn = "Long margin positions getting flushed. Cascading market sell orders triggering localized stop hunts."
-                interpretationGr = "Εκκαθάριση θέσεων Long με μόχλευση. Αλλεπάλληλες εντολές market sell προκαλούν τοπικό stop hunt."
-                cascadeRiskEn = "High downside volatility until major liquidation cluster is fully absorbed."
-                cascadeRiskGr = "Υψηλή μεταβλητότητα πτώσης μέχρι να απορροφηθεί πλήρως το μεγάλο pool ρευστοποιήσεων."
-                val invPrice = "%.2f".format(Locale.US, price * 1.018)
-                invalidationEn = "Reclaiming $$invPrice with aggressive spot bid book replenishment."
-                invalidationGr = "Ανάκτηση των $$invPrice με επιθετική επαναφόρτωση του βιβλίου εντολών αγοράς."
-            }
-            Math.abs(change24h) < 0.8 && (bookTicker?.spreadPercent ?: 0.0) < 0.0005 -> {
-                regime = MarketRegimeState.RANGE_COMPRESSION
-                confidence = 74
-                interpretationEn = "Volatility compressing within tight boundaries. Liquidity accumulating on both sides of the book."
-                interpretationGr = "Συμπίεση μεταβλητότητας σε στενό εύρος. Ρευστότητα συσσωρεύεται και στις δύο πλευρές του βιβλίου."
-                cascadeRiskEn = "Pending expansion spike once the local range boundaries are swept."
-                cascadeRiskGr = "Επικείμενη εκρηκτική εκτόνωση μόλις εκκαθαριστούν τα τοπικά άκρα του εύρους."
-                val highR = "%.2f".format(Locale.US, price * 1.012)
-                val lowR = "%.2f".format(Locale.US, price * 0.988)
-                invalidationEn = "Decisive breakout and candle close outside $$lowR - $$highR."
-                invalidationGr = "Αποφασιστική διάσπαση και κλείσιμο έξω από $$lowR - $$highR."
-            }
-            else -> {
-                regime = MarketRegimeState.CHOPPY_NEUTRAL
-                confidence = 70
-                interpretationEn = "Mixed signals across spot flow and perpetual funding. Market absorbing two-way order flow."
-                interpretationGr = "Ανάμεικτα σήματα σε spot και funding perpetuals. Η αγορά απορροφά αμφίδρομη ροή εντολών."
-                cascadeRiskEn = "Moderate chop risk; false breakout wicks common in this regime."
-                cascadeRiskGr = "Μέτριος κίνδυνος whipsaw. Συχνά ψευδή ξεσπάσματα σε αυτό το καθεστώς."
-                val invPrice = "%.2f".format(Locale.US, price * 0.980)
-                invalidationEn = "Sustained directional impulse beyond 1.5% from $$invPrice."
-                invalidationGr = "Συνεχής κατευθυντήρια κίνηση άνω του 1.5% από τα $$invPrice."
-            }
+        val regime = when {
+            changeObserved != null && changeObserved > 1.2 && fundingObserved != null && fundingObserved > 0.00012 && oiImpact == DriverImpact.HIGH ->
+                MarketRegimeState.LEVERAGE_EXPANSION
+            changeObserved != null && changeObserved > 0.5 && (fundingObserved == null || fundingObserved <= 0.00012) && spotImpact == DriverImpact.HIGH ->
+                MarketRegimeState.SPOT_ACCUMULATION
+            changeObserved != null && changeObserved > 1.5 && shortLiqs > 25_000 ->
+                MarketRegimeState.SHORT_SQUEEZE
+            changeObserved != null && changeObserved < -1.2 && longLiqs > 25_000 ->
+                MarketRegimeState.LONG_CASCADE
+            changeObserved != null && Math.abs(changeObserved) < 0.8 &&
+                (liveBook?.spreadPercent?.let { it < 0.0005 } == true) ->
+                MarketRegimeState.RANGE_COMPRESSION
+            else -> MarketRegimeState.CHOPPY_NEUTRAL
         }
+
+        val interpretationEn = tapeFacts(
+            greek = false,
+            price = price,
+            changeObserved = changeObserved,
+            fundingObserved = fundingObserved,
+            oiObserved = oiObserved,
+            longLiqs = longLiqs,
+            shortLiqs = shortLiqs,
+            hasLiquidationPrints = hasLiquidationPrints
+        )
+        val interpretationGr = tapeFacts(
+            greek = true,
+            price = price,
+            changeObserved = changeObserved,
+            fundingObserved = fundingObserved,
+            oiObserved = oiObserved,
+            longLiqs = longLiqs,
+            shortLiqs = shortLiqs,
+            hasLiquidationPrints = hasLiquidationPrints
+        )
+        val cascadeRiskEn = if (hasLiquidationPrints) {
+            "Long prints ${compactUsd(longLiqs)} vs short prints ${compactUsd(shortLiqs)}."
+        } else {
+            "Waiting for live liquidation prints."
+        }
+        val cascadeRiskGr = if (hasLiquidationPrints) {
+            "Εκκαθαρίσεις Long ${compactUsd(longLiqs)} έναντι Short ${compactUsd(shortLiqs)}."
+        } else {
+            "Αναμονή για ζωντανές εκκαθαρίσεις."
+        }
+        val invalidationEn = "No invented invalidation. Tape only."
+        val invalidationGr = "Χωρίς εφευρεμένο επίπεδο ακύρωσης. Μόνο η ταινία."
 
         val score = derivatives?.score?.value
-        val scoreNoteEn = when {
-            score == null -> ""
-            score >= 40.0 -> " Aggregated perps flow is bid-side constructive."
-            score <= -40.0 -> " Aggregated perps flow shows crowded longs."
-            else -> ""
-        }
-        val scoreNoteGr = when {
-            score == null -> ""
-            score >= 40.0 -> " Η συγκεντρωτική ροή perpetuals είναι εποικοδομητική στην πλευρά των αγορών."
-            score <= -40.0 -> " Η συγκεντρωτική ροή perpetuals δείχνει συνωστισμό Long."
-            else -> ""
-        }
+        val scoreNoteEn = if (score != null) " Aggregated perps score ${"%.0f".format(Locale.US, score)}." else ""
+        val scoreNoteGr = if (score != null) " Συγκεντρωτικό σκορ perpetuals ${"%.0f".format(Locale.US, score)}." else ""
 
         return MarketIntelligenceReport(
             symbol = symbol,
@@ -298,7 +268,7 @@ object MarketIntelligenceEngine {
                 change24h = change24h,
                 fundingRate = fundingObserved,
                 openInterestUsd = oiObserved,
-                bidRatio = if (bookTicker?.fromExchange == true) bidRatio else null,
+                bidRatio = bidRatio,
                 buyRatio = if (recentTrades.isNotEmpty() || takerRatio != null) buyRatio else null,
                 shortLiqsUsd = shortLiqs,
                 longLiqsUsd = longLiqs,
@@ -323,6 +293,57 @@ object MarketIntelligenceEngine {
             derivativesAsOfMs = derivatives?.asOfMs ?: 0L,
             sourceLabel = derivatives?.sourceLabel.orEmpty()
         )
+    }
+
+    private fun compactUsd(value: Double): String {
+        if (value <= 0.0) return "—"
+        return if (value >= 1_000_000.0) {
+            "$" + "%.1f".format(Locale.US, value / 1_000_000.0) + "M"
+        } else if (value >= 1_000.0) {
+            "$" + "%.1f".format(Locale.US, value / 1_000.0) + "K"
+        } else {
+            "$" + "%.0f".format(Locale.US, value)
+        }
+    }
+
+    private fun tapeFacts(
+        greek: Boolean,
+        price: Double,
+        changeObserved: Double?,
+        fundingObserved: Double?,
+        oiObserved: Double?,
+        longLiqs: Double,
+        shortLiqs: Double,
+        hasLiquidationPrints: Boolean
+    ): String {
+        val parts = mutableListOf<String>()
+        if (price > 0.0) {
+            parts += if (greek) "Τελευταία $${"%.2f".format(Locale.US, price)}" else "Last $${"%.2f".format(Locale.US, price)}"
+        }
+        if (changeObserved != null) {
+            parts += "24h ${"%+.2f".format(Locale.US, changeObserved)}%"
+        }
+        if (fundingObserved != null) {
+            parts += if (greek) {
+                "Funding ${"%.4f".format(Locale.US, fundingObserved * 100)}%"
+            } else {
+                "Funding ${"%.4f".format(Locale.US, fundingObserved * 100)}%"
+            }
+        }
+        if (oiObserved != null) {
+            parts += if (greek) "OI ${compactUsd(oiObserved)}" else "OI ${compactUsd(oiObserved)}"
+        }
+        if (hasLiquidationPrints) {
+            parts += if (greek) {
+                "Long ${compactUsd(longLiqs)} · Short ${compactUsd(shortLiqs)}"
+            } else {
+                "Long liqs ${compactUsd(longLiqs)} · Short liqs ${compactUsd(shortLiqs)}"
+            }
+        }
+        if (parts.isEmpty()) {
+            return if (greek) "Αναμονή για ζωντανή ταινία παραγώγων." else "Waiting for the live derivatives tape."
+        }
+        return parts.joinToString(". ") + "."
     }
 
     /**

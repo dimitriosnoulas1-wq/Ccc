@@ -661,10 +661,22 @@ fun CryptoCoinRow(
             }
         }
 
-        // Center / Right: Neon Laser Sparkline with Glowing Comet Head
-        val sparkPoints = remember(coin.sparkline) {
-            if (coin.sparkline.isNotEmpty()) coin.sparkline else listOf(1.0, 1.05, 1.02, 1.08, 1.06, 1.1)
-        }
+        // Center / Right: live sparkline only. Empty tape stays a dash — never a fake uptrend.
+        val sparkPoints = remember(coin.sparkline) { coin.sparkline }
+        if (sparkPoints.size < 2) {
+            Box(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "—",
+                    fontSize = 12.sp,
+                    color = palette.textSecondary
+                )
+            }
+        } else {
         Canvas(
             modifier = Modifier
                 .width(52.dp)
@@ -746,6 +758,7 @@ fun CryptoCoinRow(
                 radius = 1.3.dp.toPx(),
                 center = Offset(lastX, lastY)
             )
+        }
         }
 
         Spacer(modifier = Modifier.width(10.dp))

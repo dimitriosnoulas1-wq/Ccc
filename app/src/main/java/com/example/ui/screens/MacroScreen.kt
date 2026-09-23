@@ -205,11 +205,17 @@ fun MacroScreen(
         else -> NeonCyan
     }
 
-    val resolvedFgScore = if (fearAndGreedScore > 0) fearAndGreedScore else 55
-    val resolvedFgSent = if (!fearAndGreedClassification.isNullOrBlank()) fearAndGreedClassification else "Greed"
+    val isFgLive = fearAndGreedScore > 0
+    val resolvedFgScore = if (isFgLive) fearAndGreedScore else 0
+    val resolvedFgSent = if (isFgLive && !fearAndGreedClassification.isNullOrBlank()) {
+        fearAndGreedClassification
+    } else {
+        "—"
+    }
 
-    val fearGreedData = remember(resolvedFgScore, resolvedFgSent, macroSentiment) {
+    val fearGreedData = remember(resolvedFgScore, resolvedFgSent, isFgLive, macroSentiment) {
         val sentimentEl = when {
+            !isFgLive -> "—"
             resolvedFgScore < 25 -> "Ακραίος Φόβος"
             resolvedFgScore < 45 -> "Φόβος"
             resolvedFgScore < 55 -> "Ουδέτερο"
@@ -222,7 +228,8 @@ fun MacroScreen(
             sentimentEl = sentimentEl,
             yesterdayScore = macroSentiment.fearAndGreedYesterday ?: 0,
             lastWeekScore = macroSentiment.fearAndGreedLastWeek ?: 0,
-            lastMonthScore = macroSentiment.fearAndGreedLastMonth ?: 0
+            lastMonthScore = macroSentiment.fearAndGreedLastMonth ?: 0,
+            isLive = isFgLive
         )
     }
 

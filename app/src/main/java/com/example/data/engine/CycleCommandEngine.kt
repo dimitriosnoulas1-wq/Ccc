@@ -69,27 +69,42 @@ object CycleCommandEngine {
         }
 
         val rainbowBand = when {
-            btcPrice <= 0.0 -> "Waiting for price"
-            btcPrice < 48000 -> "Fire Sale / Accumulate Floor"
-            btcPrice < 68000 -> "Accumulate / Support Base"
-            btcPrice < 90000 -> "HODL / Steady Growth Corridor"
-            btcPrice < 120000 -> "Is this a bubble?"
-            else -> "Maximum Bubble Territory"
+            btcPrice <= 0.0 -> "Waiting for live price"
+            btcPrice < 48000 -> "Historically deep floor band"
+            btcPrice < 68000 -> "Historically lower band"
+            btcPrice < 90000 -> "Historically mid band"
+            btcPrice < 120000 -> "Historically upper band"
+            else -> "Historically top band"
         }
 
-        val summaryEn = when (regime) {
-            MarketRegime.ACCUMULATION -> "Deep Value Zone. Long-term risk/reward highly asymmetric in favor of spot accumulation."
-            MarketRegime.CYCLE_EXPANSION -> "Orderly Bull Expansion. Stablecoin & ETF liquidity supportive. Spot holding favored over high leverage."
-            MarketRegime.LEVERAGE_DISTRIBUTION -> "Derivatives Overheating. Elevated funding and open interest create sharp long squeeze vulnerability."
-            MarketRegime.CYCLE_PEAK_EXIT -> "Extreme Euphoria Zone. Multiple top indicators flagging. Gradual scale-out take profit strongly recommended."
+        val dayLine = "Day $halvingDays of $totalDays since the 4th halving."
+        val etfLine = if (etfFlowData.isLive) {
+            " ETF 5d net ${"%.1f".format(etf5d)}M."
+        } else {
+            " ETF flow offline."
         }
-
-        val summaryEl = when (regime) {
-            MarketRegime.ACCUMULATION -> "Ζώνη Βαθιάς Αξίας. Ο μακροπρόθεσμος λόγος απόδοσης/ρίσκου ευνοεί έντονα τη συσσώρευση Spot."
-            MarketRegime.CYCLE_EXPANSION -> "Ομαλή Επέκταση Ταύρων. Η ρευστότητα από Stablecoins & ETFs παραμένει θετική. Συστήνεται διακράτηση Spot."
-            MarketRegime.LEVERAGE_DISTRIBUTION -> "Υπερθέρμανση Παραγώγων. Το αυξημένο funding δημιουργεί υψηλό κίνδυνο απότομου Long Squeeze."
-            MarketRegime.CYCLE_PEAK_EXIT -> "Ζώνη Ακραίας Ευφορίας. Πολλοί δείκτες κορυφής ενεργοποιούνται. Συστήνεται κλιμακωτή κατοχύρωση κερδών."
+        val stablesLine = if (liquidityData.isLive) {
+            " Stables ${"%.1f".format(stablecoinTotalBillion)}B, 7d ${"%.1f".format(stablecoinChangeBillion)}B."
+        } else {
+            " Stables offline."
         }
+        val fgLine = if (fearGreedScore != null) {
+            " F&G $fearGreedScore."
+        } else {
+            " F&G offline."
+        }
+        val fundingLine = if (fundingIsLive) {
+            " Funding ${"%.4f".format(fundingRate)}%."
+        } else {
+            " Funding offline."
+        }
+        val summaryEn = "$dayLine$etfLine$stablesLine$fgLine$fundingLine No trade call."
+        val summaryEl = "Ημέρα $halvingDays από $totalDays μετά το 4ο halving." +
+            (if (etfFlowData.isLive) " ETF 5ημ. ${"%.1f".format(etf5d)} εκ." else " ETF εκτός σύνδεσης.") +
+            (if (liquidityData.isLive) " Stables ${"%.1f".format(stablecoinTotalBillion)} δισ., 7ημ. ${"%.1f".format(stablecoinChangeBillion)} δισ." else " Stables εκτός σύνδεσης.") +
+            (if (fearGreedScore != null) " F&G $fearGreedScore." else " F&G εκτός σύνδεσης.") +
+            (if (fundingIsLive) " Funding ${"%.4f".format(fundingRate)}%." else " Funding εκτός σύνδεσης.") +
+            " Χωρίς εντολή συναλλαγής."
 
         return CycleCommandState(
             regime = regime,

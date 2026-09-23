@@ -189,27 +189,29 @@ class CryptoViewModel @JvmOverloads constructor(
         initialValue = CycleCommandState()
     )
 
-    // Quantitative Forecast Engine for BTC
+    private val _btcDailyOhlc = MutableStateFlow<List<com.example.data.repository.HistoricalMarketRepository.Candle>>(emptyList())
+
+    // Quantitative reading of live BTC daily OHLC + funding + ETF
     val btcForecast: StateFlow<ForecastCardModel> = combine(
         centralizedPriceState,
         futuresMarkFunding,
         etfFlowData,
-        allCoins
-    ) { priceState, funding, etf, coins ->
+        _btcDailyOhlc
+    ) { priceState, funding, etf, candles ->
         val currentPrice = if (priceState.btcPerpPrice > 0.0) priceState.btcPerpPrice else priceState.btcSpotPrice
-        val liveSpark = coins.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
-            ?.takeIf { it.priceUpdatedAtMs > 0L && it.sparkline.size >= 30 }
-            ?.sparkline
-            .orEmpty()
-        val fundingRate = funding?.fundingRate ?: 0.0
-        val etfInflows = if (etf.isLive) etf.oneDayNetFlowMillionUsd * 1_000_000.0 else 0.0
+        val closes = candles.map { it.close }
+        val alignedOhlc = candles.size >= 30 && candles.all { it.high > 0.0 && it.low > 0.0 }
+        val highs = if (alignedOhlc) candles.map { it.high } else emptyList()
+        val lows = if (alignedOhlc) candles.map { it.low } else emptyList()
+        val fundingRate = funding?.takeIf { it.fromExchange }?.fundingRate
+        val etfInflows = if (etf.isLive) etf.oneDayNetFlowMillionUsd * 1_000_000.0 else null
 
         QuantForecastEngine.computeForecast(
             symbol = "BTC",
             currentPrice = currentPrice,
-            historicalPrices = liveSpark,
-            highs = liveSpark.map { it * 1.008 },
-            lows = liveSpark.map { it * 0.992 },
+            historicalPrices = closes,
+            highs = highs,
+            lows = lows,
             fundingRate = fundingRate,
             etfInflowsUsd = etfInflows
         )
@@ -670,6 +672,7 @@ class CryptoViewModel @JvmOverloads constructor(
             launch(Dispatchers.IO) { futuresRepository.refresh() }
             launch(Dispatchers.IO) { refreshDerivativesAndMacro() }
             launch(Dispatchers.IO) { refreshCycleHome() }
+            launch(Dispatchers.IO) { refreshBtcForecastTape() }
 
             while (isActive) {
                 delay(12000)
@@ -720,6 +723,13 @@ class CryptoViewModel @JvmOverloads constructor(
         _cycleDayAlertEnabled.value = enabled
         if (enabled) {
             viewModelScope.launch(Dispatchers.IO) { refreshCycleHome() }
+        }
+    }
+
+    private suspend fun refreshBtcForecastTape() {
+        val candles = com.example.data.repository.HistoricalMarketRepository.loadRecentDailyOhlc("BTC", 90)
+        if (!candles.isNullOrEmpty()) {
+            _btcDailyOhlc.value = candles
         }
     }
 
@@ -870,6 +880,13 @@ class CryptoViewModel @JvmOverloads constructor(
                             android.util.Log.w("CryptoViewModel", "Cycle home refresh warning", t)
                         }
                     }
+                    val tapeJob = launch(Dispatchers.IO) {
+                        try {
+                            refreshBtcForecastTape()
+                        } catch (t: Throwable) {
+                            android.util.Log.w("CryptoViewModel", "BTC tape refresh warning", t)
+                        }
+                    }
                     val derivJob = launch(Dispatchers.IO) {
                         try {
                             refreshDerivativesAndMacro()
@@ -877,7 +894,7 @@ class CryptoViewModel @JvmOverloads constructor(
                             android.util.Log.w("CryptoViewModel", "Derivatives refresh warning", t)
                         }
                     }
-                    joinAll(futuresJob, pricesJob, etfJob, liqJob, cycleJob, derivJob)
+                    joinAll(futuresJob, pricesJob, etfJob, liqJob, cycleJob, tapeJob, derivJob)
                 }
             } catch (t: Throwable) {
                 android.util.Log.w("CryptoViewModel", "Refresh failed", t)

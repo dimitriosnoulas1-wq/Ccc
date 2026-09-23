@@ -5,11 +5,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 enum class MarketRegime(val label: String, val isBullish: Boolean) {
-    STRONG_BULL("STRONG BULL ACCUMULATION", true),
-    BULL("BULL EXPANSION", true),
-    NEUTRAL("NEUTRAL CONSOLIDATION", true),
-    BEAR("BEAR COMPRESSION", false),
-    STRONG_BEAR("STRONG BEAR DISTRIBUTION", false),
+    STRONG_BULL("STRONG UPTREND READ", true),
+    BULL("UPTREND READ", true),
+    NEUTRAL("RANGE READ", true),
+    BEAR("DOWNTREND READ", false),
+    STRONG_BEAR("STRONG DOWNTREND READ", false),
     INSUFFICIENT_DATA("INSUFFICIENT DATA", false)
 }
 
@@ -41,7 +41,11 @@ data class ForecastCardModel(
     val technicalEvidences: List<String>,
     val riskWarning: String,
     val dataQualityScore: String = "Live inputs only",
-    val modelVersion: String = "v133-QuantEngine"
+    val modelVersion: String = "v140-TapeRead",
+    val hasLiveTape: Boolean = false,
+    val hasLiveFunding: Boolean = false,
+    val hasLiveEtf: Boolean = false,
+    val hasLiveLevels: Boolean = false
 )
 
 object QuantForecastEngine {
@@ -86,6 +90,7 @@ object QuantForecastEngine {
 
     fun calculateAtr(highs: List<Double>, lows: List<Double>, closes: List<Double>, period: Int = 14): Double {
         if (highs.size < period || lows.size < period || closes.size < period) return 0.0
+        if (highs.any { it <= 0.0 } || lows.any { it <= 0.0 }) return 0.0
         val trList = mutableListOf<Double>()
         trList.add(highs[0] - lows[0])
         for (i in 1 until min(highs.size, min(lows.size, closes.size))) {
@@ -108,31 +113,42 @@ object QuantForecastEngine {
         historicalPrices: List<Double>,
         highs: List<Double>,
         lows: List<Double>,
-        fundingRate: Double = 0.0001,
-        etfInflowsUsd: Double = 0.0
+        fundingRate: Double? = null,
+        etfInflowsUsd: Double? = null
     ): ForecastCardModel {
         if (currentPrice <= 0.0 || historicalPrices.size < 30) {
             return ForecastCardModel(
-                asset = symbol,
+                asset = symbol.uppercase(),
                 currentPrice = currentPrice,
                 regime = MarketRegime.INSUFFICIENT_DATA,
                 direction = ForecastDirection.UNKNOWN,
                 compositeScore = 0,
-                probabilities = ProbabilityScenario(33, 34, 33),
+                probabilities = ProbabilityScenario(0, 0, 0),
                 confidencePct = 0,
-                keySupport = currentPrice * 0.95,
-                keyResistance = currentPrice * 1.05,
-                invalidationLevel = currentPrice * 0.90,
-                simpleExplanation = "Market data quality or history depth is currently insufficient to build a verified prediction.",
-                technicalEvidences = listOf("Insufficient sample size (< 30 intervals)", "Awaiting exchange sync"),
-                riskWarning = "Do not take trades until minimum data depth requirements are fulfilled."
+                keySupport = 0.0,
+                keyResistance = 0.0,
+                invalidationLevel = 0.0,
+                simpleExplanation = "Need 30 live daily closes from the exchange. No invented support, resistance, or probabilities.",
+                technicalEvidences = listOf(
+                    "Daily tape has ${historicalPrices.size} closes (need 30+)",
+                    "Waiting for exchange daily OHLC"
+                ),
+                riskWarning = "No reading until the daily tape arrives. This is not a trade call.",
+                hasLiveTape = false,
+                hasLiveFunding = fundingRate != null,
+                hasLiveEtf = etfInflowsUsd != null,
+                hasLiveLevels = false
             )
         }
 
         val rsi14 = calculateRsi(historicalPrices, 14)
         val ema20 = calculateEma(historicalPrices, min(20, historicalPrices.size))
         val ema50 = calculateEma(historicalPrices, min(50, historicalPrices.size))
-        val atr = calculateAtr(highs, lows, historicalPrices, 14)
+        val alignedOhlc = highs.size == historicalPrices.size &&
+            lows.size == historicalPrices.size &&
+            highs.all { it > 0.0 } &&
+            lows.all { it > 0.0 }
+        val atr = if (alignedOhlc) calculateAtr(highs, lows, historicalPrices, 14) else 0.0
 
         var trendScore = 0
         val trendBull = currentPrice > ema20 && ema20 > ema50
@@ -146,13 +162,17 @@ object QuantForecastEngine {
         else if (rsi14 < 45.0) momScore -= 20
 
         var derivScore = 0
-        if (fundingRate in 0.00001..0.00015) derivScore += 15
-        else if (fundingRate > 0.0003) derivScore -= 20
-        else if (fundingRate < -0.0001) derivScore += 10
+        if (fundingRate != null) {
+            if (fundingRate in 0.00001..0.00015) derivScore += 15
+            else if (fundingRate > 0.0003) derivScore -= 20
+            else if (fundingRate < -0.0001) derivScore += 10
+        }
 
         var macroScore = 0
-        if (etfInflowsUsd > 50_000_000.0) macroScore += 20
-        else if (etfInflowsUsd < -50_000_000.0) macroScore -= 20
+        if (etfInflowsUsd != null) {
+            if (etfInflowsUsd > 50_000_000.0) macroScore += 20
+            else if (etfInflowsUsd < -50_000_000.0) macroScore -= 20
+        }
 
         val totalRaw = trendScore + momScore + derivScore + macroScore
         val compositeScore = max(-100, min(100, totalRaw))
@@ -182,29 +202,69 @@ object QuantForecastEngine {
                 val b = max(10, 20 - (abs(compositeScore) / 10))
                 Triple(b, 100 - b - br, br)
             }
-            else -> Triple(30, 45, 25)
+            ForecastDirection.NEUTRAL -> Triple(30, 45, 25)
+            ForecastDirection.UNKNOWN -> Triple(0, 0, 0)
         }
 
-        val effectiveAtr = if (atr > 0.0) atr else (currentPrice * 0.02)
-        val support = currentPrice - (effectiveAtr * 1.5)
-        val resistance = currentPrice + (effectiveAtr * 1.8)
-        val invalidation = if (direction == ForecastDirection.BULLISH) support - effectiveAtr else resistance + effectiveAtr
+        val lookbackCloses = historicalPrices.takeLast(20)
+        val lookbackHighs = if (alignedOhlc) highs.takeLast(20) else emptyList()
+        val lookbackLows = if (alignedOhlc) lows.takeLast(20) else emptyList()
+        val support = lookbackLows.filter { it > 0.0 }.minOrNull()
+            ?: lookbackCloses.minOrNull()
+            ?: 0.0
+        val resistance = lookbackHighs.filter { it > 0.0 }.maxOrNull()
+            ?: lookbackCloses.maxOrNull()
+            ?: 0.0
+        val hasLevels = support > 0.0 && resistance > 0.0
+        val invalidation = if (hasLevels) support else 0.0
 
-        val simpleText = when (direction) {
-            ForecastDirection.BULLISH -> "The market shows buyers in control. Big trends point upward, momentum is healthy, and institutional flows support higher prices."
-            ForecastDirection.BEARISH -> "Sellers currently have the advantage. Prices are slipping below key safety levels and short-term pressure remains heavy."
-            else -> "Market forces are balanced in a holding zone. Neither buyers nor sellers are committed to an immediate breakthrough."
+        val simpleText = buildString {
+            append("Reading of the last ${historicalPrices.size} daily closes")
+            if (alignedOhlc) append(" plus exchange high/low")
+            append(". ")
+            append(
+                when {
+                    trendBull -> "Price is above EMA20 and EMA20 is above EMA50."
+                    trendBear -> "Price is below EMA20 and EMA20 is below EMA50."
+                    else -> "EMA20 and EMA50 are mixed versus spot."
+                }
+            )
+            append(" RSI(14) is ${String.format(java.util.Locale.US, "%.1f", rsi14)}.")
+            if (fundingRate == null) append(" Funding is offline.")
+            if (etfInflowsUsd == null) append(" ETF flow is offline.")
+            append(" Score of these inputs only — not a forecast or a trade.")
         }
 
         val evidences = mutableListOf<String>()
-        evidences.add("EMA Structure: " + if (trendBull) "Bullish Alignment (Price > EMA20 > EMA50)" else if (trendBear) "Bearish Compression (Price < EMA20 < EMA50)" else "Mixed Trajectory")
-        evidences.add("RSI (14): ${String.format(java.util.Locale.US, "%.1f", rsi14)} (" + if (rsi14 > 70) "Overheated" else if (rsi14 < 30) "Oversold" else "Healthy Momentum" + ")")
-        evidences.add("Derivatives: 8h Funding Rate at ${String.format(java.util.Locale.US, "%.4f", fundingRate * 100)}%")
-        if (etfInflowsUsd != 0.0) {
-            evidences.add("Institutional Inflow: ${String.format(java.util.Locale.US, "$%.1fM", etfInflowsUsd / 1_000_000.0)}")
+        evidences.add(
+            "EMA structure: " + when {
+                trendBull -> "Price > EMA20 > EMA50"
+                trendBear -> "Price < EMA20 < EMA50"
+                else -> "Mixed"
+            }
+        )
+        evidences.add("RSI (14): ${String.format(java.util.Locale.US, "%.1f", rsi14)}")
+        if (atr > 0.0) {
+            evidences.add("ATR (14) from daily high/low: $${String.format(java.util.Locale.US, "%.2f", atr)}")
+        } else {
+            evidences.add("ATR offline — daily high/low not on this tape")
+        }
+        if (fundingRate != null) {
+            evidences.add("8h funding: ${String.format(java.util.Locale.US, "%.4f", fundingRate * 100)}%")
+        } else {
+            evidences.add("Funding: —")
+        }
+        if (etfInflowsUsd != null) {
+            evidences.add("US spot ETF 1-day net: ${String.format(java.util.Locale.US, "$%.1fM", etfInflowsUsd / 1_000_000.0)}")
+        } else {
+            evidences.add("ETF flow: —")
         }
 
-        val riskWarning = "Volatility (ATR: $${String.format(java.util.Locale.US, "%.2f", effectiveAtr)}) can invalidate setups quickly. Strictly respect $${String.format(java.util.Locale.US, "%.2f", invalidation)} as structural invalidation."
+        val riskWarning = if (hasLevels) {
+            "Support and resistance are the min/max of the last 20 daily prints. Not a trade setup."
+        } else {
+            "No support or resistance until daily prints arrive."
+        }
 
         return ForecastCardModel(
             asset = symbol.uppercase(),
@@ -219,7 +279,11 @@ object QuantForecastEngine {
             invalidationLevel = invalidation,
             simpleExplanation = simpleText,
             technicalEvidences = evidences,
-            riskWarning = riskWarning
+            riskWarning = riskWarning,
+            hasLiveTape = true,
+            hasLiveFunding = fundingRate != null,
+            hasLiveEtf = etfInflowsUsd != null,
+            hasLiveLevels = hasLevels
         )
     }
 }

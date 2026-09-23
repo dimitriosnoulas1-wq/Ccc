@@ -79,13 +79,8 @@ fun BitcoinRainbowChart(
     val strings = LocalAppStrings.current
     val isGreek = strings.language.code == "el"
 
-    // Live BTC price fallback to active registry if input is uninitialized
-    val effectiveBtcPrice = remember(btcPriceUsd) {
-        if (btcPriceUsd > 1000.0) btcPriceUsd
-        else com.example.data.repository.CoinDataRegistry.getAllCoins()
-            .firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }?.priceUsd
-            ?.takeIf { it > 1000.0 } ?: 77304.0
-    }
+    val hasLiveBtcPrice = btcPriceUsd > 0.0
+    val effectiveBtcPrice = if (hasLiveBtcPrice) btcPriceUsd else 0.0
 
     // Build the monthly price data combined with the live price as the latest point
     val priceSeries = remember(effectiveBtcPrice) {
@@ -130,7 +125,7 @@ fun BitcoinRainbowChart(
                         color = Color(0xFF14161A)
                     )
                     Text(
-                        text = "LOG SCALE",
+                        text = if (hasLiveBtcPrice) "LOG SCALE" else "WAITING FOR LIVE BTC",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF6B7280),
@@ -415,9 +410,12 @@ object RainbowModelEngine {
                 pts.add(PricePoint(x = y.toDouble() + (m + 1).toDouble() / 12.0 - 0.02, y = p))
             }
         }
-        // Replace the last data point with the live BTC price from the app feed
-        val nowFractionalYear = 2026.0 + 9.0 / 12.0 - 0.02
-        pts.add(PricePoint(x = nowFractionalYear, y = liveBtcPrice))
+        if (liveBtcPrice > 0.0) {
+            val now = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+            val nowFractionalYear = now.get(java.util.Calendar.YEAR) +
+                (now.get(java.util.Calendar.MONTH) + 1).toDouble() / 12.0 - 0.02
+            pts.add(PricePoint(x = nowFractionalYear, y = liveBtcPrice))
+        }
         return pts
     }
 

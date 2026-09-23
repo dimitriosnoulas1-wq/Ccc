@@ -95,7 +95,7 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val sellMomentRules: String = "1. Cuando 111 DMA cruza por encima de 350 DMA x 2. Señala alta probabilidad de techo de ciclo.\n2. Cuando Rainbow Chart entra en las zonas rojas de 'Burbuja Máxima'. Los datos históricos muestran caídas masivas posteriores (90%+ en alts)."
     override val rainbowFeatureLabel: String = "🌈 Bitcoin Rainbow Chart (Modelo Dinámico Power Law)"
     override val altSeasonFeatureLabel: String = "⚡ Índice Altcoin Season (0-100) & Top 50 Superiores"
-    override val piCycleFeatureLabel: String = "🎯 Indicador Pi Cycle Top & Suelo 200W MA (Reglas Compra/Venta)"
+    override val piCycleFeatureLabel: String = "🎯 Indicador Pi Cycle Top & Suelo 200W MA (cruces históricos)"
     override val fearGreedFeatureLabel: String = "😱 Análisis Multi-Temporal de Sentimiento Fear & Greed"
     override val proAnalyticsTitle: String = "Análisis de Ciclo Pro"
     override val proAnalyticsDesc: String = "Desbloquea comparaciones completas de curvas 2020 & 2016 y proyecciones para"
@@ -378,7 +378,7 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val macroRiskBackdropBadge: String = "MARCO MACRO"
     override val macroRainbowCardTitle: String = "🌈 Modelo de Precio Bitcoin Rainbow"
     override val macroRainbowCardSub: String = "Bandas de Valoración Logarítmicas"
-    override val macroRainbowBadge: String = "HOLD / DCA"
+    override val macroRainbowBadge: String = "HISTORIA"
     override val macroAltSeasonCardTitle: String = "⚡ Índice Altcoin Season"
     override val macroAltSeasonCardSub: String = "42/100 · Zona Neutral (Bitcoin Season)"
     override val macroFearGreedCardTitle: String = "😱 Índice Fear & Greed"
@@ -437,13 +437,13 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val neutralLabel: String = "Neutral"
     override val greedLabel: String = "Codicia"
     override val extremeGreedLabel: String = "Codicia Extrema"
-    override val fearGreedAccumulationTip: String = "Históricamente, valores por debajo de 25 (Miedo Extremo) representan ventanas óptimas de acumulación macro."
+    override val fearGreedAccumulationTip: String = "Lectura de sentimiento en vivo. Si falta el número, se muestra un guion. No es una orden de compra o venta."
 
     // Pi Cycle Strings
     override val piCycleHeaderTitle: String = "Indicadores Pi Cycle (Techo & Suelo)"
     override val piCycleSubtitle: String = "Techo (111SMA vs 350SMA×2) & Suelo (150EMA vs 471SMA×0.745)"
-    override val piCycleTopSectionTitle: String = "🔴 PI CYCLE TOP (PICO / SEÑAL DE VENTA)"
-    override val piCycleBottomSectionTitle: String = "🟢 PI CYCLE BOTTOM (SUELO / SEÑAL DE COMPRA)"
+    override val piCycleTopSectionTitle: String = "🔴 PI CYCLE TOP (CRUCE HISTÓRICO)"
+    override val piCycleBottomSectionTitle: String = "🟢 PI CYCLE BOTTOM (CRUCE HISTÓRICO)"
     override val piCycleDma111: String = "SMA 111 Días"
     override val piCycleDma350x2: String = "SMA 350 Días × 2 (Umbral de Techo)"
     override val piCycleEma150: String = "EMA 150 Días"
@@ -454,7 +454,7 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val piCycleStatusSafeText: String = "Fase de Acumulación & Expansión (Zona Segura)"
     override val piCycleStatusAlertText: String = "🚨 CRUCE PI CYCLE TOP DETECTADO (Riesgo de Techo de Ciclo)"
     override val piCycleBottomStatusSafeText: String = "Por encima del Suelo Histórico (Fase de Expansión)"
-    override val piCycleBottomStatusAlertText: String = "🚨 CRUCE PI CYCLE BOTTOM DETECTADO (Compra de Suelo Histórico)"
+    override val piCycleBottomStatusAlertText: String = "🚨 CRUCE PI CYCLE BOTTOM DETECTADO (suelo histórico)"
     override val piCycleGenerationalSupport: String = "Soporte Histórico Generacional"
 
     // Futures Terminal Strings
