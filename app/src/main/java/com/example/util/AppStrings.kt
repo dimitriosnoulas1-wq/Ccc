@@ -52,12 +52,12 @@ open class AppStrings(
     // Markets Screen & Teasers
     open val marketsHeader: String = "Market Overview"
     open val marketsHeadline: String = "100+ Useful Real-World Assets & Cycle Blueprints"
-    open val marketsSubtitle: String = "Where each coin is moving, past historical patterns, future projections & whitepapers."
+    open val marketsSubtitle: String = "Live prices, realized moves, and whitepapers for each coin."
     open val fromAth: String = "from ATH"
-    open val tapForCycleAnalog: String = "Tap for cycle analog, projections & whitepaper"
+    open val tapForCycleAnalog: String = "Tap for live moves, history & whitepaper"
     open val heroSubtitle: String = "HISTORICAL CYCLE ANALOG"
     open val currentPrice: String = "Current Price"
-    open val analogMatch: String = "Analog Match"
+    open val analogMatch: String = "Live market"
     open val cyclePhase: String = "Cycle Phase"
     open val daysSinceAth: String = "Days since ATH"
     open val tapToViewCycles: String = "Tap to explore cycles & whitepaper"
@@ -72,11 +72,11 @@ open class AppStrings(
     open val marketsOrderFlowTeaserOpenFutures: String = "Open Futures →"
     open val marketsSignalsTeaserTitle: String = "Whale Radar & Fractal Signals"
     open val marketsSignalsTeaserLiveTag: String = "LIVE FEED"
-    open val marketsSignalsTeaserSample: String = "BTC: $148M net accumulation on Coinbase Prime"
+    open val marketsSignalsTeaserSample: String = "Live whale radar from exchange large prints"
     open val marketsSignalsTeaserAccumulationTag: String = "ACCUMULATION"
     open val marketsSignalsTeaserSub: String = "Liquidation maps & 2016/2020 cycle fractals"
     open val marketsSignalsTeaserOpen: String = "Open Signals Tab →"
-    open val marketsMacroTeaserNextEvent: String = "Next Event: US Jobs (NFP) Friday 15:30 UTC"
+    open val marketsMacroTeaserNextEvent: String = "Open Macro for live DXY, yields, ETF and stables"
     open val marketsMacroTeaserOpen: String = "Open Macro →"
 
     // Cycle Days & Historical Analog
@@ -715,6 +715,56 @@ open class AppStrings(
     open val exchangeBinance: String = "Binance"
     open val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
     open val derivativesRiskGuardrail: String = "Derivatives Protocol: Trade responsibly. Never risk more than 1-2% equity per position."
+
+    open val savedCoinsTitle: String = "Saved coins"
+    open val largest24hMovesTitle: String = "Largest 24h moves"
+    open val noSavedCoinsYet: String = "No saved coins yet. Star a coin to keep it here."
+    open val unlockProForSymbol: String = "Unlock Pro for %s"
+    open val live24hMoveLabel: String = "Live 24h move"
+    open val live24hMoveDisclaimer: String = "Bar shows the live 24h print from the market feed. Not a forecast."
+    open val windowLowLabel: String = "Window low:"
+    open val windowLowDisclaimer: String = "Minimum of the live sparkline. Not an ATR forecast."
+    open val noInventedInvalidation: String = "No invented invalidation level. Live prints only."
+    open val notInvestmentAdvice: String = "Not a personalized trade or investment recommendation."
+    open val weekSinceAthFmt: String = "week %1\$d since ATH · %2\$d days"
+    open val live24hTag: String = "live 24h"
+    open val liveSparkTag: String = "live 7d"
+    open val fromAthTag: String = "from ATH"
+    open val liveRealizedHint: String = "Live realized moves · not a forecast"
+    open val liveRealizedDisclaimer: String = "Cards show realized live moves. No invented win-rate or scenario distribution."
+    open val awaitingSparkline: String = "Awaiting sparkline"
+    open val bullishMomentumShort: String = "Bullish momentum"
+    open val oversoldWeakShort: String = "Oversold / weak"
+    open val neutralConsolidationShort: String = "Neutral consolidation"
+    open val distanceFromAth: String = "Distance from ATH"
+    open val fromLivePriceAth: String = "From live price / ATH"
+    open val sinceAthSuffix: String = "since ATH"
+    open val realMarketFeed: String = "Real Market Feed"
+    open val noLiveFeed: String = "No live feed"
+    open val noWalletConcentrationFeed: String = "No public live feed for wallet concentration. Showing — instead of an invented share."
+    open val genesisHeritageTitle: String = "Genesis & Heritage"
+    open val consensusProtocolLabel: String = "Consensus Protocol:"
+    open val rsi14Label: String = "14D RSI"
+    open val delta24hLabel: String = "24h Delta"
+    open val liveMoves24hLabel: String = "24h"
+    open val liveMovesSparkLabel: String = "Spark"
+    open val currentPhaseScoreFmt: String = "Current phase is %1\$s with live cycle score %2\$d/100."
+}
+
+fun AppStrings.tr(
+    en: String,
+    el: String,
+    de: String,
+    fr: String,
+    es: String,
+    it: String
+): String = when (language) {
+    AppLanguage.ENGLISH -> en
+    AppLanguage.GREEK -> el
+    AppLanguage.GERMAN -> de
+    AppLanguage.FRENCH -> fr
+    AppLanguage.SPANISH -> es
+    AppLanguage.ITALIAN -> it
 }
 
 val EnglishStrings: AppStrings = AppStrings(AppLanguage.ENGLISH)

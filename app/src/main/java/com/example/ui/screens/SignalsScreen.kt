@@ -115,6 +115,7 @@ import com.example.ui.theme.stitchHorizonPanel
 import com.example.ui.components.QuantumReticleBadge
 import com.example.util.CoinLocalization
 import com.example.util.LocalAppStrings
+import com.example.util.tr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -374,9 +375,9 @@ fun SignalsScreen(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 listOf(
-                    if (isGreek) "Κορυφαία Σήματα" else "Top Signals",
-                    if (isGreek) "Τα Σήματά μου" else "My Signals",
-                    if (isGreek) "Απόδοση" else "Performance"
+                    strings.tabTopSignals,
+                    strings.tabMySignals,
+                    strings.tabPerformance
                 ).forEachIndexed { idx, title ->
                     val isSelected = selectedSignalsTab == idx
                     Box(
@@ -413,8 +414,8 @@ fun SignalsScreen(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val selectorTitle = when (selectedSignalsTab) {
-                    1 -> if (isGreek) "Αποθηκευμένα νομίσματα" else "Saved coins"
-                    2 -> if (isGreek) "Μεγαλύτερες κινήσεις 24ω" else "Largest 24h moves"
+                    1 -> strings.savedCoinsTitle
+                    2 -> strings.largest24hMovesTitle
                     else -> strings.signalsCoinSelectorTitle
                 }
                 Row(
@@ -472,7 +473,7 @@ fun SignalsScreen(
                 }
                 if (quickCoins.isEmpty()) {
                     Text(
-                        text = if (isGreek) "Δεν υπάρχουν αποθηκευμένα νομίσματα ακόμα." else "No saved coins yet. Star a coin to keep it here.",
+                        text = strings.noSavedCoinsYet,
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -592,10 +593,14 @@ fun SignalsScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = if (isGreek)
-                                "Τα σήματα, οι προβλέψεις και τα τεχνικά δεδομένα για το ${activeCoin.name} (${activeCoin.symbol}) είναι διαθέσιμα αποκλειστικά σε Pro μέλη."
-                            else
-                                "Signals, AI price projections, and quantitative indicators for ${activeCoin.name} (${activeCoin.symbol}) are exclusive to Pro members.",
+                            text = strings.tr(
+                                en = "Live signals and market cards for ${activeCoin.name} (${activeCoin.symbol}) are exclusive to Pro members.",
+                                el = "Τα live σήματα και οι κάρτες αγοράς για το ${activeCoin.name} (${activeCoin.symbol}) είναι διαθέσιμα αποκλειστικά σε Pro μέλη.",
+                                de = "Live-Signale und Marktkarten für ${activeCoin.name} (${activeCoin.symbol}) sind ausschließlich für Pro-Mitglieder.",
+                                fr = "Les signaux live et cartes de marché pour ${activeCoin.name} (${activeCoin.symbol}) sont réservés aux membres Pro.",
+                                es = "Las señales en vivo y las tarjetas de mercado de ${activeCoin.name} (${activeCoin.symbol}) son exclusivas de Pro.",
+                                it = "I segnali live e le schede di mercato di ${activeCoin.name} (${activeCoin.symbol}) sono esclusivi per i membri Pro."
+                            ),
                             fontSize = 12.sp,
                             color = TextSecondary,
                             textAlign = TextAlign.Center
@@ -607,7 +612,7 @@ fun SignalsScreen(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = if (isGreek) "Αναβάθμιση σε Pro για ${activeCoin.symbol}" else "Unlock Pro for ${activeCoin.symbol}",
+                                text = String.format(java.util.Locale.getDefault(), strings.unlockProForSymbol, activeCoin.symbol),
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF05050F)
                             )
@@ -721,7 +726,7 @@ fun SignalsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = if (isGreek) "Ζωντανή κίνηση 24ω" else "Live 24h move",
+                                text = strings.live24hMoveLabel,
                                 fontSize = 11.sp,
                                 color = TextSecondary
                             )
@@ -751,10 +756,7 @@ fun SignalsScreen(
                         }
 
                         Text(
-                            text = if (isGreek)
-                                "Η μπάρα δείχνει μόνο την πραγματική μεταβολή 24ω από το live feed. Όχι πρόβλεψη."
-                            else
-                                "Bar shows the live 24h print from the market feed. Not a forecast.",
+                            text = strings.live24hMoveDisclaimer,
                             fontSize = 9.5.sp,
                             lineHeight = 13.sp,
                             color = TextMuted
@@ -825,13 +827,13 @@ fun SignalsScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = if (isGreek) "Χαμηλό παραθύρου:" else "Window low:",
+                                    text = strings.windowLowLabel,
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = NeonAmber
                                 )
                                 Text(
-                                    text = if (isGreek) "Ελάχιστο από το live sparkline. Όχι ATR / πρόβλεψη." else "Minimum of the live sparkline. Not an ATR forecast.",
+                                    text = strings.windowLowDisclaimer,
                                     fontSize = 9.sp,
                                     color = TextMuted
                                 )
@@ -851,20 +853,14 @@ fun SignalsScreen(
                         }
 
                         Text(
-                            text = if (isGreek)
-                                "Δεν εμφανίζεται εφευρεμένο επίπεδο ακύρωσης. Μόνο ζωντανά prints."
-                            else
-                                "No invented invalidation level. Live prints only.",
+                            text = strings.noInventedInvalidation,
                             fontSize = 11.sp,
                             color = TextSecondary,
                             lineHeight = 15.sp
                         )
 
                         Text(
-                            text = if (isGreek)
-                                "Όχι επενδυτική συμβουλή."
-                            else
-                                "Not a personalized trade or investment recommendation.",
+                            text = strings.notInvestmentAdvice,
                             fontSize = 9.sp,
                             lineHeight = 12.sp,
                             color = TextMuted
@@ -956,10 +952,7 @@ fun SignalsScreen(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = if (isGreek)
-                                "εβδομάδα ${daysAfterAth / 7} από ATH · $daysAfterAth ημέρες"
-                            else
-                                "week ${daysAfterAth / 7} since ATH · $daysAfterAth days",
+                            text = String.format(java.util.Locale.getDefault(), strings.weekSinceAthFmt, daysAfterAth / 7, daysAfterAth),
                             fontSize = 11.sp,
                             color = TextSecondary,
                             lineHeight = 15.sp
@@ -1350,9 +1343,9 @@ fun SignalsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val liveMoves = CoinLocalization.liveRealizedMoves(activeCoin)
-                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = liveMoves.first, winRate = if (isGreek) "live 24ω" else "live 24h", modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = liveMoves.second, winRate = if (isGreek) "live 7ημ" else "live 7d", modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = liveMoves.third, winRate = if (isGreek) "από ATH" else "from ATH", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = liveMoves.first, winRate = strings.live24hTag, modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = liveMoves.second, winRate = strings.liveSparkTag, modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = liveMoves.third, winRate = strings.fromAthTag, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -1386,11 +1379,7 @@ fun SignalsScreen(
                     )
                     WhyWeSayThisPoint(
                         number = 3,
-                        text = if (isGreek) {
-                            "Η τρέχουσα φάση είναι ${signal.cycleClockPhase} με live δείκτη κύκλου ${signal.riskScore}/100."
-                        } else {
-                            "Current phase is ${signal.cycleClockPhase} with live cycle score ${signal.riskScore}/100."
-                        }
+                        text = String.format(java.util.Locale.getDefault(), strings.currentPhaseScoreFmt, signal.cycleClockPhase, signal.riskScore)
                     )
                     WhyWeSayThisPoint(
                         number = 4,

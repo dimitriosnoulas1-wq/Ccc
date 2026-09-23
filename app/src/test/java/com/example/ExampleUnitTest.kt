@@ -108,6 +108,35 @@ class ExampleUnitTest {
   }
 
   @Test
+  fun everyLanguageOverridesChromeStrings() {
+    val languages = listOf(
+      AppLanguage.ENGLISH,
+      AppLanguage.GREEK,
+      AppLanguage.GERMAN,
+      AppLanguage.FRENCH,
+      AppLanguage.SPANISH,
+      AppLanguage.ITALIAN
+    )
+    languages.forEach { language ->
+      val strings = com.example.util.getAppStrings(language)
+      assertEquals(language, strings.language)
+      assertTrue(strings.tabTopSignals.isNotBlank())
+      assertTrue(strings.tabAnalytics.isNotBlank())
+      assertTrue(strings.savedCoinsTitle.isNotBlank())
+      assertTrue(strings.live24hMoveLabel.isNotBlank())
+      assertTrue(strings.genesisHeritageTitle.isNotBlank())
+      assertFalse(strings.marketsSignalsTeaserSample.contains("148M"))
+      assertFalse(strings.marketsMacroTeaserNextEvent.contains("NFP"))
+    }
+    assertEquals("Μάθηση", com.example.util.GreekAppStrings().navLearn)
+    assertEquals("Lernen", com.example.util.GermanAppStrings().navLearn)
+    assertEquals("Apprendre", com.example.util.FrenchAppStrings().navLearn)
+    assertEquals("Aprender", com.example.util.SpanishAppStrings().navLearn)
+    assertEquals("Impara", com.example.util.ItalianAppStrings().navLearn)
+    assertEquals("Learn", AppStrings().navLearn)
+  }
+
+  @Test
   fun liveMovesUseRealPrintsNotInventedTargets() {
     val seed = com.example.data.repository.CoinDataRegistry.getAllCoins().first()
     val live = seed.copy(
