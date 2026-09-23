@@ -109,11 +109,11 @@ fun ChapterDiagram(
             BlockchainDiagramType.COIN_VS_TOKEN -> CoinVsTokenDiagram(language)
             BlockchainDiagramType.SMART_CONTRACT_STATE -> SmartContractStateDiagram(language)
             BlockchainDiagramType.SYSTEM_LIMITS -> SystemLimitsDiagram(language)
-            BlockchainDiagramType.LIQUIDATION_ENGINEERING -> SystemLimitsDiagram(language)
-            BlockchainDiagramType.FUNDING_DYNAMICS -> SystemLimitsDiagram(language)
-            BlockchainDiagramType.QUANTUM_ORDER_FLOW -> SystemLimitsDiagram(language)
-            BlockchainDiagramType.MACRO_HALVING_CYCLES -> SystemLimitsDiagram(language)
-            BlockchainDiagramType.INSTITUTIONAL_RISK -> SystemLimitsDiagram(language)
+            BlockchainDiagramType.LIQUIDATION_ENGINEERING -> LiquidationMechanicsDiagram(language)
+            BlockchainDiagramType.FUNDING_DYNAMICS -> FundingMechanicsDiagram(language)
+            BlockchainDiagramType.QUANTUM_ORDER_FLOW -> OrderBookDiagram(language)
+            BlockchainDiagramType.MACRO_HALVING_CYCLES -> HalvingIssuanceDiagram(language)
+            BlockchainDiagramType.INSTITUTIONAL_RISK -> VenueLossCoverDiagram(language)
         }
     }
 }
@@ -1747,5 +1747,314 @@ private fun SystemLimitsDiagram(language: AppLanguage) {
                 small = true
             )
         }
+    }
+}
+
+@Composable
+private fun LiquidationMechanicsDiagram(language: AppLanguage) {
+    val margin = when (language) {
+        AppLanguage.GREEK -> "Περιθώριο"
+        AppLanguage.GERMAN -> "Margin"
+        AppLanguage.FRENCH -> "Marge"
+        AppLanguage.SPANISH -> "Margen"
+        AppLanguage.ITALIAN -> "Margine"
+        AppLanguage.ENGLISH -> "Margin"
+    }
+    val marginSub = when (language) {
+        AppLanguage.GREEK -> "isolated ή cross"
+        AppLanguage.GERMAN -> "Isolated oder Cross"
+        AppLanguage.FRENCH -> "isolée ou croisée"
+        AppLanguage.SPANISH -> "aislado o cruzado"
+        AppLanguage.ITALIAN -> "isolato o cross"
+        AppLanguage.ENGLISH -> "isolated or cross"
+    }
+    val floor = when (language) {
+        AppLanguage.GREEK -> "Κατώφλι"
+        AppLanguage.GERMAN -> "Schwelle"
+        AppLanguage.FRENCH -> "Seuil"
+        AppLanguage.SPANISH -> "Umbral"
+        AppLanguage.ITALIAN -> "Soglia"
+        AppLanguage.ENGLISH -> "Floor"
+    }
+    val floorSub = when (language) {
+        AppLanguage.GREEK -> "maintenance"
+        AppLanguage.GERMAN -> "Maintenance"
+        AppLanguage.FRENCH -> "maintien"
+        AppLanguage.SPANISH -> "mantenimiento"
+        AppLanguage.ITALIAN -> "mantenimento"
+        AppLanguage.ENGLISH -> "maintenance"
+    }
+    val close = when (language) {
+        AppLanguage.GREEK -> "Κλείσιμο"
+        AppLanguage.GERMAN -> "Schluss"
+        AppLanguage.FRENCH -> "Clôture"
+        AppLanguage.SPANISH -> "Cierre"
+        AppLanguage.ITALIAN -> "Chiusura"
+        AppLanguage.ENGLISH -> "Close"
+    }
+    val closeSub = when (language) {
+        AppLanguage.GREEK -> "από το venue"
+        AppLanguage.GERMAN -> "durch die Börse"
+        AppLanguage.FRENCH -> "par la place"
+        AppLanguage.SPANISH -> "por el venue"
+        AppLanguage.ITALIAN -> "dal venue"
+        AppLanguage.ENGLISH -> "by the venue"
+    }
+    ThreeStepRow(margin, marginSub, floor, floorSub, close, closeSub)
+}
+
+@Composable
+private fun FundingMechanicsDiagram(language: AppLanguage) {
+    val mark = when (language) {
+        AppLanguage.GREEK -> "Mark"
+        AppLanguage.GERMAN -> "Mark"
+        AppLanguage.FRENCH -> "Mark"
+        AppLanguage.SPANISH -> "Mark"
+        AppLanguage.ITALIAN -> "Mark"
+        AppLanguage.ENGLISH -> "Mark"
+    }
+    val markSub = when (language) {
+        AppLanguage.GREEK -> "τιμή συμβολαίου"
+        AppLanguage.GERMAN -> "Kontraktpreis"
+        AppLanguage.FRENCH -> "prix du contrat"
+        AppLanguage.SPANISH -> "precio del contrato"
+        AppLanguage.ITALIAN -> "prezzo contratto"
+        AppLanguage.ENGLISH -> "contract price"
+    }
+    val pay = when (language) {
+        AppLanguage.GREEK -> "Funding"
+        AppLanguage.GERMAN -> "Funding"
+        AppLanguage.FRENCH -> "Funding"
+        AppLanguage.SPANISH -> "Funding"
+        AppLanguage.ITALIAN -> "Funding"
+        AppLanguage.ENGLISH -> "Funding"
+    }
+    val paySub = when (language) {
+        AppLanguage.GREEK -> "περιοδική πληρωμή"
+        AppLanguage.GERMAN -> "periodische Zahlung"
+        AppLanguage.FRENCH -> "paiement périodique"
+        AppLanguage.SPANISH -> "pago periódico"
+        AppLanguage.ITALIAN -> "pagamento periodico"
+        AppLanguage.ENGLISH -> "periodic payment"
+    }
+    val peers = when (language) {
+        AppLanguage.GREEK -> "Long ⇄ Short"
+        AppLanguage.GERMAN -> "Long ⇄ Short"
+        AppLanguage.FRENCH -> "Long ⇄ Short"
+        AppLanguage.SPANISH -> "Long ⇄ Short"
+        AppLanguage.ITALIAN -> "Long ⇄ Short"
+        AppLanguage.ENGLISH -> "Long ⇄ Short"
+    }
+    val peersSub = when (language) {
+        AppLanguage.GREEK -> "συνήθως P2P"
+        AppLanguage.GERMAN -> "meist P2P"
+        AppLanguage.FRENCH -> "souvent P2P"
+        AppLanguage.SPANISH -> "casi siempre P2P"
+        AppLanguage.ITALIAN -> "di solito P2P"
+        AppLanguage.ENGLISH -> "usually P2P"
+    }
+    ThreeStepRow(mark, markSub, pay, paySub, peers, peersSub)
+}
+
+@Composable
+private fun OrderBookDiagram(language: AppLanguage) {
+    val bids = when (language) {
+        AppLanguage.GREEK -> "Bids"
+        AppLanguage.GERMAN -> "Bids"
+        AppLanguage.FRENCH -> "Bids"
+        AppLanguage.SPANISH -> "Bids"
+        AppLanguage.ITALIAN -> "Bid"
+        AppLanguage.ENGLISH -> "Bids"
+    }
+    val bidsSub = when (language) {
+        AppLanguage.GREEK -> "αγορές που κάθονται"
+        AppLanguage.GERMAN -> "ruhende Käufe"
+        AppLanguage.FRENCH -> "achats au repos"
+        AppLanguage.SPANISH -> "compras en espera"
+        AppLanguage.ITALIAN -> "acquisti in attesa"
+        AppLanguage.ENGLISH -> "resting buys"
+    }
+    val spread = when (language) {
+        AppLanguage.GREEK -> "Spread"
+        AppLanguage.GERMAN -> "Spread"
+        AppLanguage.FRENCH -> "Spread"
+        AppLanguage.SPANISH -> "Spread"
+        AppLanguage.ITALIAN -> "Spread"
+        AppLanguage.ENGLISH -> "Spread"
+    }
+    val spreadSub = when (language) {
+        AppLanguage.GREEK -> "κενό τιμής"
+        AppLanguage.GERMAN -> "Preislücke"
+        AppLanguage.FRENCH -> "écart de prix"
+        AppLanguage.SPANISH -> "hueco de precio"
+        AppLanguage.ITALIAN -> "vuoto di prezzo"
+        AppLanguage.ENGLISH -> "price gap"
+    }
+    val asks = when (language) {
+        AppLanguage.GREEK -> "Asks"
+        AppLanguage.GERMAN -> "Asks"
+        AppLanguage.FRENCH -> "Asks"
+        AppLanguage.SPANISH -> "Asks"
+        AppLanguage.ITALIAN -> "Ask"
+        AppLanguage.ENGLISH -> "Asks"
+    }
+    val asksSub = when (language) {
+        AppLanguage.GREEK -> "πωλήσεις που κάθονται"
+        AppLanguage.GERMAN -> "ruhende Verkäufe"
+        AppLanguage.FRENCH -> "ventes au repos"
+        AppLanguage.SPANISH -> "ventas en espera"
+        AppLanguage.ITALIAN -> "vendite in attesa"
+        AppLanguage.ENGLISH -> "resting sells"
+    }
+    ThreeStepRow(bids, bidsSub, spread, spreadSub, asks, asksSub, highlightMiddle = true)
+}
+
+@Composable
+private fun HalvingIssuanceDiagram(language: AppLanguage) {
+    val caption = when (language) {
+        AppLanguage.GREEK -> "Επιδότηση ανά block"
+        AppLanguage.GERMAN -> "Subvention pro Block"
+        AppLanguage.FRENCH -> "Subvention par bloc"
+        AppLanguage.SPANISH -> "Subvención por bloque"
+        AppLanguage.ITALIAN -> "Sussidio per blocco"
+        AppLanguage.ENGLISH -> "Subsidy per block"
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = caption,
+            fontSize = 11.sp,
+            color = DiagramTextMuted,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            listOf("50", "25", "12.5", "6.25", "3.125").forEachIndexed { index, value ->
+                GeoBox(
+                    title = value,
+                    subtitle = "BTC",
+                    modifier = Modifier.weight(1f),
+                    highlight = index == 4,
+                    small = true
+                )
+                if (index < 4) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = CopperAccent,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VenueLossCoverDiagram(language: AppLanguage) {
+    val forced = when (language) {
+        AppLanguage.GREEK -> "Αναγκαστικό"
+        AppLanguage.GERMAN -> "Zwangsschluss"
+        AppLanguage.FRENCH -> "Clôture forcée"
+        AppLanguage.SPANISH -> "Cierre forzado"
+        AppLanguage.ITALIAN -> "Chiusura forzata"
+        AppLanguage.ENGLISH -> "Forced close"
+    }
+    val forcedSub = when (language) {
+        AppLanguage.GREEK -> "κάτω από το κατώφλι"
+        AppLanguage.GERMAN -> "unter der Schwelle"
+        AppLanguage.FRENCH -> "sous le seuil"
+        AppLanguage.SPANISH -> "bajo el umbral"
+        AppLanguage.ITALIAN -> "sotto la soglia"
+        AppLanguage.ENGLISH -> "below the floor"
+    }
+    val fund = when (language) {
+        AppLanguage.GREEK -> "Ταμείο"
+        AppLanguage.GERMAN -> "Fonds"
+        AppLanguage.FRENCH -> "Fonds"
+        AppLanguage.SPANISH -> "Fondo"
+        AppLanguage.ITALIAN -> "Fondo"
+        AppLanguage.ENGLISH -> "Fund"
+    }
+    val fundSub = when (language) {
+        AppLanguage.GREEK -> "ασφάλιση venue"
+        AppLanguage.GERMAN -> "Börsenversicherung"
+        AppLanguage.FRENCH -> "assurance place"
+        AppLanguage.SPANISH -> "seguro del venue"
+        AppLanguage.ITALIAN -> "assicurazione venue"
+        AppLanguage.ENGLISH -> "venue insurance"
+    }
+    val adl = when (language) {
+        AppLanguage.GREEK -> "ADL"
+        AppLanguage.GERMAN -> "ADL"
+        AppLanguage.FRENCH -> "ADL"
+        AppLanguage.SPANISH -> "ADL"
+        AppLanguage.ITALIAN -> "ADL"
+        AppLanguage.ENGLISH -> "ADL"
+    }
+    val adlSub = when (language) {
+        AppLanguage.GREEK -> "αν το ταμείο δεν φτάνει"
+        AppLanguage.GERMAN -> "falls Fonds fehlt"
+        AppLanguage.FRENCH -> "si le fonds manque"
+        AppLanguage.SPANISH -> "si el fondo no llega"
+        AppLanguage.ITALIAN -> "se il fondo non basta"
+        AppLanguage.ENGLISH -> "if the fund is short"
+    }
+    ThreeStepRow(forced, forcedSub, fund, fundSub, adl, adlSub)
+}
+
+@Composable
+private fun ThreeStepRow(
+    first: String,
+    firstSub: String,
+    second: String,
+    secondSub: String,
+    third: String,
+    thirdSub: String,
+    highlightMiddle: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        GeoBox(
+            title = first,
+            subtitle = firstSub,
+            modifier = Modifier.weight(1f),
+            small = true
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = CopperAccent,
+            modifier = Modifier.size(14.dp)
+        )
+        GeoBox(
+            title = second,
+            subtitle = secondSub,
+            modifier = Modifier.weight(1f),
+            highlight = highlightMiddle,
+            small = true
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = CopperAccent,
+            modifier = Modifier.size(14.dp)
+        )
+        GeoBox(
+            title = third,
+            subtitle = thirdSub,
+            modifier = Modifier.weight(1f),
+            highlight = !highlightMiddle,
+            small = true
+        )
     }
 }

@@ -168,7 +168,7 @@ fun LearnBlockchainScreen(
                     .fillMaxWidth()
             ) { (chapter, isLocked) ->
                 if (isLocked) {
-                    // Locked Pro Gatekeeper for Chapters 2..17
+                    // Locked Pro gate for chapters 18..22. Chapters 1..17 stay free.
                     LockedChapterGatekeeper(
                         chapter = chapter,
                         language = currentLanguage,
@@ -192,7 +192,6 @@ fun LearnBlockchainScreen(
                         // Top Chapter Title (Large, high contrast, clean)
                         ChapterHeaderTitle(
                             chapter = chapter,
-                            isFree = chapter.id == 1,
                             language = currentLanguage
                         )
 
@@ -206,14 +205,13 @@ fun LearnBlockchainScreen(
                         if (chapter.diagramCaption.isNotBlank()) {
                             Text(
                                 text = chapter.diagramCaption,
-                                fontSize = 12.sp,
+                                fontSize = 13.5.sp,
                                 fontStyle = FontStyle.Italic,
                                 color = TextMutedComfort,
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             )
                         }
 
-                        // Below: 3-5 Short Bite-Sized Paragraphs (Clean line breaks, no walls of text)
                         ParagraphsSection(content = chapter.content)
 
                         // Two Small Clean Cards: Example and Common Mistake
@@ -237,7 +235,7 @@ fun LearnBlockchainScreen(
                                 AppLanguage.ITALIAN -> "Materiale didattico · Non è una consulenza finanziaria"
                                 AppLanguage.ENGLISH -> "Educational material · Not financial advice"
                             },
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = TextMutedComfort,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -436,7 +434,6 @@ private fun LearnTopHeader(
 @Composable
 private fun ChapterHeaderTitle(
     chapter: BlockchainChapter,
-    isFree: Boolean,
     language: AppLanguage
 ) {
     val chapterWord = when (language) {
@@ -494,7 +491,7 @@ private fun ChapterHeaderTitle(
                 )
             }
 
-            if (isFree) {
+            if (!chapter.isProOnly) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
@@ -504,10 +501,26 @@ private fun ChapterHeaderTitle(
                 ) {
                     Text(
                         text = freeBadge,
-                        fontSize = 9.5.sp,
+                        fontSize = 10.sp,
                         fontFamily = JetBrainsMonoFont,
                         fontWeight = FontWeight.Bold,
                         color = TachyonMint
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(CopperAccent.copy(alpha = 0.15f))
+                        .border(1.dp, CopperAccent.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "PRO",
+                        fontSize = 10.sp,
+                        fontFamily = JetBrainsMonoFont,
+                        fontWeight = FontWeight.Bold,
+                        color = CopperAccent
                     )
                 }
             }
@@ -515,30 +528,29 @@ private fun ChapterHeaderTitle(
 
         Text(
             text = chapter.title,
-            fontSize = 20.sp,
+            fontSize = 23.sp,
             fontFamily = SpaceGroteskFont,
             fontWeight = FontWeight.Bold,
             color = Color.White,
-            lineHeight = 26.sp
+            lineHeight = 30.sp
         )
     }
 }
 
 @Composable
 private fun ParagraphsSection(content: String) {
-    // Split into 3-5 bite-sized paragraphs
     val paragraphs = content.split("\n\n").filter { it.isNotBlank() }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         paragraphs.forEach { paragraph ->
             Text(
                 text = paragraph.trim(),
-                fontSize = 15.sp,
+                fontSize = 17.sp,
                 color = TextPrimaryHighContrast,
-                lineHeight = 23.sp
+                lineHeight = 27.sp
             )
         }
     }
@@ -596,7 +608,7 @@ private fun ExampleCard(
                 )
                 Text(
                     text = headerTitle,
-                    fontSize = 12.5.sp,
+                    fontSize = 13.5.sp,
                     fontFamily = SpaceGroteskFont,
                     fontWeight = FontWeight.Bold,
                     color = CyanAccent
@@ -605,9 +617,9 @@ private fun ExampleCard(
 
             Text(
                 text = example,
-                fontSize = 13.5.sp,
+                fontSize = 15.5.sp,
                 color = TextSecondaryComfort,
-                lineHeight = 20.sp
+                lineHeight = 24.sp
             )
         }
     }
@@ -665,7 +677,7 @@ private fun CommonMistakeCard(
                 )
                 Text(
                     text = headerTitle,
-                    fontSize = 12.5.sp,
+                    fontSize = 13.5.sp,
                     fontFamily = SpaceGroteskFont,
                     fontWeight = FontWeight.Bold,
                     color = CrimsonAccent
@@ -674,9 +686,9 @@ private fun CommonMistakeCard(
 
             Text(
                 text = mistake,
-                fontSize = 13.5.sp,
+                fontSize = 15.5.sp,
                 color = TextSecondaryComfort,
-                lineHeight = 20.sp
+                lineHeight = 24.sp
             )
         }
     }
@@ -690,21 +702,21 @@ private fun LockedChapterGatekeeper(
     onBackToFree: () -> Unit
 ) {
     val lockTitle = when (language) {
-        AppLanguage.GREEK -> "Κεφάλαια 2–17: Έκδοση Pro"
-        AppLanguage.GERMAN -> "Kapitel 2–17: Pro Version"
-        AppLanguage.FRENCH -> "Chapitres 2–17 : Version Pro"
-        AppLanguage.SPANISH -> "Capítulos 2–17: Versión Pro"
-        AppLanguage.ITALIAN -> "Capitoli 2–17: Versione Pro"
-        AppLanguage.ENGLISH -> "Chapters 2–17: Pro Tier"
+        AppLanguage.GREEK -> "Κεφάλαια 18–22: Pro"
+        AppLanguage.GERMAN -> "Kapitel 18–22: Pro"
+        AppLanguage.FRENCH -> "Chapitres 18–22 : Pro"
+        AppLanguage.SPANISH -> "Capítulos 18–22: Pro"
+        AppLanguage.ITALIAN -> "Capitoli 18–22: Pro"
+        AppLanguage.ENGLISH -> "Chapters 18–22: Pro"
     }
 
     val lockDesc = when (language) {
-        AppLanguage.GREEK -> "Το Κεφάλαιο 1 παρέχεται δωρεάν. Ξεκλείδωσε ολόκληρη τη σειρά 17 κεφαλαίων Blockchain, μαζί με όλα τα Macro, Futures και Whale σήματα του CryptoCycles."
-        AppLanguage.GERMAN -> "Kapitel 1 ist kostenlos. Schalte alle 17 Blockchain-Kapitel sowie alle Macro-, Futures- und Whale-Signale von CryptoCycles frei."
-        AppLanguage.FRENCH -> "Le chapitre 1 est offert. Débloquez les 17 chapitres Blockchain ainsi que tous les signaux Macro, Futures et Whales de CryptoCycles."
-        AppLanguage.SPANISH -> "El Capítulo 1 es gratuito. Desbloquea los 17 capítulos de Blockchain junto con todas las señales Macro, Futures y Whales de CryptoCycles."
-        AppLanguage.ITALIAN -> "Il Capitolo 1 è gratuito. Sblocca tutti i 17 capitoli Blockchain insieme a tutti i segnali Macro, Futures e Whales di CryptoCycles."
-        AppLanguage.ENGLISH -> "Chapter 1 is free. Unlock the complete 17-chapter Blockchain course along with all Macro, Futures, and Whale signals in CryptoCycles."
+        AppLanguage.GREEK -> "Τα κεφάλαια 1–17 είναι δωρεάν: κανόνες του δικτύου, όχι σήματα αγοράς. Το Pro ανοίγει άλλα πέντε μαθήματα — μόχλευση και ρευστοποίηση, funding, βιβλίο εντολών, ιστορικό halving, και πώς ένα ανταλλακτήριο καλύπτει ζημιές. Χωρίς whale radar και χωρίς εντολή αγοράς ή πώλησης."
+        AppLanguage.GERMAN -> "Kapitel 1–17 sind kostenlos: Netzwerkregeln, keine Handelssignale. Pro öffnet fünf weitere Lektionen — Hebel und Liquidation, Funding, Orderbuch, Halving-Historie und wie eine Börse Verluste abdeckt. Kein Whale-Radar und kein Kauf- oder Verkaufsaufruf."
+        AppLanguage.FRENCH -> "Les chapitres 1–17 sont gratuits : règles du réseau, pas de signaux de trading. Pro ouvre cinq leçons de plus — levier et liquidation, funding, carnet d'ordres, historique du halving, et comment une place couvre les pertes. Pas de radar baleine, pas d'ordre d'achat ou de vente."
+        AppLanguage.SPANISH -> "Los capítulos 1–17 son gratis: reglas de la red, no señales de compra. Pro abre cinco lecciones más — apalancamiento y liquidación, funding, libro de órdenes, historial del halving y cómo un exchange cubre pérdidas. Sin radar de ballenas y sin orden de compra o venta."
+        AppLanguage.ITALIAN -> "I capitoli 1–17 sono gratuiti: regole della rete, non segnali di trading. Pro apre altre cinque lezioni — leva e liquidazione, funding, order book, storia dell'halving e come un exchange copre le perdite. Nessun whale radar e nessun ordine di acquisto o vendita."
+        AppLanguage.ENGLISH -> "Chapters 1–17 are free: network rules, not trade calls. Pro opens five more lessons — leverage and liquidation, funding, the order book, halving history, and how a venue covers losses. No whale radar and no buy or sell order."
     }
 
     val unlockBtnText = when (language) {
@@ -717,12 +729,12 @@ private fun LockedChapterGatekeeper(
     }
 
     val backFreeText = when (language) {
-        AppLanguage.GREEK -> "Επιστροφή στο Κεφάλαιο 1 (Δωρεάν)"
-        AppLanguage.GERMAN -> "Zurück zu Kapitel 1 (Gratis)"
-        AppLanguage.FRENCH -> "Retour au Chapitre 1 (Gratuit)"
-        AppLanguage.SPANISH -> "Volver al Capítulo 1 (Gratis)"
-        AppLanguage.ITALIAN -> "Torna al Capitolo 1 (Gratis)"
-        AppLanguage.ENGLISH -> "Back to Chapter 1 (Free)"
+        AppLanguage.GREEK -> "Επιστροφή στα δωρεάν κεφάλαια"
+        AppLanguage.GERMAN -> "Zurück zu den Gratis-Kapiteln"
+        AppLanguage.FRENCH -> "Retour aux chapitres gratuits"
+        AppLanguage.SPANISH -> "Volver a los capítulos gratis"
+        AppLanguage.ITALIAN -> "Torna ai capitoli gratuiti"
+        AppLanguage.ENGLISH -> "Back to the free chapters"
     }
 
     Column(
@@ -1018,12 +1030,12 @@ private fun ChapterPickerSheetContent(
     }
 
     val sheetSub = when (language) {
-        AppLanguage.GREEK -> "17 Κεφάλαια · Blockchain & Πώς Λειτουργεί"
-        AppLanguage.GERMAN -> "17 Kapitel · Blockchain & Mechanismen"
-        AppLanguage.FRENCH -> "17 Chapitres · Blockchain & Fonctionnement"
-        AppLanguage.SPANISH -> "17 Capítulos · Blockchain y Funcionamiento"
-        AppLanguage.ITALIAN -> "17 Capitoli · Blockchain e Meccanismi"
-        AppLanguage.ENGLISH -> "17 Chapters · Blockchain & Mechanism"
+        AppLanguage.GREEK -> "22 κεφάλαια · 1–17 δωρεάν · 18–22 Pro"
+        AppLanguage.GERMAN -> "22 Kapitel · 1–17 gratis · 18–22 Pro"
+        AppLanguage.FRENCH -> "22 chapitres · 1–17 gratuits · 18–22 Pro"
+        AppLanguage.SPANISH -> "22 capítulos · 1–17 gratis · 18–22 Pro"
+        AppLanguage.ITALIAN -> "22 capitoli · 1–17 gratuiti · 18–22 Pro"
+        AppLanguage.ENGLISH -> "22 chapters · 1–17 free · 18–22 Pro"
     }
 
     val freeBadge = when (language) {
