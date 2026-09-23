@@ -560,7 +560,7 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val aiQuickActionAltseason: String = "Preparación Altseason"
     override val aiDisclaimer: String = "Desarrollado con modelos Gemini AI y telemetría en tiempo real. No es asesoramiento financiero."
     override val aiThinking: String = "Analizando telemetría y libro de órdenes en vivo..."
-    override val aiGreeting: String = "¡Hola! Soy tu Analista IA en tiempo real de CryptoCycles. Pregúntame sobre precios actuales, tasas de financiación, patrones de ciclo halving o zonas de liquidación."
+    override val aiGreeting: String = "Estoy aquí. ¿Qué te gustaría ver?"
     override val aiClearHistory: String = "Limpiar"
     override val aiLiveContextTag: String = "Datos en Vivo Conectados"
     override val aiPromptPrefixCycle: String = "Analiza la fase actual del ciclo halving, el riesgo y los análogos históricos."

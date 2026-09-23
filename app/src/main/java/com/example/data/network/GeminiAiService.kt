@@ -76,6 +76,10 @@ class GeminiAiService(
             AppLanguage.ITALIAN -> "Italian (Italiano)"
         }
 
+        if (isGreetingOnly(prompt)) {
+            return@withContext presenceReply(effectiveLanguage)
+        }
+
         if (apiKey.isNotBlank()) {
             for (model in MODELS) {
                 // Standard generateContent first: search grounding is extra cost and often quota-blocked.
@@ -111,6 +115,55 @@ class GeminiAiService(
         } else {
             ""
         }
+    }
+
+    internal fun presenceReply(language: AppLanguage): String = when (language) {
+        AppLanguage.GREEK -> "Είμαι εδώ. Τι θα θέλατε να δούμε;"
+        AppLanguage.GERMAN -> "Ich bin da. Was möchten Sie uns ansehen?"
+        AppLanguage.FRENCH -> "Je suis là. Que souhaitez-vous voir ?"
+        AppLanguage.SPANISH -> "Estoy aquí. ¿Qué te gustaría ver?"
+        AppLanguage.ITALIAN -> "Sono qui. Cosa vorresti vedere?"
+        AppLanguage.ENGLISH -> "I'm here. What would you like to see?"
+    }
+
+    internal fun isGreetingOnly(prompt: String): Boolean {
+        val p = prompt.lowercase(Locale.ROOT).trim()
+            .trim('!', '?', '.', ',', ';', '…')
+            .replace(Regex("\\s+"), " ")
+        if (p.isEmpty()) return true
+        if (hasMarketIntent(p)) return false
+
+        val exact = setOf(
+            "hi", "hey", "yo", "hello", "helloo", "hellooo",
+            "geia", "geia sou", "geia sas", "γεια", "γεια σου", "γεια σας",
+            "test", "testing",
+            "hey there", "hi there",
+            "eimai edw", "είμαι εδώ", "eisai ekei", "είσαι εκεί",
+            "kalimera", "καλημερα", "καλημέρα",
+            "kalispera", "καλησπερα", "καλησπέρα"
+        )
+        if (p in exact) return true
+
+        val presence = listOf(
+            "who are you", "ποιος εισαι", "ποιος είσαι", "poios eisai",
+            "ti kaneis", "τι κανεις", "τι κάνεις",
+            "douleveis", "δουλευεις", "δουλεύεις",
+            "leitourgeis", "λειτουργεις", "λειτουργείς",
+            "are you live", "are you livee", "are you online", "are you there",
+            "eisai live", "είσαι live", "eisai online", "είσαι online"
+        )
+        if (presence.any { p == it || p.startsWith("$it?") || p.startsWith("$it !") }) return true
+
+        return p.matches(Regex("^(hi+|hey+|hello+|geia+|γεια+)(\\s+(sou|sas|there))?$"))
+    }
+
+    private fun hasMarketIntent(normalizedPrompt: String): Boolean {
+        val needles = listOf(
+            "btc", "eth", "sol", "xrp", "price", "τιμ", "timh", "cycle", "κυκλ", "kykl",
+            "halving", "funding", "futures", "whale", "alt", "doge", "ada", "chart",
+            "support", "resistance", "buy", "sell", "αγορ", "πουλ"
+        )
+        return needles.any { normalizedPrompt.contains(it) }
     }
 
     private fun callGeminiRestApi(
@@ -156,8 +209,9 @@ class GeminiAiService(
             3. REAL-TIME DATA PRECISION: Always use the exact real-time prices and values from the Live Telemetry Context below. Never guess, invent, or approximate prices.
             4. TIME & GENERAL QUERIES: If the user asks for the time/date, use the live device timestamp provided. If the user asks general or non-crypto questions, answer clearly, intelligently, and conversationally without forcing crypto into the conversation.
             5. Multilingual & Natural: Default to $targetLangName. If the prompt is in Greek or Greeklish (e.g., "t timh exei to xrp twra", "ti wra einai", "poso kanei to sol"), ALWAYS reply in fluent, natural Greek (Ελληνικά). If the user asks in English, German, French, Spanish, etc., adapt immediately and reply fluently in that language!
-            6. Formatting: Use clean markdown with bold numbers and bullet points.
+            6. Formatting: Use clean markdown with bold numbers and bullet points. Keep replies short unless the user asked for detail.
             7. REFUSE EXECUTION ORDERS & TARGETS: You must refuse buy/sell execution orders and must not invent price targets. Explain data on screen only.
+            8. GREETINGS STAY EMPTY OF ANALYSIS: If the user only says hello / hi / γεια / test / "are you there", reply with ONE clean sentence such as "I'm here. What would you like to see?" or "Είμαι εδώ. Τι θα θέλατε να δούμε;". Do not dump prices, cycle lectures, or a menu of topics.
             
             Real-Time Live Telemetry Context:
             $timeLine
@@ -275,12 +329,7 @@ class GeminiAiService(
         val isSolana = p.contains("solana") || p.contains("sol") || p.contains("σολανα")
         val isEthereum = p.contains("ethereum") || p.contains("eth") || p.contains("αιθεριο")
 
-        // Conversational / Greeting / Live checks
-        val isGreetingOrLiveCheck = p.contains("live") || p.contains("online") || p.contains("hello") ||
-                p.contains("hi") || p.contains("geia") || p.contains("γεια") || p.contains("test") ||
-                p.contains("who are you") || p.contains("ποιος εισαι") || p.contains("poios eisai") ||
-                p.contains("ti kaneis") || p.contains("δουλευεις") || p.contains("douleveis") ||
-                p.contains("leitourgeis") || p.contains("λειτουργεις") || p == "hey" || p == "yo"
+        val isGreetingOrLiveCheck = isGreetingOnly(prompt)
 
         val isPeakOrAth = p.contains("ath") || p.contains("all time high") || p.contains("peak") ||
                 p.contains("top") || p.contains("κορυφ") || p.contains("υψηλο") || p.contains("korifi")
@@ -345,20 +394,7 @@ class GeminiAiService(
                     • **Spot ETFs & L2s:** Τα Layer 2 δίκτυα (Arbitrum, Base, Optimism) συνεχίζουν να απορροφούν όγκο συναλλαγών.
                     • **Συσχέτιση:** Η επιτάχυνση του ETH αποτελεί ιστορικά το έναυσμα για ευρύτερο Altseason.
                 """.trimIndent()
-                isGreetingOrLiveCheck -> """
-                    **👋 Γεια σου! Είμαι ζωντανά συνδεδεμένος και έτοιμος!**
-                    
-                    Είμαι ο **AI Market Analyst** του CryptoCycles. Παρακολουθώ σε πραγματικό χρόνο τις εξελίξεις στην αγορά των κρυπτονομισμάτων.
-                    
-                    💡 **Τι μπορείς να με ρωτήσεις:**
-                    • **4ετής Κύκλος & Halving:** Σε ποια φάση του κύκλου βρισκόμαστε και πότε αναμένονται οι ιστορικές κορυφές.
-                    • **Ανάλυση Bitcoin, ETH & SOL:** Τάσεις, επίπεδα στήριξης/αντίστασης και κινητικότητα.
-                    • **Παράγωγα & Funding Rates:** Επίπεδα μόχλευσης στα Futures και κίνδυνοι ρευστοποιήσεων.
-                    • **Altcoins & Altseason:** Πότε ενεργοποιείται το Altseason με βάση το BTC Dominance.
-                    • **Δείκτες Ψυχολογίας:** Ανάλυση Fear & Greed Index και macro συνθηκών.
-                    
-                    *Ρώτησέ με οτιδήποτε θέλεις συγκεκριμένα!*
-                """.trimIndent()
+                isGreetingOrLiveCheck -> presenceReply(language)
 
                 isBuyingStrategy -> """
                     **🎯 Στρατηγική Εισόδου & Διαχείρισης Ρίσκου**
@@ -422,17 +458,7 @@ class GeminiAiService(
                     • **Σύνοψη:** Παρακολουθούμε τα επίπεδα στήριξης και τη ροή στα Spot ETFs για επιβεβαίωση της επόμενης ανοδικής κίνησης.
                 """.trimIndent()
 
-                else -> """
-                    **💡 CryptoCycles AI Ανάλυση**
-                    
-                    Σχετικά με το ερώτημά σου: *"$prompt"*
-                    
-                    • **Τρέχουσα Εικόνα Αγοράς:** Το Bitcoin κινείται στα `$btcPriceFormatted` με κυριαρχία `$btcDomFormatted`.
-                    • **Κύκλος & Halving:** Διανύουμε την περίοδο `$halvingDays` μετά το 4ο Halving, η οποία ιστορικά αποτελεί την κύρια φάση διαμόρφωσης της τάσης.
-                    • **Κλίμα Αγοράς:** Ο δείκτης Fear & Greed βρίσκεται στο `$fng / 100` (${snapshot.fearAndGreedSentiment}), με το Funding Rate στο `$fundingFormatted`.
-                    
-                    Αν χρειάζεσαι περισσότερες λεπτομέρειες για συγκεκριμένα νομίσματα, τεχνικούς δείκτες ή στρατηγικές διαχείρισης ρίσκου, γράψε μου την απορία σου!
-                """.trimIndent()
+                else -> presenceReply(language)
             }
         }
 
@@ -473,20 +499,7 @@ class GeminiAiService(
                 • **Altseason Trigger:** A sustained breakout in ETH/BTC historically serves as the catalyst for broad altcoin liquidity expansion.
             """.trimIndent()
 
-            isGreetingOrLiveCheck -> """
-                **👋 Hello! I am live and online!**
-                
-                I am the **CryptoCycles AI Market Analyst**, tracking real-time crypto cycle metrics, derivatives flow, and on-chain dynamics.
-                
-                💡 **What you can ask me:**
-                • **4-Year Cycle & Halving:** Phase analysis and historical cycle peak projections.
-                • **Bitcoin, ETH & SOL:** Price trends, key support/resistance levels, and momentum.
-                • **Futures & Funding Rates:** Leverage health, liquidation clusters, and squeeze risks.
-                • **Altcoins & Altseason:** Capital rotation triggers and BTC Dominance radar.
-                • **Market Sentiment:** Fear & Greed breakdown and macro risk analysis.
-                
-                *Ask me anything specific about the crypto market!*
-            """.trimIndent()
+            isGreetingOrLiveCheck -> presenceReply(language)
 
             isBuyingStrategy -> """
                 **🎯 Entry Strategy & Risk Management**
@@ -550,17 +563,7 @@ class GeminiAiService(
                 • **Summary:** Watch key support levels and ETF spot flows to gauge continuation momentum.
             """.trimIndent()
 
-            else -> """
-                **💡 CryptoCycles AI Intelligence**
-                
-                Regarding your query: *"$prompt"*
-                
-                • **Current Market Posture:** Bitcoin is trading at `$btcPriceFormatted` with `$btcDomFormatted` dominance.
-                • **Cycle Progression:** We are `$halvingDays` post-Halving, in the core macro expansion corridor.
-                • **Market Sentiment:** Fear & Greed sits at `$fng / 100` (${snapshot.fearAndGreedSentiment}) with a `$fundingFormatted` funding rate baseline.
-                
-                Feel free to ask for specific coin analyses, technical indicators, or risk management strategies!
-            """.trimIndent()
+            else -> presenceReply(language)
         }
     }
 }

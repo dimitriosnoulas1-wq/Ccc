@@ -638,7 +638,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val aiQuickActionAltseason: String = "Ετοιμότητα Altseason"
     override val aiDisclaimer: String = "Τροφοδοτείται από ζωντανά μοντέλα Gemini AI & on-chain τηλεμετρία. Δεν αποτελεί οικονομική συμβουλή."
     override val aiThinking: String = "Ανάλυση ζωντανών δεδομένων & order book..."
-    override val aiGreeting: String = "Γεια σας! Είμαι ο ζωντανός AI Αναλυτής του CryptoCycles. Ρωτήστε με οτιδήποτε για τις τρέχουσες τιμές, τα funding rates, τα μοτίβα του halving ή τις ζώνες ρευστοποιήσεων."
+    override val aiGreeting: String = "Είμαι εδώ. Τι θα θέλατε να δούμε;"
     override val aiClearHistory: String = "Καθαρισμός"
     override val aiLiveContextTag: String = "Ζωντανά Δεδομένα Συνδεδεμένα"
     override val aiPromptPrefixCycle: String = "Κάνε ανάλυση της τρέχουσας φάσης του κύκλου halving, του ρίσκου και των ιστορικών αναλογικών."
