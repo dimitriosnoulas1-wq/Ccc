@@ -27,6 +27,7 @@ object HistoricalMarketRepository {
     data class Candle(val timeMs: Long, val close: Double)
 
     private val cache = ConcurrentHashMap<String, Pair<Long, CycleFractalData>>()
+    private val candleCache = ConcurrentHashMap<String, Pair<Long, List<Candle>>>()
     private const val TTL_MS = 10 * 60 * 1000L
 
     private const val DAY_MS = 86_400_000L
@@ -46,6 +47,21 @@ object HistoricalMarketRepository {
         val data = buildHalvingOverlay(symbol, candles, now) ?: return@withContext null
         cache[key] = now to data
         data
+    }
+
+    suspend fun loadRecentDaily(symbol: String, days: Int): List<Candle>? = withContext(Dispatchers.IO) {
+        val key = symbol.uppercase()
+        val now = System.currentTimeMillis()
+        val all = candleCache[key]?.let { (at, data) ->
+            if (now - at < TTL_MS) data else null
+        } ?: run {
+            val fetched = fetchDailyHistory(symbol) ?: return@withContext null
+            candleCache[key] = now to fetched
+            fetched
+        }
+        if (days <= 0) return@withContext all
+        val cutoff = now - days.toLong() * DAY_MS
+        all.filter { it.timeMs >= cutoff }.ifEmpty { all.takeLast(days.coerceAtLeast(2)) }
     }
 
     private fun fetchDailyHistory(symbol: String): List<Candle>? {
