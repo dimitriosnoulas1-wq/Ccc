@@ -100,7 +100,9 @@ fun DefiLlamaStablecoinsCard(
                             .background(flowColor, CircleShape)
                     )
                     Text(
-                        text = if (isGreek) {
+                        text = if (!liquidityData.isLive) {
+                            if (isGreek) "Offline" else "Offline"
+                        } else if (isGreek) {
                             if (isExpanding) "Επέκταση Ρευστότητας" else "Συρρίκνωση Ρευστότητας"
                         } else {
                             if (isExpanding) "Liquidity Inflow" else "Liquidity Outflow"

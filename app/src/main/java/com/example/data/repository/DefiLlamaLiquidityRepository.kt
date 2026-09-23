@@ -13,17 +13,7 @@ import org.json.JSONObject
 class DefiLlamaLiquidityRepository(
     private val scope: CoroutineScope
 ) {
-    private val _liquidityData = MutableStateFlow(
-        StablecoinLiquidityData(
-            totalCirculatingUsd = 172_450_000_000.0,
-            change7dUsd = 1_850_000_000.0,
-            change7dPercent = 1.08,
-            usdtDominancePercent = 69.8,
-            usdcCirculatingUsd = 35_400_000_000.0,
-            isLiquidityExpanding = true,
-            sourceName = "DefiLlama (Global Stablecoins)"
-        )
-    )
+    private val _liquidityData = MutableStateFlow(StablecoinLiquidityData())
     val liquidityData: StateFlow<StablecoinLiquidityData> = _liquidityData.asStateFlow()
 
     init {

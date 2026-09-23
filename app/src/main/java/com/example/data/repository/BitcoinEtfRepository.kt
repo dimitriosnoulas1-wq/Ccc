@@ -16,15 +16,7 @@ import java.util.regex.Pattern
 class BitcoinEtfRepository(
     private val scope: CoroutineScope
 ) {
-    private val _etfFlowData = MutableStateFlow(
-        BitcoinEtfFlowData(
-            oneDayNetFlowMillionUsd = 184.2,
-            fiveDayCumulativeMillionUsd = 892.6,
-            asOfDate = getFormattedTodayDate(),
-            isAvailable = true,
-            sourceName = "Farside Investors / Institutional Public Records"
-        )
-    )
+    private val _etfFlowData = MutableStateFlow(BitcoinEtfFlowData())
     val etfFlowData: StateFlow<BitcoinEtfFlowData> = _etfFlowData.asStateFlow()
 
     init {
@@ -48,14 +40,10 @@ class BitcoinEtfRepository(
                 }
             }
         } catch (_: Throwable) {
-            // Fallback gracefully to current verified snapshot with today's date
         }
-
-        // Keep verified baseline active
-        _etfFlowData.value = _etfFlowData.value.copy(
-            asOfDate = getFormattedTodayDate(),
-            isAvailable = true
-        )
+        if (!_etfFlowData.value.isLive) {
+            _etfFlowData.value = BitcoinEtfFlowData(asOfDate = getFormattedTodayDate())
+        }
     }
 
     private fun parseFarsideHtml(html: String): BitcoinEtfFlowData? {

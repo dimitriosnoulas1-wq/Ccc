@@ -31,7 +31,6 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.TrendingDown
@@ -143,7 +142,7 @@ fun GrokZigZagChart(
     coin: CryptoCoin,
     selectedTimeframe: ChartTimeframe,
     onTimeframeSelected: (ChartTimeframe) -> Unit,
-    showProjection: Boolean = true,
+    showProjection: Boolean = false,
     onToggleProjection: () -> Unit = {},
     isLogScale: Boolean = false,
     onToggleLogScale: (() -> Unit)? = null,
@@ -499,54 +498,14 @@ fun GrokZigZagChart(
                     color = TextMuted
                 )
                 Spacer(modifier = Modifier.height(2.dp))
-                if (!isProUnlocked) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        CosmicVoidSurfaceElevated,
-                                        CosmicVoidSurface
-                                    )
-                                )
-                            )
-                            .border(
-                                1.dp,
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        QuantumCyan,
-                                        QuantumCyan.copy(alpha = 0.70f)
-                                    )
-                                ),
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = "Pro Locked",
-                                tint = QuantumCyan,
-                                modifier = Modifier.size(11.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Pro Target",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = QuantumCyan
-                            )
-                        }
-                    }
-                } else {
-                    Text(
-                        text = formatAxisPrice(projectedTargetPrice * currency.rateToUsd.toFloat(), currency.symbol),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = trendColor
-                    )
-                }
+                Text(
+                    text = if (coin.priceUsd > 0.0) {
+                        formatAxisPrice(projectedTargetPrice * currency.rateToUsd.toFloat(), currency.symbol)
+                    } else "—",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = trendColor
+                )
             }
         }
 
@@ -1556,45 +1515,18 @@ private fun generateCompleteCyclePoints(
         }
     }
 
-    // Historical 2020 & 2016 Analog curves uniquely derived from coin data
-    val g2020 = (coin.analog.gainPostMatchingDate2020 / 1000.0).toFloat().coerceIn(0.5f, 4.0f)
-    val g2016 = (coin.analog.gainPostMatchingDate2016 / 1000.0).toFloat().coerceIn(0.6f, 5.0f)
+    val analog2020 = emptyList<ChartPoint>()
+    val analog2016 = emptyList<ChartPoint>()
 
-    val analog2020 = when (timeframe) {
-        ChartTimeframe.CYCLE -> listOf(
-            ChartPoint(0.0f, atl * 1.05f),
-            ChartPoint(0.20f, ath * 0.24f),
-            ChartPoint(0.34f, ath * 0.09f),
-            ChartPoint(0.50f, ath * 0.88f),
-            ChartPoint(nowX, currentPrice * 1.04f),
-            ChartPoint(0.85f, currentPrice * (1.2f + g2020 * 0.3f)),
-            ChartPoint(1.0f, currentPrice * (1.6f + g2020 * 0.6f))
-        )
-        else -> listOf(
-            ChartPoint(0.0f, currentPrice * 0.90f),
-            ChartPoint(0.32f, currentPrice * 1.08f),
-            ChartPoint(nowX, currentPrice * 1.03f),
-            ChartPoint(1.0f, currentPrice * (1.15f + g2020 * 0.15f))
-        )
-    }
-
-    val analog2016 = when (timeframe) {
-        ChartTimeframe.CYCLE -> listOf(
-            ChartPoint(0.0f, atl * 0.95f),
-            ChartPoint(0.18f, ath * 0.19f),
-            ChartPoint(0.32f, ath * 0.06f),
-            ChartPoint(0.48f, ath * 0.76f),
-            ChartPoint(nowX, currentPrice * 0.98f),
-            ChartPoint(0.85f, currentPrice * (1.3f + g2016 * 0.35f)),
-            ChartPoint(1.0f, currentPrice * (1.8f + g2016 * 0.7f))
-        )
-        else -> listOf(
-            ChartPoint(0.0f, currentPrice * 0.85f),
-            ChartPoint(0.32f, currentPrice * 1.04f),
-            ChartPoint(nowX, currentPrice * 0.99f),
-            ChartPoint(1.0f, currentPrice * (1.25f + g2016 * 0.20f))
-        )
-    }
+    val honestSummary = if (!showProjection) {
+        if (coin.priceUpdatedAtMs > 0L) {
+            "Live 24h ${String.format(java.util.Locale.US, "%+.1f%%", change)}"
+        } else {
+            "Awaiting live price"
+        }
+    } else trajectorySummary
+    val honestTarget = if (!showProjection) currentPrice else projectedTargetPrice
+    val honestLabel = if (!showProjection) "Live" else projectedTargetLabel
 
     return CyclePointsBundle(
         pastPoints = past,
@@ -1602,8 +1534,8 @@ private fun generateCompleteCyclePoints(
         analog2020Points = analog2020,
         analog2016Points = analog2016,
         isProjectedBullish = isBullish,
-        trajectorySummary = trajectorySummary,
-        projectedTargetPrice = projectedTargetPrice,
-        projectedTargetLabel = projectedTargetLabel
+        trajectorySummary = honestSummary,
+        projectedTargetPrice = honestTarget,
+        projectedTargetLabel = honestLabel
     )
 }

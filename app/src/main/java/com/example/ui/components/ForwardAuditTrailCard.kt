@@ -99,7 +99,7 @@ fun ForwardAuditTrailCard(
                                 .padding(horizontal = 5.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "DEMO DATA",
+                                text = if (auditLogs.isNotEmpty()) "LIVE LOG" else "EMPTY",
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Black,
                                 color = NeonEmerald
@@ -137,7 +137,7 @@ fun ForwardAuditTrailCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "4 / 4",
+                        text = "${auditLogs.size}",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -159,7 +159,11 @@ fun ForwardAuditTrailCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "+28.2% Avg",
+                        text = run {
+                            val avg = auditLogs.mapNotNull { it.performancePercent }
+                            if (avg.isEmpty()) "—"
+                            else String.format(java.util.Locale.US, "%+.1f%% Avg", avg.average())
+                        },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -181,7 +185,11 @@ fun ForwardAuditTrailCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "100%",
+                        text = run {
+                            val verified = auditLogs.count { it.isVerified }
+                            if (auditLogs.isEmpty()) "—"
+                            else "${((verified.toDouble() / auditLogs.size) * 100).toInt()}%"
+                        },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -200,6 +208,13 @@ fun ForwardAuditTrailCard(
         val entriesToShow = if (isExpanded) auditLogs else auditLogs.take(2)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (auditLogs.isEmpty()) {
+                Text(
+                    text = if (isGreek) "Δεν υπάρχουν ακόμα live σήματα. Το log γεμίζει όταν αλλάζει το regime." else "No live signals yet. The log fills when the regime changes.",
+                    fontSize = 11.sp,
+                    color = palette.textMuted
+                )
+            }
             entriesToShow.forEach { entry ->
                 AuditEntryItem(
                     entry = entry,

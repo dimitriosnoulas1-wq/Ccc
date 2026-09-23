@@ -113,8 +113,7 @@ import com.example.util.LocalAppStrings
 enum class MacroSectionFilter(val titleEn: String, val titleEl: String) {
     ALL("All Macro", "Όλοι οι Δείκτες"),
     CYCLE_DAYS_ANALOG("⏳ Cycle Days & Analog", "⏳ Ημέρες Κύκλου & Αναλογία"),
-    ECONOMIC_CALENDAR("📅 Jobs & CPI Calendar", "📅 Ημερολόγιο NFP & CPI"),
-    RISK_BACKDROP("🌐 DXY, 10Y & FedWatch", "🌐 DXY, 10Y & FedWatch"),
+    RISK_BACKDROP("🌐 DXY, 10Y Yields", "🌐 DXY, 10Y"),
     RAINBOW("🌈 Rainbow Chart", "🌈 Rainbow Chart"),
     ALT_SEASON("⚡ Alt Season", "⚡ Alt Season"),
     FEAR_GREED("😱 Fear & Greed", "😱 Fear & Greed"),
@@ -133,8 +132,10 @@ fun MacroScreen(
     cycleCommandState: CycleCommandState = CycleCommandState(),
     stablecoinLiquidityData: StablecoinLiquidityData = StablecoinLiquidityData(),
     forwardAuditLogs: List<ForwardSignalAuditEntry> = emptyList(),
-    fearAndGreedScore: Int = 55,
-    fearAndGreedClassification: String = "Greed",
+    liveMovingAverages: com.example.data.model.LiveMovingAverages = com.example.data.model.LiveMovingAverages(),
+    globalRiskSnapshot: com.example.data.model.GlobalRiskSnapshot = com.example.data.model.GlobalRiskSnapshot(),
+    fearAndGreedScore: Int = 0,
+    fearAndGreedClassification: String = "—",
     macroSentiment: com.example.data.model.MacroMarketSentiment = com.example.data.model.MacroMarketSentiment(),
     isRefreshing: Boolean = false,
     isConnected: Boolean = true,
@@ -153,7 +154,6 @@ fun MacroScreen(
 
     // Collapsible section state for compact layout
     var cycleDaysExpanded by remember { mutableStateOf(true) }
-    var economicExpanded by remember { mutableStateOf(true) }
     var riskBackdropExpanded by remember { mutableStateOf(true) }
     var rainbowExpanded by remember { mutableStateOf(true) }
     var altSeasonExpanded by remember { mutableStateOf(true) }
@@ -220,32 +220,33 @@ fun MacroScreen(
             score = resolvedFgScore,
             sentiment = resolvedFgSent,
             sentimentEl = sentimentEl,
-            yesterdayScore = macroSentiment.fearAndGreedYesterday ?: (resolvedFgScore - 2).coerceIn(1, 100),
-            lastWeekScore = macroSentiment.fearAndGreedLastWeek ?: (resolvedFgScore - 4).coerceIn(1, 100),
-            lastMonthScore = macroSentiment.fearAndGreedLastMonth ?: (resolvedFgScore + 3).coerceIn(1, 100)
+            yesterdayScore = macroSentiment.fearAndGreedYesterday ?: 0,
+            lastWeekScore = macroSentiment.fearAndGreedLastWeek ?: 0,
+            lastMonthScore = macroSentiment.fearAndGreedLastMonth ?: 0
         )
     }
 
-    val piCycleData = remember(btcPriceUsd) {
-        val dma111 = btcPriceUsd * 0.88
-        val dma350x2 = btcPriceUsd * 1.48
-        val ema150 = btcPriceUsd * 0.86
-        val sma471x0745 = btcPriceUsd * 0.52
-        val ma200w = 43800.0
-        val topGap = ((dma350x2 - dma111) / dma111 * 100.0).coerceAtLeast(0.0)
-        val bottomGap = ((ema150 - sma471x0745) / sma471x0745 * 100.0).coerceAtLeast(0.0)
+    val piCycleData = remember(btcPriceUsd, liveMovingAverages) {
+        val dma111 = liveMovingAverages.dma111 ?: 0.0
+        val dma350x2 = liveMovingAverages.dma350x2 ?: 0.0
+        val ema150 = liveMovingAverages.ema150 ?: 0.0
+        val sma471x0745 = liveMovingAverages.sma471x0745 ?: 0.0
+        val ma200w = liveMovingAverages.ma200w ?: 0.0
+        val topGap = if (dma111 > 0.0 && dma350x2 > 0.0) ((dma350x2 - dma111) / dma111 * 100.0) else 0.0
+        val bottomGap = if (ema150 > 0.0 && sma471x0745 > 0.0) ((ema150 - sma471x0745) / sma471x0745 * 100.0) else 0.0
         PiCycleData(
             currentBtcPrice = btcPriceUsd,
             dma111 = dma111,
             dma350x2 = dma350x2,
-            isCrossed = dma111 >= dma350x2,
+            isCrossed = dma111 > 0.0 && dma350x2 > 0.0 && dma111 >= dma350x2,
             distanceToTopCrossPct = topGap,
             ema150 = ema150,
             sma471x0745 = sma471x0745,
-            isBottomCrossed = ema150 <= sma471x0745,
+            isBottomCrossed = ema150 > 0.0 && sma471x0745 > 0.0 && ema150 <= sma471x0745,
             distanceToBottomCrossPct = bottomGap,
             ma200w = ma200w,
-            distanceAbove200wPct = ((btcPriceUsd - ma200w) / ma200w * 100.0).coerceAtLeast(0.0)
+            distanceAbove200wPct = if (ma200w > 0.0 && btcPriceUsd > 0.0) ((btcPriceUsd - ma200w) / ma200w * 100.0) else 0.0,
+            isLive = liveMovingAverages.isLive
         )
     }
 
@@ -382,7 +383,8 @@ fun MacroScreen(
                 onOpenProModal = onOpenProModal,
                 isGreek = isGreek,
                 strings = strings,
-                palette = palette
+                palette = palette,
+                cycle = cycleCommandState
             )
         }
 
@@ -402,7 +404,9 @@ fun MacroScreen(
             MacroActionableStrategyCards(
                 isGreek = isGreek,
                 btcPrice = btcPriceUsd,
-                currency = currency
+                currency = currency,
+                cycle = cycleCommandState,
+                sma200d = liveMovingAverages.sma200d
             )
         }
 
@@ -479,31 +483,11 @@ fun MacroScreen(
             }
         }
 
-        // 2a. Economic Calendar & Jobs / CPI Prints
-        if (selectedFilter == MacroSectionFilter.ALL || selectedFilter == MacroSectionFilter.ECONOMIC_CALENDAR) {
-            item {
-                CollapsibleCardContainer(
-                    title = if (isGreek) "📅 Οικονομικά Γεγονότα & NFP / CPI" else "📅 Economic Prints & NFP / CPI",
-                    subtitle = if (isGreek) "Επόμενο: US Jobs (NFP) Παρασκευή 15:30 UTC" else "Next: US Jobs (NFP) Friday 15:30 UTC",
-                    badge = "NFP FRIDAY",
-                    badgeColor = palette.primary,
-                    isExpanded = economicExpanded,
-                    onToggle = { economicExpanded = !economicExpanded }
-                ) {
-                    EconomicCalendarCard(
-                        isProUnlocked = isProUnlocked,
-                        onOpenProModal = onOpenProModal,
-                        isGreek = isGreek
-                    )
-                }
-            }
-        }
-
-        // 2b. Global Risk Backdrop: FedWatch, DXY & US 10Y Yield
+        // 2b. Global Risk Backdrop: DXY & US 10Y Yield
         if (selectedFilter == MacroSectionFilter.ALL || selectedFilter == MacroSectionFilter.RISK_BACKDROP) {
             item {
                 CollapsibleCardContainer(
-                    title = if (isGreek) "🌐 DXY, 10Y Yields & FedWatch" else "🌐 DXY, 10Y Yields & FedWatch",
+                    title = if (isGreek) "🌐 DXY, 10Y Yields" else "🌐 DXY, 10Y Yields",
                     subtitle = if (isGreek) "Παγκόσμια Ρευστότητα & Αποδόσεις Ομολόγων" else "Global USD Liquidity & Sovereign Yields",
                     badge = "MACRO BACKDROP",
                     badgeColor = NeonPurple,
@@ -513,7 +497,8 @@ fun MacroScreen(
                     GlobalRiskBackdropCard(
                         isProUnlocked = isProUnlocked,
                         onOpenProModal = onOpenProModal,
-                        isGreek = isGreek
+                        isGreek = isGreek,
+                        risk = globalRiskSnapshot
                     )
                 }
             }
@@ -642,7 +627,9 @@ fun MacroScreen(
 private fun MacroActionableStrategyCards(
     isGreek: Boolean,
     btcPrice: Double,
-    currency: Currency
+    currency: Currency,
+    cycle: CycleCommandState,
+    sma200d: Double?
 ) {
     val palette = LocalAppColors.current
 
@@ -660,7 +647,7 @@ private fun MacroActionableStrategyCards(
                 color = palette.primary
             )
             Text(
-                text = if (isGreek) "Φάση: Συσσώρευση" else "Phase: Accumulation",
+                text = if (isGreek) "Φάση: ${cycle.regime.titleEl}" else "Phase: ${cycle.regime.titleEn}",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = GainGreen
@@ -768,10 +755,15 @@ private fun MacroActionableStrategyCards(
                     }
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = if (isGreek)
-                            "Ιστορικές διορθώσεις συχνά δοκιμάζουν τον 200D MA ($88.5k) ή καταγράφονται όταν ο δείκτης Fear & Greed υποχωρεί κάτω από το 45 (Ζώνη Φόβου)."
-                        else
-                            "Historical pullbacks frequently retest the 200D MA ($88.5k) or manifest when Fear & Greed retracts below 45 (Fear zone).",
+                        text = run {
+                            val maText = if (sma200d != null && sma200d > 0.0) {
+                                com.example.util.AppNumberFormatter.formatPrice(sma200d, currency)
+                            } else "—"
+                            if (isGreek)
+                                "Οι διορθώσεις συχνά δοκιμάζουν τον live 200D MA ($maText) ή εμφανίζονται όταν το Fear & Greed πέφτει κάτω από 45."
+                            else
+                                "Pullbacks often retest the live 200D MA ($maText) or appear when Fear & Greed drops below 45."
+                        },
                         fontSize = 11.5.sp,
                         lineHeight = 16.sp,
                         color = palette.textSecondary
@@ -935,7 +927,8 @@ fun WeeklyMacroBriefingCard(
     onOpenProModal: () -> Unit,
     isGreek: Boolean,
     strings: com.example.util.AppStrings,
-    palette: AppThemePalette
+    palette: AppThemePalette,
+    cycle: CycleCommandState
 ) {
     Box(
         modifier = Modifier
@@ -1033,7 +1026,7 @@ fun WeeklyMacroBriefingCard(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Green (Accumulate)",
+                                text = if (isGreek) cycle.regime.titleEl else cycle.regime.titleEn,
                                 fontSize = 12.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = GainGreen
@@ -1059,7 +1052,7 @@ fun WeeklyMacroBriefingCard(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = strings.weeklyBriefingActionAccumulate,
+                            text = if (isGreek) cycle.regime.actionEl else cycle.regime.actionEn,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp,
@@ -1087,19 +1080,27 @@ fun WeeklyMacroBriefingCard(
                     color = palette.primary
                 )
                 Text(
-                    text = strings.weeklyBriefingLine1,
+                    text = if (isGreek) cycle.keyStanceSummaryEl else cycle.keyStanceSummaryEn,
                     fontSize = 11.5.sp,
                     color = palette.textSecondary,
                     lineHeight = 16.sp
                 )
                 Text(
-                    text = strings.weeklyBriefingLine2,
+                    text = if (cycle.halvingDaysElapsed > 0) {
+                        if (isGreek) "Ημέρα ${cycle.halvingDaysElapsed} μετά το 4ο Halving. Rainbow: ${cycle.rainbowBandName}."
+                        else "Day ${cycle.halvingDaysElapsed} after the 4th Halving. Rainbow: ${cycle.rainbowBandName}."
+                    } else if (isGreek) "Αναμονή ζωντανού ρολογιού κύκλου." else "Waiting for live cycle clock.",
                     fontSize = 11.5.sp,
                     color = palette.textSecondary,
                     lineHeight = 16.sp
                 )
                 Text(
-                    text = strings.weeklyBriefingLine3,
+                    text = buildString {
+                        if (cycle.fundingIsLive) append(if (isGreek) "Funding ${"%.3f".format(cycle.fundingRatePercent)}%. " else "Funding ${"%.3f".format(cycle.fundingRatePercent)}%. ")
+                        if (cycle.etfFlowIsLive) append(if (isGreek) "ETF 5D ${"%.1f".format(cycle.etf5dNetFlowMillionUsd)}M. " else "ETF 5D ${"%.1f".format(cycle.etf5dNetFlowMillionUsd)}M. ")
+                        if (cycle.fearAndGreedIndex >= 0) append("Fear & Greed ${cycle.fearAndGreedIndex}.")
+                        if (isEmpty()) append(if (isGreek) "Χωρίς επιπλέον live επιβεβαίωση." else "No extra live confirmation yet.")
+                    },
                     fontSize = 11.5.sp,
                     color = palette.textSecondary,
                     lineHeight = 16.sp
@@ -1162,202 +1163,6 @@ fun WeeklyMacroBriefingCard(
 }
 
 /**
- * Economic Calendar Card: US Jobs (NFP), CPI, FOMC, GDP
- * Pro-gated live actual/forecast numbers with 3-line objective explanation
- */
-@Composable
-fun EconomicCalendarCard(
-    isProUnlocked: Boolean,
-    onOpenProModal: () -> Unit,
-    isGreek: Boolean
-) {
-    val palette = LocalAppColors.current
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // Spotlight Event: US Jobs / Non-Farm Payrolls (NFP)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (palette.isLight) Color(0xFFF8FAFC) else CosmicVoidSurface)
-                .border(1.dp, if (palette.isLight) palette.border else CosmicBorder, RoundedCornerShape(12.dp))
-                .padding(12.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .clip(CircleShape)
-                                .background(GainGreen)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isGreek) "US Jobs: Non-Farm Payrolls (NFP)" else "US Jobs: Non-Farm Payrolls (NFP)",
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = palette.textPrimary
-                        )
-                    }
-                    Text(
-                        text = "Friday 15:30 UTC",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = palette.primary
-                    )
-                }
-
-                // Metric row (Forecast / Previous / Impact)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(palette.surfaceElevated)
-                            .padding(8.dp)
-                    ) {
-                        Column {
-                            Text(text = "Forecast", fontSize = 9.5.sp, color = palette.textMuted)
-                            Text(
-                                text = "+185,000",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = palette.textPrimary
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(palette.surfaceElevated)
-                            .padding(8.dp)
-                    ) {
-                        Column {
-                            Text(text = "Previous", fontSize = 9.5.sp, color = palette.textMuted)
-                            Text(
-                                text = "+256,000",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = palette.textPrimary
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(palette.surfaceElevated)
-                            .padding(8.dp)
-                    ) {
-                        Column {
-                            Text(text = "Volatility", fontSize = 9.5.sp, color = palette.textMuted)
-                            Text(
-                                text = "High (±3.8%)",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = GainGreen
-                            )
-                        }
-                    }
-                }
-
-                // 3-Line structured explanation without buy/sell bias
-                MetricExplainerBox(
-                    whatItIs = "Monthly US employment change excluding farm workers, reported by the Bureau of Labor Statistics.",
-                    whatItShows = "Labor market tightness and economic activity directly shaping Federal Reserve rate decisions.",
-                    whatItDoesNotMean = "Macro liquidity context for interest rates, not a direct crypto directional signal."
-                )
-            }
-        }
-
-        // Secondary Economic Event: CPI Inflation
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (palette.isLight) Color(0xFFF8FAFC) else CosmicVoidSurface)
-                .border(1.dp, if (palette.isLight) palette.border else CosmicBorder, RoundedCornerShape(12.dp))
-                .padding(12.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (isGreek) "US Consumer Price Index (CPI)" else "US Consumer Price Index (CPI)",
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = palette.textPrimary
-                    )
-                    Text(
-                        text = "Next Wed 13:30 UTC",
-                        fontSize = 10.5.sp,
-                        color = palette.textMuted
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(palette.surfaceElevated)
-                            .padding(8.dp)
-                    ) {
-                        Column {
-                            Text(text = "Consensus YoY", fontSize = 9.5.sp, color = palette.textMuted)
-                            Text(
-                                text = "2.7%",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = palette.textPrimary
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(palette.surfaceElevated)
-                            .padding(8.dp)
-                    ) {
-                        Column {
-                            Text(text = "Prior YoY", fontSize = 9.5.sp, color = palette.textMuted)
-                            Text(
-                                text = "2.9%",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = palette.textPrimary
-                            )
-                        }
-                    }
-                }
-
-                MetricExplainerBox(
-                    whatItIs = "Headline inflation metric tracking average price changes across goods and services.",
-                    whatItShows = "Consumer purchasing power erosion and the path toward the Fed's 2% target.",
-                    whatItDoesNotMean = "Inflation trajectory context, not an algorithmic market execution trigger."
-                )
-            }
-        }
-    }
-}
-
-/**
  * Global Risk Backdrop: FedWatch, DXY Dollar Index, US 10-Year Treasury Yield, Brent Crude
  * Pro-gated live values with 3-line objective micro-copy
  */
@@ -1365,48 +1170,12 @@ fun EconomicCalendarCard(
 fun GlobalRiskBackdropCard(
     isProUnlocked: Boolean,
     onOpenProModal: () -> Unit,
-    isGreek: Boolean
+    isGreek: Boolean,
+    risk: com.example.data.model.GlobalRiskSnapshot
 ) {
     val palette = LocalAppColors.current
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        // 1. FedWatch Rate Cut Odds
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (palette.isLight) Color(0xFFF8FAFC) else CosmicVoidSurface)
-                .border(1.dp, if (palette.isLight) palette.border else CosmicBorder, RoundedCornerShape(12.dp))
-                .padding(12.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (isGreek) "FedWatch: Πιθανότητα Μείωσης Επιτοκίων" else "CME FedWatch: Rate Cut Odds",
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = palette.textPrimary
-                    )
-                    Text(
-                        text = "78.5% (25 bps cut)",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = GainGreen
-                    )
-                }
-
-                MetricExplainerBox(
-                    whatItIs = "Implied interest rate cut probability calculated from 30-day Fed Funds futures trading.",
-                    whatItShows = "Market consensus expectations for Federal Reserve monetary policy easing.",
-                    whatItDoesNotMean = "Market probability distribution, not a guaranteed central bank policy commitment."
-                )
-            }
-        }
-
         // 2. DXY (US Dollar Index)
         Box(
             modifier = Modifier
@@ -1429,7 +1198,10 @@ fun GlobalRiskBackdropCard(
                         color = palette.textPrimary
                     )
                     Text(
-                        text = "104.18 (-0.28%)",
+                        text = if (risk.dxy != null) {
+                            val chg = risk.dxyChangePct ?: 0.0
+                            String.format(java.util.Locale.US, "%.2f (%s%.2f%%)", risk.dxy, if (chg >= 0) "+" else "", chg)
+                        } else "—",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.primary
@@ -1466,7 +1238,10 @@ fun GlobalRiskBackdropCard(
                         color = palette.textPrimary
                     )
                     Text(
-                        text = "4.21% (-3.8 bps)",
+                        text = if (risk.us10y != null) {
+                            val bps = risk.us10yChangeBps ?: 0.0
+                            String.format(java.util.Locale.US, "%.2f%% (%s%.1f bps)", risk.us10y, if (bps >= 0) "+" else "", bps)
+                        } else "—",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.primary
@@ -1503,7 +1278,10 @@ fun GlobalRiskBackdropCard(
                         color = palette.textPrimary
                     )
                     Text(
-                        text = "$74.65/bbl (+0.4%)",
+                        text = if (risk.brent != null) {
+                            val chg = risk.brentChangePct ?: 0.0
+                            String.format(java.util.Locale.US, "$%.2f/bbl (%s%.2f%%)", risk.brent, if (chg >= 0) "+" else "", chg)
+                        } else "—",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.textPrimary

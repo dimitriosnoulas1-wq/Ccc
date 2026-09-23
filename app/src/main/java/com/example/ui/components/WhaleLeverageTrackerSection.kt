@@ -180,7 +180,7 @@ fun WhaleLeverageTrackerSection(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "2x - 50x DEMO",
+                                    text = if (positions.isNotEmpty()) "LIVE OI / LIQS" else "SYNCING",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = NeonEmerald
@@ -190,7 +190,7 @@ fun WhaleLeverageTrackerSection(
                     }
 
                     Text(
-                        text = if (isGreek) "Ζωντανές θέσεις εκατομμυρίων με μόχλευση (Longs/Shorts)" else "Live multi-million $ leverage positions & liquidations",
+                        text = if (isGreek) "Ζωντανό Open Interest και ρευστοποιήσεις (Binance / Bybit / OKX)" else "Live open interest and liquidations (Binance / Bybit / OKX)",
                         fontSize = 11.sp,
                         color = TextMuted
                     )

@@ -29,13 +29,20 @@ import com.example.data.model.MacroMarketSentiment
 import com.example.data.model.StablecoinLiquidityData
 import com.example.data.model.WhaleAlert
 import com.example.data.model.WhaleAlertSettings
+import com.example.data.model.AggregatedDerivativesSnapshot
+import com.example.data.model.GlobalRiskSnapshot
+import com.example.data.model.LiveMovingAverages
+import com.example.data.model.WhaleAlertType
+import com.example.data.model.WhaleFlowSnapshot
 import com.example.data.model.WhaleLeveragePosition
 import com.example.data.model.WhaleLeverageSummary
 import com.example.data.repository.BitcoinEtfRepository
 import com.example.data.repository.CryptoRepository
 import com.example.data.repository.DefiLlamaLiquidityRepository
+import com.example.data.repository.DerivativesRepository
 import com.example.data.repository.ForwardAuditTrailRepository
 import com.example.data.repository.FuturesTerminalRepository
+import com.example.data.repository.LiveMacroFeedsRepository
 import com.example.data.repository.WhaleAlertRepository
 import com.example.data.repository.WhaleLeverageRepository
 import com.example.engine.forecasting.QuantForecastEngine
@@ -114,6 +121,31 @@ class CryptoViewModel @JvmOverloads constructor(
     val whaleSettings: StateFlow<WhaleAlertSettings> = whaleRepository.settings
     val whaleLeveragePositions: StateFlow<List<WhaleLeveragePosition>> = whaleLeverageRepository.positions
     val whaleLeverageSummary: StateFlow<WhaleLeverageSummary> = whaleLeverageRepository.summary
+    val whaleFlowSnapshot: StateFlow<WhaleFlowSnapshot> = whaleAlerts.map { alerts ->
+        val cutoff = System.currentTimeMillis() - 86_400_000L
+        val recent = alerts.filter { it.timestamp >= cutoff }
+        val inflow = recent.filter {
+            it.type == WhaleAlertType.WHALE_BUY || it.type == WhaleAlertType.EXCHANGE_OUTFLOW
+        }.sumOf { it.amountUsd }
+        val outflow = recent.filter {
+            it.type == WhaleAlertType.EXCHANGE_INFLOW || it.type == WhaleAlertType.WHALE_TRANSFER
+        }.sumOf { it.amountUsd }
+        WhaleFlowSnapshot(
+            inflowUsd = inflow,
+            outflowUsd = outflow,
+            netUsd = inflow - outflow,
+            alertCount = recent.size,
+            isLive = recent.isNotEmpty(),
+            sourceLabel = "Binance USDT-M"
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WhaleFlowSnapshot())
+
+    private val _derivativesSnapshot = MutableStateFlow(DerivativesRepository.emptySnapshot("BTC"))
+    val derivativesSnapshot: StateFlow<AggregatedDerivativesSnapshot> = _derivativesSnapshot.asStateFlow()
+
+    private val liveMacroFeeds = LiveMacroFeedsRepository(viewModelScope)
+    val liveMovingAverages: StateFlow<LiveMovingAverages> = liveMacroFeeds.movingAverages
+    val globalRiskSnapshot: StateFlow<GlobalRiskSnapshot> = liveMacroFeeds.globalRisk
 
     // Futures Terminal streams
     val activeFuturesSymbol: StateFlow<String> = futuresRepository.currentSymbol
@@ -140,13 +172,15 @@ class CryptoViewModel @JvmOverloads constructor(
         centralizedPriceState,
         etfFlowData,
         stablecoinLiquidityData,
-        futuresMarkFunding
-    ) { priceState, etf, liq, funding ->
+        futuresMarkFunding,
+        futuresMacroSentiment
+    ) { priceState, etf, liq, funding, sentiment ->
         CycleCommandEngine.computeCycleCommandState(
             btcPrice = priceState.btcSpotPrice,
             etfFlowData = etf,
             liquidityData = liq,
-            futuresMarkFunding = funding
+            futuresMarkFunding = funding,
+            fearGreedScore = sentiment.fearAndGreedValue
         )
     }.stateIn(
         scope = viewModelScope,
@@ -190,9 +224,28 @@ class CryptoViewModel @JvmOverloads constructor(
         )
     )
 
-    // Forward Signal Audit Trail Repository
-    private val forwardAuditRepo: ForwardAuditTrailRepository = ForwardAuditTrailRepository()
+    private val forwardAuditRepo: ForwardAuditTrailRepository =
+        ForwardAuditTrailRepository(application.applicationContext)
     val forwardAuditLogs: StateFlow<List<ForwardSignalAuditEntry>> = forwardAuditRepo.auditLogs
+
+    val liveMacroSignal: StateFlow<MacroCycleSignal> = combine(
+        cycleCommandState,
+        futuresMacroSentiment
+    ) { cmd, sent ->
+        MacroCycleSignal(
+            halvingDaysPassed = cmd.halvingDaysElapsed,
+            totalCycleDays = cmd.halvingCycleLength,
+            cycleClockPhase = cmd.regime.titleEn,
+            riskScore = cmd.compositeCycleScore,
+            dominanceBtc = sent.btcDominance ?: 0.0,
+            fearGreedIndex = sent.fearAndGreedValue ?: 0,
+            fearGreedSentiment = sent.fearAndGreedClassification ?: "—",
+            buyWindowOpen = cmd.regime == com.example.data.model.MarketRegime.ACCUMULATION ||
+                cmd.regime == com.example.data.model.MarketRegime.CYCLE_EXPANSION,
+            sellWindowOpen = cmd.regime == com.example.data.model.MarketRegime.CYCLE_PEAK_EXIT,
+            matchingHistoricalDate = "Day ${cmd.halvingDaysElapsed} post-halving"
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MacroCycleSignal())
 
     // 30-Day In-App Alert History Log
     val alertHistory: StateFlow<List<AlertHistoryItem>> = AlertHistoryManager.alerts
@@ -394,15 +447,15 @@ class CryptoViewModel @JvmOverloads constructor(
             solPrice = solPrice,
             sol24hChange = solChange,
             solTs = bus.solSpot.tsMillis,
-            cyclePhase = "Phase 4: Early Bull Expansion (Mid-Cycle)",
-            cycleDay = daysSinceHalving + 14,
+            cyclePhase = cycleCommandState.value.regime.titleEn,
+            cycleDay = daysSinceHalving,
             daysSinceHalving = daysSinceHalving,
-            rainbowBand = "Accumulation / Support Base",
-            distance200w = "+54.2% above 200W SMA",
-            piCycleGap = "+48.6%",
-            fearAndGreedScore = macro.fearAndGreedValue ?: 55,
-            fearAndGreedSentiment = macro.fearAndGreedClassification ?: "Greed",
-            btcDominancePct = macro.btcDominance ?: 58.0,
+            rainbowBand = cycleCommandState.value.rainbowBandName.takeIf { it.isNotBlank() && it != "—" },
+            distance200w = formatMaDistance(btcPrice, liveMovingAverages.value.ma200w, "200W SMA"),
+            piCycleGap = formatPiGap(liveMovingAverages.value, btcPrice),
+            fearAndGreedScore = macro.fearAndGreedValue ?: 0,
+            fearAndGreedSentiment = macro.fearAndGreedClassification ?: "—",
+            btcDominancePct = macro.btcDominance ?: 0.0,
             altcoinSeasonIndex = calculatedAltSeason,
             fundingRatePct = if (markFunding?.fromExchange == true && markFunding.fundingRate != null) {
                 (markFunding.fundingRate ?: 0.0) * 100.0
@@ -412,8 +465,8 @@ class CryptoViewModel @JvmOverloads constructor(
             futuresMarkPrice = if (bus.btcMark.price > 0.0) bus.btcMark.price else (markFunding?.markPrice ?: 0.0),
             openInterestUsd = if (openInterest?.isAvailable == true) openInterest.openInterestUsd ?: 0.0 else 0.0,
             activeFuturesSymbol = activeFuturesSymbol.value,
-            whaleNet24h = "+$142M Net Accumulation",
-            marketStance = "Historical cycle alignment & institutional net flows",
+            whaleNet24h = formatWhaleNet(whaleFlowSnapshot.value),
+            marketStance = cycleCommandState.value.keyStanceSummaryEn,
             targetedCoinInfo = targetedInfo,
             allTrackedCoinsSummary = allSummary,
             topMarketPricesSummary = allSummary
@@ -495,9 +548,39 @@ class CryptoViewModel @JvmOverloads constructor(
 
         viewModelScope.launch {
             repository.coins.collect { coinList ->
-                whaleLeverageRepository.updateWithLiveCoins(coinList)
                 futuresRepository.updateLiveCoins(coinList)
             }
+        }
+
+        viewModelScope.launch {
+            futuresRepository.recentTrades.collect { trades ->
+                whaleRepository.ingestLargePrints(trades)
+            }
+        }
+
+        viewModelScope.launch {
+            combine(derivativesSnapshot, futuresRecentLiquidations, futuresMarkFunding) { snap, liqs, funding ->
+                Triple(snap, liqs, funding)
+            }.collect { (snap, liqs, funding) ->
+                whaleLeverageRepository.applyLiveSnapshot(
+                    snapshot = snap,
+                    liquidations = liqs,
+                    markPrice = funding?.markPrice ?: 0.0
+                )
+            }
+        }
+
+        viewModelScope.launch {
+            combine(cycleCommandState, centralizedPriceState) { cmd, prices -> cmd to prices }
+                .collect { (cmd, prices) ->
+                    val price = if (prices.btcPerpPrice > 0.0) prices.btcPerpPrice else prices.btcSpotPrice
+                    forwardAuditRepo.logCurrentLiveRegime(
+                        currentPriceUsd = price,
+                        regime = cmd.regime,
+                        evidenceEn = cmd.keyStanceSummaryEn,
+                        evidenceEl = cmd.keyStanceSummaryEl
+                    )
+                }
         }
 
         viewModelScope.launch {
@@ -546,6 +629,9 @@ class CryptoViewModel @JvmOverloads constructor(
                 if (trade.price > 0.0) {
                     repository.updateCoinTradePrice(trade.symbol, trade.price, trade.timeMs)
                 }
+                if (trade.valueUsd >= 100_000.0) {
+                    whaleRepository.ingestLargePrints(listOf(trade))
+                }
             }
         }
 
@@ -567,15 +653,16 @@ class CryptoViewModel @JvmOverloads constructor(
             launch(Dispatchers.IO) { repository.fetchBinanceBtcTickerDirect() }
             launch(Dispatchers.IO) { repository.refreshLivePrices() }
             launch(Dispatchers.IO) { futuresRepository.refresh() }
+            launch(Dispatchers.IO) { refreshDerivativesAndMacro() }
 
-            // Synchronized background fetch loop so screens do not diverge
             while (isActive) {
                 delay(12000)
                 try {
                     val pBtc = launch(Dispatchers.IO) { repository.fetchBinanceBtcTickerDirect() }
                     val p1 = launch(Dispatchers.IO) { repository.refreshLivePrices() }
                     val p2 = launch(Dispatchers.IO) { futuresRepository.refresh() }
-                    joinAll(pBtc, p1, p2)
+                    val p3 = launch(Dispatchers.IO) { refreshDerivativesAndMacro() }
+                    joinAll(pBtc, p1, p2, p3)
                 } catch (t: Throwable) {
                     android.util.Log.w("CryptoViewModel", "Sync background fetch warning", t)
                 }
@@ -712,7 +799,14 @@ class CryptoViewModel @JvmOverloads constructor(
                             android.util.Log.w("CryptoViewModel", "DefiLlama liquidity refresh warning", t)
                         }
                     }
-                    joinAll(futuresJob, pricesJob, etfJob, liqJob)
+                    val derivJob = launch(Dispatchers.IO) {
+                        try {
+                            refreshDerivativesAndMacro()
+                        } catch (t: Throwable) {
+                            android.util.Log.w("CryptoViewModel", "Derivatives refresh warning", t)
+                        }
+                    }
+                    joinAll(futuresJob, pricesJob, etfJob, liqJob, derivJob)
                 }
             } catch (t: Throwable) {
                 android.util.Log.w("CryptoViewModel", "Refresh failed", t)
@@ -738,6 +832,37 @@ class CryptoViewModel @JvmOverloads constructor(
                 android.util.Log.e("CryptoViewModel", "Error switching symbol to $symbol", t)
             }
         }
+    }
+
+    private suspend fun refreshDerivativesAndMacro() {
+        val symbol = activeFuturesSymbol.value.ifBlank { "BTCUSDT" }
+        _derivativesSnapshot.value = DerivativesRepository.fetch(symbol)
+        liveMacroFeeds.refresh()
+        etfRepository.refreshEtfFlows()
+        liquidityRepository.refreshLiquidity()
+    }
+
+    private fun formatMaDistance(price: Double, ma: Double?, label: String): String? {
+        if (price <= 0.0 || ma == null || ma <= 0.0) return null
+        val pct = ((price - ma) / ma) * 100.0
+        val sign = if (pct >= 0) "+" else ""
+        return "${"%.1f".format(java.util.Locale.US, pct)}% ${if (pct >= 0) "above" else "below"} $label".replaceFirst("-", "")
+            .let { if (pct >= 0) "$sign${"%.1f".format(java.util.Locale.US, pct)}% above $label" else "${"%.1f".format(java.util.Locale.US, pct)}% below $label" }
+    }
+
+    private fun formatPiGap(averages: LiveMovingAverages, price: Double): String? {
+        val top = averages.dma350x2 ?: return null
+        val fast = averages.dma111 ?: return null
+        if (top <= 0.0 || fast <= 0.0) return null
+        val gap = ((top - fast) / fast) * 100.0
+        return "${"%.1f".format(java.util.Locale.US, gap)}%"
+    }
+
+    private fun formatWhaleNet(flow: WhaleFlowSnapshot): String? {
+        if (!flow.isLive) return null
+        val sign = if (flow.netUsd >= 0) "+" else "-"
+        val compact = com.example.util.AppNumberFormatter.formatCompactCurrency(kotlin.math.abs(flow.netUsd))
+        return "$sign$compact net"
     }
 
     override fun onCleared() {

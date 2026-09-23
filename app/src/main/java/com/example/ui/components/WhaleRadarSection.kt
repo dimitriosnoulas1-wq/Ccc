@@ -133,7 +133,7 @@ fun WhaleRadarSection(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "DEMO DATA",
+                        text = if (alerts.isNotEmpty()) "LIVE" else "SYNCING",
                         fontSize = 9.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,

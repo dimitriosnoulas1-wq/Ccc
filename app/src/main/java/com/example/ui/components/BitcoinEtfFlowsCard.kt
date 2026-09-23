@@ -36,11 +36,11 @@ fun BitcoinEtfFlowsCard(
 
     val is1dPositive = oneDayFlow >= 0.0
     val color1d = if (is1dPositive) Color(0xFF00E676) else Color(0xFFFF5252)
-    val text1d = String.format(Locale.US, "%s$%.1fM", if (is1dPositive) "+" else "-", abs(oneDayFlow))
+    val text1d = if (!etfFlowData.isLive) "—" else String.format(Locale.US, "%s$%.1fM", if (is1dPositive) "+" else "-", abs(oneDayFlow))
 
     val is5dPositive = fiveDayFlow >= 0.0
     val color5d = if (is5dPositive) Color(0xFF00E676) else Color(0xFFFF5252)
-    val text5d = String.format(Locale.US, "%s$%.1fM", if (is5dPositive) "+" else "-", abs(fiveDayFlow))
+    val text5d = if (!etfFlowData.isLive) "—" else String.format(Locale.US, "%s$%.1fM", if (is5dPositive) "+" else "-", abs(fiveDayFlow))
 
     Column(
         modifier = Modifier
@@ -96,8 +96,10 @@ fun BitcoinEtfFlowsCard(
                             )
                     )
                     Text(
-                        text = if (isGreek) {
-                            if (is1dPositive) "Εισροές / Live Feed" else "Εκροές / Live Feed"
+                        text = if (!etfFlowData.isLive) {
+                            if (isGreek) "Offline" else "Offline"
+                        } else if (isGreek) {
+                            if (is1dPositive) "Εισροές / Live" else "Εκροές / Live"
                         } else {
                             if (is1dPositive) "Inflows / Live" else "Outflows / Live"
                         },
