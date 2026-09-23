@@ -135,7 +135,17 @@ data class CryptoCoin(
         marketCap = 0.0,
         sparkline = emptyList(),
         priceUpdatedAtMs = 0L,
-        quoteState = QuoteState.PENDING
+        quoteState = QuoteState.PENDING,
+        projectedNextMove1w = "—",
+        projectedNextMove2w = "—",
+        projectedNextMove4w = "—",
+        nextPredictedMoveNarrative = "",
+        analog = analog.copy(
+            projectedCyclePeak = 0.0,
+            projectedCycleBottom = 0.0,
+            gainPostMatchingDate2020 = 0.0,
+            gainPostMatchingDate2016 = 0.0
+        )
     )
 
     val calculatedAthDaysAgo: Int

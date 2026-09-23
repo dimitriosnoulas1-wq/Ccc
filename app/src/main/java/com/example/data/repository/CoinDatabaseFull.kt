@@ -47,7 +47,7 @@ object CoinDatabaseFull {
                 whereItMovesNow = "Συσσώρευση στην περιοχή $0.70-$0.80 με σταθερή ανάπτυξη smart contracts στο Plutus v3.",
                 whereItMovedPast = "2017 ($0.02) -> 2018 ($1.33) -> 2020 ($0.02) -> 2021 ($3.10) -> 2024 ($0.82).",
                 nextPredictedMoveNarrative = "Ιστορικά ακολουθεί με καθυστέρηση 40-60 ημερών το ράλι του Bitcoin με απότομες παραβολικές κινήσεις.",
-                projectedNextMove1w = "+5.4% (67% win rate)", projectedNextMove2w = "+12.1% (74% win rate)", projectedNextMove4w = "+26.8% (80% win rate)",
+                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "29 Sep 2017", founderOrCreator = "Charles Hoskinson (IOHK)",
                 consensusMechanism = "Ouroboros Proof of Stake",
                 whitepaperSummary = "Ακαδημαϊκά σχεδιασμένο Layer 1 blockchain βασισμένο σε peer-reviewed έρευνα, με eUTXO μοντέλο και ασφάλεια τύπου Haskell.",
@@ -70,7 +70,7 @@ object CoinDatabaseFull {
                 whereItMovesNow = "Ανοδική επέκταση καθοδηγούμενη από κοινωνικό συναίσθημα και αυξανόμενη χρήση micropayments.",
                 whereItMovedPast = "2014 ($0.0002) -> 2018 ($0.018) -> 2021 ($0.737) -> 2024 ($0.45).",
                 nextPredictedMoveNarrative = "Τα meme ράλι χαρακτηρίζονται από ακραία ταχύτητα και εκθετική αύξηση όγκου σε σύντομα διαστήματα.",
-                projectedNextMove1w = "+11.5% (73% win rate)", projectedNextMove2w = "+24.0% (80% win rate)", projectedNextMove4w = "+55.0% (84% win rate)",
+                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "06 Dec 2013", founderOrCreator = "Billy Markus & Jackson Palmer",
                 consensusMechanism = "Auxiliary Proof of Work (Scrypt Scrypt-merged mining)",
                 whitepaperSummary = "Το αυθεντικό P2P meme cryptocurrency που δημιουργήθηκε ως ανάλαφρο εναλλακτικό μέσο πληρωμών.",
@@ -93,7 +93,7 @@ object CoinDatabaseFull {
                 whereItMovesNow = "Ανάπτυξη Subnets και RWA tokenization partnerships με Wall Street ιδρύματα (Citi, J.P. Morgan).",
                 whereItMovedPast = "2020 ($3.00) -> 2021 ($146.22) -> 2023 ($9.00) -> 2024 ($65.00).",
                 nextPredictedMoveNarrative = "Σε περιόδους bull market τα Subnets οδηγούν σε επιταχυνόμενη καύση AVAX token fees.",
-                projectedNextMove1w = "+6.8% (70% win rate)", projectedNextMove2w = "+15.2% (77% win rate)", projectedNextMove4w = "+32.0% (82% win rate)",
+                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "21 Sep 2020", founderOrCreator = "Emin Gün Sirer (Ava Labs)",
                 consensusMechanism = "Avalanche Consensus (Snow family Directed Acyclic Graph)",
                 whitepaperSummary = "Πλατφόρμα έξυπνων συμβολαίων με sub-second finality και δυνατότητα δημιουργίας προσαρμοσμένων Subnet blockchains.",
@@ -116,7 +116,7 @@ object CoinDatabaseFull {
                 whereItMovesNow = "Κυριαρχία σε Cross-Chain Interoperability Protocol (CCIP) και Swift banking integrations.",
                 whereItMovedPast = "2017 ($0.15) -> 2019 ($4.50) -> 2021 ($52.88) -> 2023 ($5.50) -> 2024 ($22.00).",
                 nextPredictedMoveNarrative = "Το LINK λειτουργεί ως η βασική υποδομή για RWA tokenization και multi-chain composability.",
-                projectedNextMove1w = "+4.2% (72% win rate)", projectedNextMove2w = "+9.8% (79% win rate)", projectedNextMove4w = "+22.5% (85% win rate)",
+                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "19 Sep 2017", founderOrCreator = "Sergey Nazarov & Steve Ellis",
                 consensusMechanism = "Decentralized Oracle Network (DON) + Chainlink Staking v0.2",
                 whitepaperSummary = "Το κορυφαίο αποκεντρωμένο δίκτυο οράκλων που συνδέει smart contracts με δεδομένα του πραγματικού κόσμου και τραπεζικά συστήματα.",
@@ -139,7 +139,7 @@ object CoinDatabaseFull {
                 whereItMovesNow = "Ισχυρή ανοδική τροχιά με ρεκόρ TVL και εκρηκτική αύξηση on-chain δραστηριότητας.",
                 whereItMovedPast = "2023 ($0.36) -> 2024 ($2.18).",
                 nextPredictedMoveNarrative = "Το Move-based architecture προσελκύει μαζικά developers από άλλα L1s.",
-                projectedNextMove1w = "+9.2% (76% win rate)", projectedNextMove2w = "+21.0% (83% win rate)", projectedNextMove4w = "+45.0% (88% win rate)",
+                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "03 May 2023", founderOrCreator = "Mysten Labs (Evan Cheng, Adeniyi Abiodun)",
                 consensusMechanism = "Mysticeti Consensus + Bullshark/Narwhal DAG",
                 whitepaperSummary = "Layer 1 blockchain βασισμένο στη γλώσσα Move με Object-centric μοντέλο και parallel transaction execution.",
@@ -163,7 +163,7 @@ object CoinDatabaseFull {
                 whereItMovesNow = "Ισχυρή ανοδική συσσώρευση με ραγδαία αύξηση χρήσης του Soroban smart contracts και διασυνοριακών πληρωμών.",
                 whereItMovedPast = "2014 ($0.002) -> 2017 ($0.02) -> 2018 ($0.938) -> 2021 ($0.79) -> 2024 ($0.58).",
                 nextPredictedMoveNarrative = "Το Stellar ιστορικά συσχετίζεται έντονα με το Ripple (XRP), σημειώνοντας εκρηκτικά ράλι διασυνοριακής ρευστότητας.",
-                projectedNextMove1w = "+7.8% (72% win rate)", projectedNextMove2w = "+16.5% (79% win rate)", projectedNextMove4w = "+36.0% (85% win rate)",
+                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "31 Jul 2014", founderOrCreator = "Jed McCaleb & Joyce Kim",
                 consensusMechanism = "Stellar Consensus Protocol (SCP / FBA)",
                 whitepaperSummary = "Αποκεντρωμένο, ανοιχτού κώδικα δίκτυο πληρωμών που συνδέει τράπεζες, συστήματα πληρωμών και ανθρώπους παγκοσμίως με sub-cent fees.",
@@ -195,19 +195,6 @@ object CoinDatabaseFull {
             genDate: String, founder: String, consensus: String,
             wpSummary: String, tech: String, tokenomics: String, uses: List<String>
         ) {
-            val symHash = kotlin.math.abs(sym.hashCode())
-            val m1Val = 4.0 + (symHash % 6) + (rank % 4) * 0.7
-            val m2Val = 9.0 + (symHash % 11) + (rank % 5) * 1.2
-            val m4Val = 20.0 + (symHash % 25) + (rank % 7) * 2.4
-            val sign = if (change < -4.0) "-" else "+"
-            val p1w = (66 + (symHash % 8)).coerceIn(65, 78)
-            val p2w = (p1w + 6 + (rank % 3)).coerceIn(72, 85)
-            val p4w = (p2w + 5 + (rank % 4)).coerceIn(78, 92)
-
-            val m1 = com.example.util.AppNumberFormatter.formatPercent(m1Val, includeSign = false, decimals = 1)
-            val m2 = com.example.util.AppNumberFormatter.formatPercent(m2Val, includeSign = false, decimals = 1)
-            val m4 = com.example.util.AppNumberFormatter.formatPercent(m4Val, includeSign = false, decimals = 1)
-
             extra.add(
                 CryptoCoin(
                     id = id, symbol = sym, name = name, rank = rank,
@@ -219,10 +206,10 @@ object CoinDatabaseFull {
                     sparkline = listOf(price * 0.94, price * 0.96, price * 0.95, price * 0.98, price * 0.99, price),
                     whereItMovesNow = "Διαπραγματεύεται σε σταθερό εύρος συσσώρευσης με θετική δυναμική και αυξανόμενο on-chain όγκο.",
                     whereItMovedPast = "Προηγούμενοι κύκλοι σημείωσαν ισχυρά πολλαπλάσια ανόδου κατά τη διάρκεια του post-halving altseason.",
-                    nextPredictedMoveNarrative = "Ιστορικά αναλογικά μοντέλα υποδεικνύουν υψηλή πιθανότητα ανόδου στις επόμενες 4 εβδομάδες.",
-                    projectedNextMove1w = "$sign$m1 ($p1w% win rate)",
-                    projectedNextMove2w = "$sign$m2 ($p2w% win rate)",
-                    projectedNextMove4w = "$sign$m4 ($p4w% win rate)",
+                    nextPredictedMoveNarrative = "",
+                    projectedNextMove1w = "—",
+                    projectedNextMove2w = "—",
+                    projectedNextMove4w = "—",
                     genesisDate = genDate, founderOrCreator = founder, consensusMechanism = consensus,
                     whitepaperSummary = wpSummary, technologyDetails = tech, tokenomicsDetails = tokenomics, useCases = uses
                 )
