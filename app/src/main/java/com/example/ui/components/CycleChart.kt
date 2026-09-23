@@ -98,18 +98,17 @@ fun HistoricalCycleChart(
     val strings = LocalAppStrings.current
     val isGreek = strings.language.code == "el"
 
-    var zoom by remember(coinId, coinSymbol) { mutableStateOf("1D") }
     var reloadNonce by remember(coinId, coinSymbol) { mutableStateOf(0) }
-    var historyModel by remember(coinId, coinSymbol, zoom) { mutableStateOf<CycleFractalData?>(null) }
-    var historyState by remember(coinId, coinSymbol, zoom) { mutableStateOf("loading") }
-    LaunchedEffect(coinId, coinSymbol, zoom, reloadNonce) {
+    var historyModel by remember(coinId, coinSymbol) { mutableStateOf<CycleFractalData?>(null) }
+    var historyState by remember(coinId, coinSymbol) { mutableStateOf("loading") }
+    LaunchedEffect(coinId, coinSymbol, reloadNonce) {
         historyState = "loading"
-        val loaded = com.example.data.repository.HistoricalMarketRepository.load(coinId, coinSymbol, zoom)
+        val loaded = com.example.data.repository.HistoricalMarketRepository.load(coinId, coinSymbol, "HALVING")
         historyModel = loaded
         historyState = if (loaded == null) "error" else "ready"
     }
     val chartData = historyModel
-    var selectedMode by remember { mutableStateOf(CycleChartMode.CURRENT) }
+    var selectedMode by remember { mutableStateOf(CycleChartMode.ALL) }
     var touchXNormalized by remember { mutableStateOf<Float?>(null) }
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseGlow by infiniteTransition.animateFloat(
@@ -131,13 +130,12 @@ fun HistoricalCycleChart(
                 .padding(16.dp)
                 .testTag("historical_cycle_chart_container")
         ) {
-            ZoomSelector(zoom = zoom, onSelect = { zoom = it })
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = if (historyState == "error") {
                     if (isGreek) "Το ιστορικό δεν είναι διαθέσιμο αυτή τη στιγμή. Δοκίμασε ξανά." else "History is unavailable right now. Try again."
                 } else {
-                    if (isGreek) "Φόρτωση πραγματικού ιστορικού από Binance / CoinGecko…" else "Loading real history from Binance / CoinGecko…"
+                    if (isGreek) "Φόρτωση κύκλων από halving σε halving…" else "Loading halving-to-halving cycles…"
                 },
                 fontSize = 12.sp,
                 color = TextSecondary
@@ -160,13 +158,7 @@ fun HistoricalCycleChart(
         return
     }
     val fractalData = chartData
-    val axisMax = remember(fractalData) {
-        val days = fractalData.currentPoints.map { it.day } +
-            fractalData.projectedPoints.map { it.day } +
-            fractalData.points2020.map { it.day } +
-            fractalData.points2016.map { it.day }
-        (days.maxOrNull() ?: 1).coerceAtLeast(1)
-    }
+    val axisMax = fractalData.axisDays.coerceAtLeast(1)
     val hasProjection = fractalData.projectedPoints.isNotEmpty()
 
     // Calculate current inspected day and price based on touch or default current point
@@ -174,23 +166,33 @@ fun HistoricalCycleChart(
     val activeFraction = touchXNormalized ?: currentDayFraction
     val inspectedDay = (activeFraction * axisMax.toFloat()).roundToInt()
 
-    val inspectedPrice = remember(inspectedDay, fractalData) {
-        val allPoints = fractalData.currentPoints + fractalData.projectedPoints
-        val closest = allPoints.minByOrNull { kotlin.math.abs(it.day - inspectedDay) }
-        closest?.price ?: (currentPrice ?: 0.0)
+    val currentPoint = fractalData.currentPoints.minByOrNull { kotlin.math.abs(it.day - inspectedDay) }
+    val pastPoint = fractalData.points2020.minByOrNull { kotlin.math.abs(it.day - inspectedDay) }
+    val earlierPoint = fractalData.points2016.minByOrNull { kotlin.math.abs(it.day - inspectedDay) }
+    val readingPastCycle = inspectedDay > fractalData.currentDay
+    val inspectedPrice = when {
+        !readingPastCycle && currentPoint != null -> currentPoint.price
+        selectedMode == CycleChartMode.CYCLE_2016 && earlierPoint != null -> earlierPoint.price
+        pastPoint != null && readingPastCycle -> pastPoint.price
+        earlierPoint != null && readingPastCycle -> earlierPoint.price
+        currentPoint != null -> currentPoint.price
+        else -> currentPrice ?: 0.0
     }
-
-    val phaseDescription = remember(inspectedDay, chartData, isGreek) {
-        val event = chartData?.eventDays?.minByOrNull { kotlin.math.abs(it.first - inspectedDay) }
-        val nearEvent = event?.takeIf { kotlin.math.abs(it.first - inspectedDay) < 24 }?.second
-        val date = chartData?.currentPoints?.minByOrNull { kotlin.math.abs(it.day - inspectedDay) }?.phaseTag
-        val halvingNote = if (chartData?.usesHalving == true && nearEvent?.contains("halving") == true) nearEvent else null
-        when {
-            halvingNote != null -> halvingNote
-            nearEvent != null -> nearEvent
-            date != null -> date
-            else -> chartData.windowLabel
-        }
+    val priceCaption = when {
+        readingPastCycle && selectedMode == CycleChartMode.CYCLE_2016 ->
+            if (isGreek) "Κλείσιμο κύκλου 2016" else "2016 cycle close"
+        readingPastCycle ->
+            if (isGreek) "Κλείσιμο κύκλου 2020" else "2020 cycle close"
+        else ->
+            if (isGreek) "Κλείσιμο αυτού του κύκλου" else "This cycle close"
+    }
+    val phaseDescription = if (!readingPastCycle) {
+        currentPoint?.phaseTag ?: fractalData.windowLabel
+    } else {
+        when (selectedMode) {
+            CycleChartMode.CYCLE_2016 -> earlierPoint?.phaseTag
+            else -> pastPoint?.phaseTag ?: earlierPoint?.phaseTag
+        } ?: fractalData.windowLabel
     }
 
     Column(
@@ -233,7 +235,7 @@ fun HistoricalCycleChart(
                             .padding(horizontal = 5.dp, vertical = 1.5.dp)
                     ) {
                         Text(
-                            text = zoom,
+                            text = "4Y",
                             fontSize = 8.5.sp,
                             fontWeight = FontWeight.Black,
                             color = QuantumCyan
@@ -288,8 +290,6 @@ fun HistoricalCycleChart(
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-        ZoomSelector(zoom = zoom, onSelect = { zoom = it })
-        Spacer(modifier = Modifier.height(8.dp))
 
         // 2. Mode Selector Chips
         Row(
@@ -356,7 +356,7 @@ fun HistoricalCycleChart(
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = phaseDescription,
+                            text = "${strings.cycleChartDayLabel} $inspectedDay / $axisMax",
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (touchXNormalized != null) QuantumCyan else TextPrimary,
@@ -381,7 +381,7 @@ fun HistoricalCycleChart(
                         }
                     }
                     Text(
-                        text = fractalData.windowLabel,
+                        text = phaseDescription,
                         fontSize = 10.sp,
                         color = TextSecondary,
                         maxLines = 1,
@@ -397,10 +397,7 @@ fun HistoricalCycleChart(
                         color = TachyonMint
                     )
                     Text(
-                        text = if (hasProjection && inspectedDay > fractalData.currentDay)
-                            (if (isGreek) "Στατιστική προβολή — όχι εγγύηση" else "Statistical projection — not a guarantee")
-                        else
-                            (if (isGreek) "Πραγματική τιμή" else "Exchange close"),
+                        text = priceCaption,
                         fontSize = 9.sp,
                         color = TextMuted
                     )
@@ -687,7 +684,7 @@ fun HistoricalCycleChart(
         ) {
             val eventTags = fractalData.eventDays.take(4)
             if (eventTags.isEmpty()) {
-                TimelineTag(day = zoom, label = fractalData.windowLabel, color = TextMuted)
+                TimelineTag(day = "D0", label = fractalData.windowLabel, color = TextMuted)
             } else {
                 eventTags.forEach { (day, label) ->
                     val color = when {
@@ -746,46 +743,15 @@ fun HistoricalCycleChart(
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = if (fractalData.usesHalving) {
-                if (isGreek) "Η κυανή γραμμή είναι τα πραγματικά κλεισίματα αυτού του παραθύρου. Δεν υπάρχει πρόβλεψη. Η σύγκριση δείχνει παλαιότερα παράθυρα, όχι μελλοντική τιμή. Τα halvings σημειώνονται μόνο στο Bitcoin."
-                else "The cyan line is this window's real closes. There is no forecast. Compare shows older windows, not a future price. Halving markers are shown only for Bitcoin."
+            text = if (isGreek) {
+                "Κυανό: αυτός ο κύκλος, από το halving του 2024 μέχρι σήμερα. Μωβ: κύκλος 2020. Χρυσό: κύκλος 2016. Ίδιες ημέρες μετά το halving. Είναι ό,τι έγινε ήδη, όχι πρόβλεψη."
             } else {
-                if (isGreek) "Η κυανή γραμμή είναι τα πραγματικά κλεισίματα αυτού του νομίσματος. Δεν υπάρχει πρόβλεψη. Η σύγκριση δείχνει παλαιότερα παράθυρα, όχι μελλοντική τιμή."
-                else "The cyan line is this coin's real closes. There is no forecast. Compare shows older windows, not a future price."
+                "Cyan is this cycle, from the 2024 halving until today. Purple is 2020 and gold is 2016, on the same day-count. Those lines already happened. They are not a forecast."
             },
             fontSize = 9.5.sp,
             lineHeight = 13.sp,
             color = TextMuted
         )
-    }
-}
-
-@Composable
-private fun ZoomSelector(zoom: String, onSelect: (String) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        listOf("1D", "1W", "1M", "1Y").forEach { label ->
-            val selected = zoom == label
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (selected) QuantumCyan.copy(alpha = 0.16f) else Color.Transparent)
-                    .border(0.5.dp, if (selected) QuantumCyan else CosmicBorder, RoundedCornerShape(8.dp))
-                    .clickable { onSelect(label) }
-                    .padding(vertical = 4.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = label,
-                    fontSize = 11.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (selected) QuantumCyan else TextMuted
-                )
-            }
-        }
     }
 }
 

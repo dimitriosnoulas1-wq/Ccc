@@ -27,7 +27,8 @@ data class CycleFractalData(
     val earlierCycleLabel: String = "Earlier cycle",
     val usesHalving: Boolean = false,
     val eventDays: List<Pair<Int, String>> = emptyList(),
-    val windowLabel: String = ""
+    val windowLabel: String = "",
+    val axisDays: Int = 800
 )
 
 object CycleFractalEngine {
