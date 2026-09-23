@@ -141,7 +141,16 @@ class GeminiAiService(
         }
         val buildKey = runCatching { BuildConfig.OPENAI_API_KEY }.getOrDefault("")
         val injectedKey = runCatching { BuildConfig.OPENAI_INJECTED_API_KEY }.getOrDefault("")
-        return sanitizeApiKey(buildKey).ifBlank { sanitizeApiKey(injectedKey) }
+        val runtimeKey = sequenceOf(
+            System.getenv("OPENAI_API_KEY"),
+            System.getenv("OPENAI"),
+            System.getenv("ChatGPT"),
+            System.getenv("gpt"),
+            System.getenv("GPT")
+        ).mapNotNull { it }.firstOrNull().orEmpty()
+        return sanitizeApiKey(buildKey)
+            .ifBlank { sanitizeApiKey(injectedKey) }
+            .ifBlank { sanitizeApiKey(runtimeKey) }
     }
 
     private fun sanitizeApiKey(raw: String): String {

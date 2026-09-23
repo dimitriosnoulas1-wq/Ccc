@@ -32,6 +32,8 @@ android {
       System.getenv("OPENAI_API_KEY")
         ?: System.getenv("OPENAI")
         ?: System.getenv("ChatGPT")
+        ?: System.getenv("gpt")
+        ?: System.getenv("GPT")
         ?: ""
       )
       .replace("\\", "\\\\")
