@@ -329,6 +329,7 @@ fun CryptoCyclesApp(
                                 },
                                 onOpenChart = { viewModel.openCycleChart() },
                                 onOpenCoins = { viewModel.showCoinsCatalog() },
+                                onSearchCoins = { query -> viewModel.openCoinsCatalog(query) },
                                 onOpenProModal = { viewModel.openProModal() },
                                 onRefresh = { viewModel.manualRefresh() },
                                 onAlertHistoryClick = { viewModel.openAlertHistory() }

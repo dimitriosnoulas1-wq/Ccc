@@ -141,8 +141,21 @@ fun MarketsScreen(
                             .padding(vertical = 4.dp)
                     )
                 }
+                item {
+                    SearchBarField(
+                        query = searchQuery,
+                        onQueryChanged = onSearchChanged
+                    )
+                }
+                item {
+                    CategoryFilterPills(
+                        selectedCategory = selectedCategory,
+                        onSelectCategory = onCategoryChanged
+                    )
+                }
             }
 
+            if (onBackToCycle == null) {
             // 1. TOP APP BAR
             item {
                 val avgMarketVolatility = remember(coins) {
@@ -374,21 +387,21 @@ fun MarketsScreen(
                     onUpgradeClicked = onOpenProModal
                 )
             }
-
-            // Search Bar
-            item {
-                SearchBarField(
-                    query = searchQuery,
-                    onQueryChanged = onSearchChanged
-                )
             }
 
-            // Category Filter Pills
-            item {
-                CategoryFilterPills(
-                    selectedCategory = selectedCategory,
-                    onSelectCategory = onCategoryChanged
-                )
+            if (onBackToCycle == null) {
+                item {
+                    SearchBarField(
+                        query = searchQuery,
+                        onQueryChanged = onSearchChanged
+                    )
+                }
+                item {
+                    CategoryFilterPills(
+                        selectedCategory = selectedCategory,
+                        onSelectCategory = onCategoryChanged
+                    )
+                }
             }
 
             // Coins Count & Feed Header

@@ -47,6 +47,7 @@ import com.example.data.model.StablecoinLiquidityData
 import com.example.ui.components.BitcoinEtfFlowsCard
 import com.example.ui.components.DashboardTopAppBar
 import com.example.ui.components.DefiLlamaStablecoinsCard
+import com.example.ui.components.SearchBarField
 import com.example.ui.theme.JetBrainsMonoFont
 import com.example.ui.theme.LocalAppColors
 import com.example.ui.theme.QuantumCyan
@@ -71,6 +72,7 @@ fun CycleHomePage(
     onCycleDayAlertChanged: (Boolean) -> Unit,
     onOpenChart: () -> Unit,
     onOpenCoins: () -> Unit,
+    onSearchCoins: (String) -> Unit = {},
     onOpenProModal: () -> Unit,
     onRefresh: () -> Unit,
     onAlertHistoryClick: () -> Unit,
@@ -131,6 +133,20 @@ fun CycleHomePage(
                     fontSize = 12.sp,
                     color = palette.textSecondary
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                SearchBarField(
+                    query = "",
+                    onQueryChanged = { typed -> onSearchCoins(typed) },
+                    onFocus = onOpenCoins
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (greek) "100 νομίσματα · άγγιξε για αναζήτηση" else "100 coins · tap to search",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = QuantumCyan,
+                    modifier = Modifier.clickable { onOpenCoins() }
+                )
             }
         }
         item {
@@ -173,17 +189,6 @@ fun CycleHomePage(
                 lineHeight = 16.sp,
                 color = palette.textMuted,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-        }
-        item {
-            Text(
-                text = if (greek) "Όλα τα νομίσματα" else "All coins",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = QuantumCyan,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .clickable { onOpenCoins() }
             )
         }
     }
