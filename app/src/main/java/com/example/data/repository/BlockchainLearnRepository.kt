@@ -217,7 +217,7 @@ object BlockchainLearnRepository {
             diagramCaption = "Σχήμα: Bids | Spread | Asks. Η market εντολή καταναλώνει την αντίθετη πλευρά.",
             diagramExtraNote = "Το βιβλίο ανήκει στο ανταλλακτήριο, όχι στο blockchain.",
             realExample = "Μια market αγορά καταναλώνει τις χαμηλότερες asks με τη σειρά μέχρι να καλυφθεί το ζητούμενο μέγεθος. Αν αυτές οι asks είναι μικρές, η τελευταία εκτέλεση απέχει περισσότερο από την πρώτη ask.",
-            commonMistake = "«Ό,τι βλέπω στο βιβλίο θα εκτελεστεί σίγουρα.» Οι εντολές που κάθονται μπορούν να φύγουν πριν το match. Δεν υπάρχει «κβαντική ροή εντολών» ως πρωτόκολλο."
+            commonMistake = "«Ό,τι βλέπω στο βιβλίο θα εκτελεστεί σίγουρα.» Οι εντολές που κάθονται μπορούν να φύγουν πριν το match."
         ),
         BlockchainChapter(
             id = 21,
@@ -440,7 +440,7 @@ object BlockchainLearnRepository {
             diagramCaption = "Diagram: Bids | Spread | Asks. A market order consumes the opposite side.",
             diagramExtraNote = "The book belongs to the venue, not the blockchain.",
             realExample = "A market buy consumes the lowest asks in order until the requested size is filled. If those asks are small, the last fill sits farther from the first ask.",
-            commonMistake = "\"What I see on the book will definitely trade.\" Resting orders can vanish before the match. There is no \"quantum order flow\" protocol."
+            commonMistake = "\"What I see on the book will definitely trade.\" Resting orders can vanish before the match."
         ),
         BlockchainChapter(
             id = 21,
@@ -663,7 +663,7 @@ object BlockchainLearnRepository {
             diagramCaption = "Schema: Bids | Spread | Asks. Die Market-Order verbraucht die Gegenseite.",
             diagramExtraNote = "Das Buch gehört der Börse, nicht der Blockchain.",
             realExample = "Ein Market-Kauf verbraucht der Reihe nach die niedrigsten Asks, bis die gewünschte Größe gefüllt ist. Sind diese Asks klein, liegt der letzte Fill weiter von der ersten Ask.",
-            commonMistake = "«Was ich im Buch sehe, wird bestimmt gehandelt.» Ruhende Orders können vor dem Match verschwinden. Es gibt kein «Quantum-Order-Flow»-Protokoll."
+            commonMistake = "«Was ich im Buch sehe, wird bestimmt gehandelt.» Ruhende Orders können vor dem Match verschwinden."
         ),
         BlockchainChapter(
             id = 21,
@@ -886,7 +886,7 @@ object BlockchainLearnRepository {
             diagramCaption = "Schéma : Bids | Spread | Asks. L'ordre au marché consomme le côté opposé.",
             diagramExtraNote = "Le carnet appartient à la place, pas à la blockchain.",
             realExample = "Un achat au marché consomme les asks les plus basses dans l'ordre jusqu'à remplir la taille demandée. Si ces asks sont petites, la dernière exécution s'éloigne de la première ask.",
-            commonMistake = "« Ce que je vois au carnet sera forcément échangé. » Les ordres au repos peuvent disparaître avant le match. Il n'existe pas de protocole « flux d'ordres quantique »."
+            commonMistake = "« Ce que je vois au carnet sera forcément échangé. » Les ordres au repos peuvent disparaître avant le match."
         ),
         BlockchainChapter(
             id = 21,
@@ -1109,7 +1109,7 @@ object BlockchainLearnRepository {
             diagramCaption = "Esquema: Bids | Spread | Asks. La orden a mercado consume el lado contrario.",
             diagramExtraNote = "El libro pertenece al exchange, no a la blockchain.",
             realExample = "Una compra a mercado consume las asks más bajas en orden hasta cubrir el tamaño pedido. Si esas asks son pequeñas, la última ejecución queda más lejos de la primera ask.",
-            commonMistake = "«Lo que veo en el libro se ejecutará seguro.» Las órdenes en espera pueden desaparecer antes del cruce. No existe un protocolo de «flujo cuántico de órdenes»."
+            commonMistake = "«Lo que veo en el libro se ejecutará seguro.» Las órdenes en espera pueden desaparecer antes del cruce."
         ),
         BlockchainChapter(
             id = 21,
@@ -1332,7 +1332,7 @@ object BlockchainLearnRepository {
             diagramCaption = "Schema: Bid | Spread | Ask. L'ordine a mercato consuma il lato opposto.",
             diagramExtraNote = "Il book appartiene al venue, non alla blockchain.",
             realExample = "Un acquisto a mercato consuma le ask più basse in ordine finché la size richiesta è riempita. Se quelle ask sono piccole, l'ultimo fill sta più lontano dalla prima ask.",
-            commonMistake = "«Quello che vedo sul book verrà sicuramente scambiato.» Gli ordini a riposo possono sparire prima del match. Non esiste un protocollo di «quantum order flow»."
+            commonMistake = "«Quello che vedo sul book verrà sicuramente scambiato.» Gli ordini a riposo possono sparire prima del match."
         ),
         BlockchainChapter(
             id = 21,
