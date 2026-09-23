@@ -642,7 +642,7 @@ open class AppStrings(
     open val aiQuickActionAltseason: String = "Altseason Readiness"
     open val aiDisclaimer: String = "Powered by live Gemini AI models & real-time telemetry. Not financial advice."
     open val aiThinking: String = "Analyzing live telemetry & order book..."
-    open val aiGreeting: String = "Hello! I am your real-time CryptoCycles AI Analyst. Ask me anything about current prices, funding rates, halving cycle patterns, or liquidation clusters."
+    open val aiGreeting: String = "I'm here. What would you like to see?"
     open val aiClearHistory: String = "Clear Chat"
     open val aiLiveContextTag: String = "Live Feeds Attached"
     open val aiPromptPrefixCycle: String = "Analyze the current cycle phase, halving progress and risk/reward for the market."

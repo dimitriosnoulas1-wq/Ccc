@@ -560,7 +560,7 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val aiQuickActionAltseason: String = "Disponibilité Altseason"
     override val aiDisclaimer: String = "Propulsé par les modèles Gemini IA & la télémétrie en temps réel. Ne constitue pas un conseil financier."
     override val aiThinking: String = "Analyse de la télémétrie et du carnet d'ordres en direct..."
-    override val aiGreeting: String = "Bonjour ! Je suis votre Analyste IA en direct de CryptoCycles. Interrogez-moi sur les cours actuels, les taux de funding, les modèles de halving ou les zones de liquidation."
+    override val aiGreeting: String = "Je suis là. Que souhaitez-vous voir ?"
     override val aiClearHistory: String = "Effacer"
     override val aiLiveContextTag: String = "Flux en Direct Connectés"
     override val aiPromptPrefixCycle: String = "Analyse la phase actuelle du cycle de halving, le risque et les analogues historiques."

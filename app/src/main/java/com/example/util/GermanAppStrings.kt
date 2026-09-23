@@ -560,7 +560,7 @@ class GermanAppStrings : AppStrings(AppLanguage.GERMAN) {
     override val aiQuickActionAltseason: String = "Altseason-Bereitschaft"
     override val aiDisclaimer: String = "Unterstützt durch Live-Gemini-KI-Modelle & Echtzeit-Telemetrie. Keine Finanzberatung."
     override val aiThinking: String = "Analysiere Live-Telemetrie & Orderbuch..."
-    override val aiGreeting: String = "Hallo! Ich bin Ihr Echtzeit-KI-Analyst von CryptoCycles. Fragen Sie mich zu aktuellen Kursen, Funding-Raten, Halving-Mustern oder Liquidationszonen."
+    override val aiGreeting: String = "Ich bin da. Was möchten Sie uns ansehen?"
     override val aiClearHistory: String = "Löschen"
     override val aiLiveContextTag: String = "Live-Daten Verknüpft"
     override val aiPromptPrefixCycle: String = "Analysiere die aktuelle Halving-Zyklusphase, das Risiko und historische Analoga."

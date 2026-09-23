@@ -21,6 +21,26 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     val hubUrl = (System.getenv("MARKET_HUB_URL") ?: "").replace("\"", "")
     buildConfigField("String", "MARKET_HUB_URL", "\"$hubUrl\"")
+    // Maps Cloud/AI Studio secrets (GEMINI_API_KEY or Gemini) into the APK without committing .env.
+    val injectedGeminiKey = (System.getenv("GEMINI_API_KEY") ?: System.getenv("Gemini") ?: "")
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\n", "")
+      .replace("\r", "")
+    buildConfigField("String", "GEMINI_INJECTED_API_KEY", "\"$injectedGeminiKey\"")
+    val injectedOpenAiKey = (
+      System.getenv("OPENAI_API_KEY")
+        ?: System.getenv("OPENAI")
+        ?: System.getenv("ChatGPT")
+        ?: System.getenv("gpt")
+        ?: System.getenv("GPT")
+        ?: ""
+      )
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\n", "")
+      .replace("\r", "")
+    buildConfigField("String", "OPENAI_INJECTED_API_KEY", "\"$injectedOpenAiKey\"")
   }
 
   signingConfigs {
