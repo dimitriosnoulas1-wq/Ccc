@@ -15,11 +15,12 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
+import kotlin.math.ln
 
 /**
- * Real OHLC closes for the analytics cycle chart.
- * Binance klines when the asset is listed, otherwise CoinGecko market_chart.
- * The dashed extension replays prior-window returns and is labelled as a statistical projection.
+ * Halving-to-halving closes for the cycle chart.
+ * Bitcoin uses the full daily history. Other coins use their Binance daily market.
+ * Each line is that cycle's real closes, rebased to its own halving. Nothing is drawn after today.
  */
 object HistoricalMarketRepository {
 
@@ -28,34 +29,81 @@ object HistoricalMarketRepository {
     private val cache = ConcurrentHashMap<String, Pair<Long, CycleFractalData>>()
     private const val TTL_MS = 10 * 60 * 1000L
 
-    private val btcHalvings = listOf(
-        1354116278000L to "2012 halving",
-        1468082773000L to "2016 halving",
-        1589217823000L to "2020 halving",
-        HalvingCycleUtils.HALVING_4TH_TIMESTAMP to "2024 halving"
-    )
+    private const val DAY_MS = 86_400_000L
+    private const val HALVING_2016 = 1468082773000L
+    private const val HALVING_2020 = 1589217823000L
+    private const val ANCHOR_MS = 14 * DAY_MS
 
+    @Suppress("UNUSED_PARAMETER")
     suspend fun load(coinId: String, symbol: String, zoom: String): CycleFractalData? = withContext(Dispatchers.IO) {
-        val key = "${coinId.lowercase()}|${symbol.uppercase()}|${zoom.uppercase()}"
+        val key = "${coinId.lowercase()}|${symbol.uppercase()}|HALVING"
         val now = System.currentTimeMillis()
         cache[key]?.let { (at, data) ->
             if (now - at < TTL_MS) return@withContext data
         }
-        val spec = zoomSpec(zoom)
-        val candles = fetchCloses(coinId, symbol, spec.interval, spec.fetchBars) ?: return@withContext null
-        if (candles.size < 4) return@withContext null
-        val data = build(symbol, candles, spec.barsPerWindow, spec.fetchBars)
+        val candles = fetchDailyHistory(symbol) ?: return@withContext null
+        if (candles.size < 30) return@withContext null
+        val data = buildHalvingOverlay(symbol, candles, now) ?: return@withContext null
         cache[key] = now to data
         data
     }
 
-    private data class ZoomSpec(val interval: String, val barsPerWindow: Int, val fetchBars: Int)
+    private fun fetchDailyHistory(symbol: String): List<Candle>? {
+        if (symbol.equals("BTC", ignoreCase = true)) {
+            val btc = fetchBlockchainBtc()
+            if (!btc.isNullOrEmpty()) return btc
+        }
+        return fetchBinanceDaily(symbol)
+    }
 
-    private fun zoomSpec(zoom: String): ZoomSpec = when (zoom.uppercase()) {
-        "1W" -> ZoomSpec("1h", 168, 520)
-        "1M" -> ZoomSpec("4h", 180, 560)
-        "1Y" -> ZoomSpec("1d", 365, 1000)
-        else -> ZoomSpec("15m", 96, 300)
+    private fun fetchBlockchainBtc(): List<Candle>? {
+        val body = MarketDataClient.getText(
+            "https://api.blockchain.info/charts/market-price?timespan=all&format=json&sampled=false&cors=true"
+        ) ?: return null
+        return try {
+            val values = JSONObject(body).optJSONArray("values") ?: return null
+            buildList {
+                for (i in 0 until values.length()) {
+                    val row = values.optJSONObject(i) ?: continue
+                    val time = row.optLong("x") * 1000L
+                    val close = row.optDouble("y", 0.0)
+                    if (time > 0L && close > 0.0) add(Candle(time, close))
+                }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun fetchBinanceDaily(symbol: String): List<Candle>? {
+        ExchangeDirectory.ensureLoaded()
+        val listing = SymbolMath.spotFirstListing(symbol, ExchangeDirectory.spotPairs(), ExchangeDirectory.futuresPairs())
+            ?: return null
+        val out = mutableListOf<Candle>()
+        var start = HALVING_2016
+        val now = System.currentTimeMillis()
+        var guard = 0
+        while (guard < 6 && start < now) {
+            val urls = if (listing.spot) {
+                listOf(
+                    "https://data-api.binance.vision/api/v3/klines?symbol=${listing.pair}&interval=1d&limit=1000&startTime=$start",
+                    "https://api.binance.com/api/v3/klines?symbol=${listing.pair}&interval=1d&limit=1000&startTime=$start"
+                )
+            } else {
+                listOf(
+                    "https://www.binance.com/fapi/v1/klines?symbol=${listing.pair}&interval=1d&limit=1000&startTime=$start",
+                    "https://fapi.binance.com/fapi/v1/klines?symbol=${listing.pair}&interval=1d&limit=1000&startTime=$start"
+                )
+            }
+            val batch = MarketDataClient.getText(urls)?.let { parseKlines(it, listing.divisor) }.orEmpty()
+            if (batch.isEmpty()) break
+            out += batch
+            val next = batch.last().timeMs + DAY_MS
+            if (batch.size < 900 || next <= start) break
+            start = next
+            guard++
+        }
+        return out.distinctBy { it.timeMs / DAY_MS }.sortedBy { it.timeMs }.takeIf { it.isNotEmpty() }
     }
 
     private fun fetchCloses(coinId: String, symbol: String, interval: String, limit: Int): List<Candle>? {
@@ -139,116 +187,77 @@ object HistoricalMarketRepository {
         return buckets.values.toList()
     }
 
-    private fun build(symbol: String, candles: List<Candle>, window: Int, fetchedCap: Int): CycleFractalData {
-        val current = candles.takeLast(window.coerceAtMost(candles.size))
-        val before = candles.dropLast(current.size)
-        val past = before.takeLast(current.size)
-        val earlier = before.dropLast(past.size).takeLast(current.size)
-        val projection = emptyList<Candle>()
-        val currentBase = current.first().close
-        val allReturns = returns(current) + returns(past) + returns(earlier) + projection.map { candle ->
-            if (currentBase > 0.0) candle.close / currentBase - 1.0 else 0.0
-        }
-        val minRet = allReturns.minOrNull() ?: -0.05
-        val maxRet = allReturns.maxOrNull() ?: 0.05
-        val span = (maxRet - minRet).takeIf { abs(it) > 1e-9 } ?: 1.0
+    internal fun buildHalvingOverlay(symbol: String, candles: List<Candle>, nowMs: Long): CycleFractalData? {
+        val sorted = candles.filter { it.close > 0.0 }.sortedBy { it.timeMs }
+        if (sorted.size < 30) return null
+        val axisDays = ((HalvingCycleUtils.HALVING_5TH_TIMESTAMP - HalvingCycleUtils.HALVING_4TH_TIMESTAMP) / DAY_MS)
+            .toInt()
+            .coerceAtLeast(1)
+        val now = nowMs.coerceAtMost(HalvingCycleUtils.HALVING_5TH_TIMESTAMP)
+        val cycle2016 = cycleDrafts(sorted, HALVING_2016, HALVING_2020, axisDays)
+        val cycle2020 = cycleDrafts(sorted, HALVING_2020, HalvingCycleUtils.HALVING_4TH_TIMESTAMP, axisDays)
+        val cycleNow = cycleDrafts(sorted, HalvingCycleUtils.HALVING_4TH_TIMESTAMP, now, axisDays)
+        if (cycleNow.size < 2 && cycle2020.size < 2) return null
+        val logs = (cycle2016 + cycle2020 + cycleNow).map { ln(it.multiple.coerceAtLeast(0.05)) }
+        val minLog = logs.minOrNull() ?: 0.0
+        val maxLog = logs.maxOrNull() ?: minLog
+        val span = (maxLog - minLog).takeIf { abs(it) > 1e-6 } ?: 1.0
 
-        fun points(series: List<Candle>, xEnd: Int): List<FractalPoint> {
-            if (series.size < 2) return emptyList()
-            val base = series.first().close
-            return series.mapIndexed { index, candle ->
-                val x = if (series.size == 1) 0 else (index * xEnd) / (series.size - 1)
-                val ret = if (base > 0) candle.close / base - 1.0 else 0.0
-                val norm = ((ret - minRet) / span).toFloat().coerceIn(0.04f, 0.96f)
-                FractalPoint(
-                    day = x,
-                    normalizedValue = norm,
-                    price = candle.close,
-                    phaseTag = formatDay(candle.timeMs)
-                )
-            }
+        fun draw(drafts: List<CycleDraft>): List<FractalPoint> = drafts.map { draft ->
+            val logM = ln(draft.multiple.coerceAtLeast(0.05))
+            val norm = ((logM - minLog) / span).toFloat().coerceIn(0.04f, 0.96f)
+            FractalPoint(draft.day, norm, draft.price, draft.label)
         }
 
-        val currentPts = points(current, 640)
-        val pastPts = points(past, 640)
-        val earlierPts = points(earlier, 640)
-        val projected = if (projection.isEmpty() || currentPts.isEmpty()) {
-            emptyList()
+        val currentDay = if (nowMs <= HalvingCycleUtils.HALVING_4TH_TIMESTAMP) {
+            0
         } else {
-            val base = current.first().close
-            val startNorm = currentPts.last().normalizedValue
-            listOf(currentPts.last()) + projection.mapIndexed { index, candle ->
-                val x = 640 + ((index + 1) * 160) / projection.size
-                val ret = if (base > 0) candle.close / base - 1.0 else 0.0
-                val norm = ((ret - minRet) / span).toFloat().coerceIn(0.04f, 0.96f)
-                FractalPoint(x, if (index == 0) startNorm else norm, candle.close, "Projected ${formatDay(candle.timeMs)}")
-            }
+            ((nowMs - HalvingCycleUtils.HALVING_4TH_TIMESTAMP) / DAY_MS).toInt().coerceIn(0, axisDays)
         }
-
-        val windowStart = current.first().timeMs
-        val windowEnd = current.last().timeMs
-        val events = mutableListOf<Pair<Int, String>>()
-        val coversFullHistory = candles.size < fetchedCap - 2
-        val high = current.maxByOrNull { it.close }
-        val low = current.minByOrNull { it.close }
-        if (high != null) {
-            val label = if (coversFullHistory && candles.maxOf { it.close } == high.close) "ATH" else "High"
-            dayIndex(high.timeMs, windowStart, windowEnd)?.let { events += it to label }
-        }
-        if (low != null) {
-            val label = if (coversFullHistory && candles.minOf { it.close } == low.close) "ATL" else "Low"
-            dayIndex(low.timeMs, windowStart, windowEnd)?.let { events += it to label }
-        }
-        if (coversFullHistory) {
-            events += 0 to "Listing"
-        }
-        val usesHalving = symbol.equals("BTC", ignoreCase = true)
-        if (usesHalving) {
-            for ((time, label) in btcHalvings) {
-                dayIndex(time, windowStart, windowEnd)?.let { events += it to label }
-            }
-        }
-
-        val change = if (current.first().close > 0) {
-            ((current.last().close - current.first().close) / current.first().close) * 100.0
-        } else 0.0
-        val pastLabel = past.firstOrNull()?.let { "Past ${formatDay(it.timeMs)}" } ?: "Past cycle"
-        val earlierLabel = earlier.firstOrNull()?.let { "Earlier ${formatDay(it.timeMs)}" } ?: "Earlier cycle"
-
+        val change = if (cycleNow.size >= 2) (cycleNow.last().multiple - 1.0) * 100.0 else 0.0
         return CycleFractalData(
-            currentPoints = currentPts,
-            projectedPoints = projected,
+            currentPoints = draw(cycleNow),
+            projectedPoints = emptyList(),
             projectedBandUpper = emptyList(),
             projectedBandLower = emptyList(),
-            points2020 = pastPts,
-            points2016 = earlierPts,
+            points2020 = draw(cycle2020),
+            points2016 = draw(cycle2016),
             correlationScore2020 = change,
             correlationScore2016 = 0.0,
-            currentDay = currentPts.lastOrNull()?.day ?: 0,
-            peakDay = events.firstOrNull { it.second == "ATH" || it.second == "High" }?.first ?: 0,
-            floorDay = events.firstOrNull { it.second == "ATL" || it.second == "Low" }?.first ?: 0,
-            pastCycleLabel = pastLabel,
-            earlierCycleLabel = earlierLabel,
-            usesHalving = usesHalving,
-            eventDays = events.distinctBy { it.second },
-            windowLabel = "${formatDay(windowStart)} – ${formatDay(windowEnd)}"
+            currentDay = currentDay,
+            peakDay = cycleNow.maxByOrNull { it.price }?.day ?: 0,
+            floorDay = 0,
+            pastCycleLabel = "2020",
+            earlierCycleLabel = "2016",
+            usesHalving = symbol.equals("BTC", ignoreCase = true) || cycle2016.isNotEmpty() || cycle2020.isNotEmpty(),
+            eventDays = listOf(0 to "Halving"),
+            windowLabel = "Day $currentDay / $axisDays",
+            axisDays = axisDays
         )
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun project(current: List<Candle>, past: List<Candle>): List<Candle> {
-        return emptyList()
-    }
+    private data class CycleDraft(val day: Int, val multiple: Double, val price: Double, val label: String)
 
-    private fun returns(series: List<Candle>): List<Double> {
-        if (series.size < 2 || series.first().close <= 0.0) return emptyList()
-        val base = series.first().close
-        return series.map { it.close / base - 1.0 }
-    }
-
-    private fun dayIndex(timeMs: Long, start: Long, end: Long): Int? {
-        if (end <= start || timeMs < start || timeMs > end) return null
-        return (((timeMs - start).toDouble() / (end - start).toDouble()) * 640.0).toInt().coerceIn(0, 640)
+    private fun cycleDrafts(candles: List<Candle>, startMs: Long, endMs: Long, axisDays: Int): List<CycleDraft> {
+        if (endMs <= startMs) return emptyList()
+        val anchor = candles.minByOrNull { abs(it.timeMs - startMs) } ?: return emptyList()
+        if (abs(anchor.timeMs - startMs) > ANCHOR_MS || anchor.close <= 0.0) return emptyList()
+        val series = candles.filter { it.timeMs in startMs..endMs }
+        if (series.size < 8) return emptyList()
+        val sampled = series.filterIndexed { index, _ -> index % 7 == 0 }.toMutableList()
+        if (sampled.last().timeMs != series.last().timeMs) sampled += series.last()
+        if (sampled.first().timeMs != anchor.timeMs && anchor.timeMs <= endMs) {
+            sampled.add(0, anchor)
+        }
+        return sampled.map { candle ->
+            val day = ((candle.timeMs - startMs) / DAY_MS).toInt().coerceIn(0, axisDays)
+            CycleDraft(
+                day = day,
+                multiple = candle.close / anchor.close,
+                price = candle.close,
+                label = formatDay(candle.timeMs)
+            )
+        }.distinctBy { it.day }
     }
 
     private fun formatDay(timeMs: Long): String =

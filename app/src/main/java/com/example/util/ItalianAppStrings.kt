@@ -84,7 +84,7 @@ class ItalianAppStrings : AppStrings(AppLanguage.ITALIAN) {
     override val whereItMovedPastLabel: String = "Dove si è mosso nei cicli passati:"
     override val nextMoveHeader: String = "MOVIMENTI LIVE REALIZZATI"
     override val cycleFractalLabel: String = "Giorno Frattale del Ciclo"
-    override val historicalMatchLabel: String = "Corrispondenza Pattern Storico"
+    override val historicalMatchLabel: String = "Come il prezzo si è mosso da un halving al successivo"
     override val target1w: String = "1 Settimana"
     override val target2w: String = "2 Settimane"
     override val target4w: String = "4 Settimane"
