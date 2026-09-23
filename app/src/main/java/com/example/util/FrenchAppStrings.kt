@@ -84,7 +84,7 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val whereItMovedPastLabel: String = "Où il a évolué lors des cycles passés :"
     override val nextMoveHeader: String = "MOUVEMENTS LIVE RÉALISÉS"
     override val cycleFractalLabel: String = "Jour Fractal du Cycle"
-    override val historicalMatchLabel: String = "Correspondance de Modèle Historique"
+    override val historicalMatchLabel: String = "Clôtures réelles, chaque fenêtre rebasée sur son ouverture"
     override val target1w: String = "1 Semaine"
     override val target2w: String = "2 Semaines"
     override val target4w: String = "4 Semaines"
