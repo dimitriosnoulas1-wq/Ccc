@@ -15,7 +15,7 @@ import java.util.Locale
 
 object AlertHistoryManager {
     private const val PREFS_NAME = "crypto_alert_history_prefs"
-    private const val KEY_ALERTS_JSON = "alerts_json_v1"
+    private const val KEY_ALERTS_JSON = "alerts_json_v2_live_only"
 
     private val _alerts = MutableStateFlow<List<AlertHistoryItem>>(emptyList())
     val alerts: StateFlow<List<AlertHistoryItem>> = _alerts.asStateFlow()
@@ -32,10 +32,7 @@ object AlertHistoryManager {
     private fun loadAlerts() {
         val jsonString = prefs?.getString(KEY_ALERTS_JSON, null)
         if (jsonString.isNullOrEmpty()) {
-            // Seed initial realistic 30-day historical institutional alerts
-            val defaultHistory = getSeedHistory()
-            _alerts.value = defaultHistory
-            saveAlerts(defaultHistory)
+            _alerts.value = emptyList()
         } else {
             try {
                 val array = JSONArray(jsonString)
@@ -62,17 +59,9 @@ object AlertHistoryManager {
                         )
                     )
                 }
-                if (list.isEmpty()) {
-                    val seed = getSeedHistory()
-                    _alerts.value = seed
-                    saveAlerts(seed)
-                } else {
-                    _alerts.value = list
-                }
+                _alerts.value = list.filterNot { it.id.startsWith("seed-") }
             } catch (_: Exception) {
-                val seed = getSeedHistory()
-                _alerts.value = seed
-                saveAlerts(seed)
+                _alerts.value = emptyList()
             }
         }
     }
@@ -118,9 +107,8 @@ object AlertHistoryManager {
     }
 
     fun clearAll() {
-        val seed = getSeedHistory()
-        _alerts.value = seed
-        saveAlerts(seed)
+        _alerts.value = emptyList()
+        saveAlerts(emptyList())
     }
 
     private fun saveAlerts(list: List<AlertHistoryItem>) {
@@ -146,75 +134,4 @@ object AlertHistoryManager {
         } catch (_: Exception) {}
     }
 
-    private fun getSeedHistory(): List<AlertHistoryItem> {
-        val now = System.currentTimeMillis()
-        val dayMs = 86400000L
-        return listOf(
-            AlertHistoryItem(
-                id = "seed-1",
-                timestamp = now - 3600000L * 3,
-                displayDate = "Σήμερα, 04:15",
-                category = AlertCategory.FUNDING_SPIKE,
-                title = "⚡ BINANCE FUNDING SPIKE WARNING",
-                message = "Binance BTC Funding Rate έφτασε το +0.048% με αυξανόμενο Open Interest.",
-                detailedReason = "Ακραία υπερθέρμανση Long μοχλεύσεων. Αυξημένος κίνδυνος Long Squeeze / Local Flush τις επόμενες ώρες.",
-                btcPriceAtTrigger = 67420.0,
-                navTargetTab = "DERIVATIVES",
-                isUrgent = true,
-                isRead = false
-            ),
-            AlertHistoryItem(
-                id = "seed-2",
-                timestamp = now - dayMs * 1,
-                displayDate = "Χθες, 19:40",
-                category = AlertCategory.ETF_EXTREME,
-                title = "🏛️ MASSIVE SPOT ETF INFLOW (+640M)",
-                message = "Θεσμική καθαρή εισροή +$640.2M στα US Spot Bitcoin ETFs (IBIT & FBTC).",
-                detailedReason = "Συνεχιζόμενη απορρόφηση προσφοράς από Spot ETFs. Ισχυρή υποστήριξη τιμής και θετική απόκλιση ρευστότητας.",
-                btcPriceAtTrigger = 66800.0,
-                navTargetTab = "MACRO",
-                isUrgent = false,
-                isRead = true
-            ),
-            AlertHistoryItem(
-                id = "seed-3",
-                timestamp = now - dayMs * 3,
-                displayDate = "09 Σεπ, 11:20",
-                category = AlertCategory.WHALE_FLOW,
-                title = "🚨 WHALE DEPOSIT TO SPOT EXCHANGE",
-                message = "Μεταφορά 4,850 BTC (~$325M) από άγνωστο πορτοφόλι προς Binance Spot.",
-                detailedReason = "Εντοπίστηκε αυξημένη πιθανότητα spot πώλησης ή ανακατανομής θέσεων από μεγάλο κάτοχο.",
-                btcPriceAtTrigger = 66100.0,
-                navTargetTab = "WHALES",
-                isUrgent = true,
-                isRead = true
-            ),
-            AlertHistoryItem(
-                id = "seed-4",
-                timestamp = now - dayMs * 7,
-                displayDate = "05 Σεπ, 16:00",
-                category = AlertCategory.CYCLE_SHIFT,
-                title = "🎯 CYCLE REGIME TRANSITION: EXPANSION",
-                message = "Ο συνθετικός δείκτης κύκλου επιβεβαίωσε είσοδο στη Ζώνη 2 (Cycle Expansion).",
-                detailedReason = "Συνδυασμός θετικών ροών ETF, διεύρυνσης Stablecoins και διατήρησης του BTC πάνω από το 200W SMA.",
-                btcPriceAtTrigger = 64900.0,
-                navTargetTab = "MACRO",
-                isUrgent = false,
-                isRead = true
-            ),
-            AlertHistoryItem(
-                id = "seed-5",
-                timestamp = now - dayMs * 14,
-                displayDate = "29 Αυγ, 08:30",
-                category = AlertCategory.LIQUIDATION_CASCADE,
-                title = "💥 LIQUIDATION CASCADE FLUSH ($180M)",
-                message = "Εκκαθαρίσεις $180M σε Long θέσεις εντός 1 ώρας. Το Funding Rate μηδένισε.",
-                detailedReason = "Υγιής εκτόνωση υπερβολικής μόχλευσης (Leverage Reset). Η αγορά δημιούργησε τοπικό πυθμένα υποστήριξης.",
-                btcPriceAtTrigger = 62150.0,
-                navTargetTab = "DERIVATIVES",
-                isUrgent = true,
-                isRead = true
-            )
-        )
-    }
 }

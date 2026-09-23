@@ -337,8 +337,6 @@ class ItalianAppStrings : AppStrings(AppLanguage.ITALIAN) {
     override val whaleNotificationsDesc: String = "Ricevi avvisi istantanei per acquisti massicci di balene o depositi sugli exchange."
     override val whaleNotificationsProLockedDesc: String = "Funzionalità PRO esclusiva. Avvisi push live per trasferimenti da $10M+."
     override val whaleThresholdTitle: String = "Soglia Minima Avviso Balene"
-    override val whaleTestAlertBtn: String = "Testa Avviso Balena"
-    override val whaleTestAlertSuccess: String = "Notifica di test inviata al dispositivo!"
     override val whaleFilterAll: String = "Tutte le Balene"
     override val whaleFilterInflow: String = "🚨 Entrate / Vendite"
     override val whaleFilterOutflow: String = "🟢 Accumulo"

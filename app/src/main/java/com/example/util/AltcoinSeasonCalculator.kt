@@ -38,7 +38,7 @@ object AltcoinSeasonCalculator {
             )
             if (!bodyString.isNullOrBlank()) {
                     val jsonArray = JSONArray(bodyString)
-                    var btcChange = 5.0
+                    var btcChange = Double.NaN
                     val marketCoins = mutableListOf<Pair<String, Double>>()
 
                     for (i in 0 until jsonArray.length()) {
@@ -57,29 +57,27 @@ object AltcoinSeasonCalculator {
                     }
 
                     val top50Alts = marketCoins.take(50)
-                    if (top50Alts.isNotEmpty()) {
+                    if (top50Alts.isNotEmpty() && !btcChange.isNaN()) {
                         val outperforming = top50Alts.filter { it.second > btcChange }
                         val outperformingCount = outperforming.size
-                        // Scale 30d outperformance proportionally into a realistic 0-100 index score
-                        val rawScore = ((outperformingCount.toDouble() / 50.0) * 100.0).roundToInt()
-                        val finalScore = rawScore.coerceIn(15, 85) // Prevent unrealistic extreme 0 or 100 spikes
+                        val finalScore = ((outperformingCount.toDouble() / top50Alts.size.toDouble()) * 100.0)
+                            .roundToInt()
+                            .coerceIn(0, 100)
 
                         val topPerformers = top50Alts
                             .sortedByDescending { it.second }
                             .take(7)
                             .map { it.first to ((it.second * 10.0).roundToInt() / 10.0) }
 
-                        val prevMonth = (finalScore - 2).coerceIn(10, 90)
-                        val prevYear = (finalScore - 5).coerceIn(10, 90)
-
                         val result = AltcoinSeasonData(
                             score = finalScore,
-                            previousMonthScore = prevMonth,
-                            previousYearScore = prevYear,
-                            topOutperformingCoins = if (topPerformers.isNotEmpty()) topPerformers else listOf("SOL" to 12.5, "SUI" to 15.0),
+                            previousMonthScore = 0,
+                            previousYearScore = 0,
+                            topOutperformingCoins = topPerformers,
                             btcGain90d = (btcChange * 10.0).roundToInt() / 10.0,
                             top50OutperformedCount = outperformingCount,
-                            totalTop50Count = top50Alts.size
+                            totalTop50Count = top50Alts.size,
+                            isAvailable = true
                         )
 
                         cachedData = result
@@ -98,51 +96,42 @@ object AltcoinSeasonCalculator {
         return calculateLocalFallback(coins, centralizedBtcPrice)
     }
 
-    fun calculateLocalFallback(coins: List<CryptoCoin>, centralizedBtcPrice: Double): AltcoinSeasonData {
-        if (coins.isEmpty()) {
-            return AltcoinSeasonData(score = 39) // Anchor to realistic neutral baseline (39)
+    fun calculateLocalFallback(coins: List<CryptoCoin>, @Suppress("UNUSED_PARAMETER") centralizedBtcPrice: Double): AltcoinSeasonData {
+        val liveCoins = coins.filter { it.priceUsd > 0.0 && it.priceUpdatedAtMs > 0L }
+        val btcCoin = liveCoins.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
+        if (liveCoins.size < 10 || btcCoin == null) {
+            return AltcoinSeasonData()
         }
 
-        val btcCoin = coins.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
-        val btcPrice = if (centralizedBtcPrice > 0.0) centralizedBtcPrice else (btcCoin?.priceUsd ?: 77250.0)
-        val btcGain = btcCoin?.change24h ?: 1.5
-
-        val altcoins = coins.filter { coin ->
+        val btcGain = btcCoin.change24h
+        val altcoins = liveCoins.filter { coin ->
             !coin.symbol.equals("BTC", ignoreCase = true) &&
-            !excludedSymbols.contains(coin.symbol.uppercase()) &&
-            coin.priceUsd > 0.0
+            !excludedSymbols.contains(coin.symbol.uppercase())
         }.take(50)
+        if (altcoins.isEmpty()) return AltcoinSeasonData()
 
-        val totalAlts = altcoins.size.coerceAtLeast(1)
         val altPerformanceList = altcoins.map { alt ->
-            // Use realistic proportional gain based on 24h change without random hash jitter spikes
-            val altGain = alt.change24h
-            Triple(alt.symbol.uppercase(), altGain, altGain > btcGain)
+            Triple(alt.symbol.uppercase(), alt.change24h, alt.change24h > btcGain)
         }
-
-        val outperformingCount = altPerformanceList.count { p -> p.third }
-        // Compute realistic score anchored around neutral market conditions (~35-45)
-        val baseScore = 39
-        val performanceDelta = ((outperformingCount.toDouble() / totalAlts.toDouble()) * 20.0) - 10.0
-        val finalScore = (baseScore + performanceDelta).roundToInt().coerceIn(20, 75)
+        val outperformingCount = altPerformanceList.count { it.third }
+        val finalScore = ((outperformingCount.toDouble() / altcoins.size.toDouble()) * 100.0)
+            .roundToInt()
+            .coerceIn(0, 100)
 
         val topPerformers = altPerformanceList
             .sortedByDescending { it.second }
             .take(7)
             .map { (symbol, gain, _) -> symbol to ((gain * 10.0).roundToInt() / 10.0) }
 
-        val result = AltcoinSeasonData(
+        return AltcoinSeasonData(
             score = finalScore,
-            previousMonthScore = (finalScore - 3).coerceIn(10, 90),
-            previousYearScore = (finalScore - 6).coerceIn(10, 90),
-            topOutperformingCoins = if (topPerformers.isNotEmpty()) topPerformers else listOf("SOL" to 8.5, "SUI" to 11.2),
+            previousMonthScore = 0,
+            previousYearScore = 0,
+            topOutperformingCoins = topPerformers,
             btcGain90d = (btcGain * 10.0).roundToInt() / 10.0,
             top50OutperformedCount = outperformingCount,
-            totalTop50Count = totalAlts
+            totalTop50Count = altcoins.size,
+            isAvailable = true
         )
-
-        cachedData = result
-        lastFetchTimestamp = System.currentTimeMillis()
-        return result
     }
 }

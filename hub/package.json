@@ -2,7 +2,7 @@
   "name": "cryptocycles-hub",
   "version": "1.0.0",
   "private": true,
-  "description": "Shared market-data cache so every phone reads one Binance/CoinGecko pull.",
+  "description": "Shared market-data cache so every phone reads one Binance/CoinGecko/Bybit/OKX pull.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

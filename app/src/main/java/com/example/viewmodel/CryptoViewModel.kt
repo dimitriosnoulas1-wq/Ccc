@@ -158,29 +158,23 @@ class CryptoViewModel @JvmOverloads constructor(
     val btcForecast: StateFlow<ForecastCardModel> = combine(
         centralizedPriceState,
         futuresMarkFunding,
-        etfFlowData
-    ) { priceState, funding, etf ->
+        etfFlowData,
+        allCoins
+    ) { priceState, funding, etf, coins ->
         val currentPrice = if (priceState.btcPerpPrice > 0.0) priceState.btcPerpPrice else priceState.btcSpotPrice
-        val base = currentPrice
-        val prices = listOf(
-            base * 0.96, base * 0.965, base * 0.97, base * 0.975, base * 0.972,
-            base * 0.978, base * 0.982, base * 0.985, base * 0.983, base * 0.988,
-            base * 0.99, base * 0.987, base * 0.992, base * 0.995, base * 0.993,
-            base * 0.997, base * 1.001, base * 0.998, base * 1.003, base * 1.005,
-            base * 1.004, base * 1.008, base * 1.011, base * 1.009, base * 1.013,
-            base * 1.015, base * 1.012, base * 1.017, base * 1.019, currentPrice
-        )
-        val highs = prices.map { it * 1.008 }
-        val lows = prices.map { it * 0.992 }
-        val fundingRate = funding?.fundingRate ?: 0.0001
-        val etfInflows = etf.oneDayNetFlowMillionUsd * 1_000_000.0
+        val liveSpark = coins.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
+            ?.takeIf { it.priceUpdatedAtMs > 0L && it.sparkline.size >= 30 }
+            ?.sparkline
+            .orEmpty()
+        val fundingRate = funding?.fundingRate ?: 0.0
+        val etfInflows = if (etf.isLive) etf.oneDayNetFlowMillionUsd * 1_000_000.0 else 0.0
 
         QuantForecastEngine.computeForecast(
             symbol = "BTC",
             currentPrice = currentPrice,
-            historicalPrices = prices,
-            highs = highs,
-            lows = lows,
+            historicalPrices = liveSpark,
+            highs = liveSpark.map { it * 1.008 },
+            lows = liveSpark.map { it * 0.992 },
             fundingRate = fundingRate,
             etfInflowsUsd = etfInflows
         )
@@ -189,10 +183,10 @@ class CryptoViewModel @JvmOverloads constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = QuantForecastEngine.computeForecast(
             symbol = "BTC",
-            currentPrice = 77250.0,
-            historicalPrices = List(30) { 77250.0 },
-            highs = List(30) { 78000.0 },
-            lows = List(30) { 76000.0 }
+            currentPrice = 0.0,
+            historicalPrices = emptyList(),
+            highs = emptyList(),
+            lows = emptyList()
         )
     )
 
@@ -410,9 +404,13 @@ class CryptoViewModel @JvmOverloads constructor(
             fearAndGreedSentiment = macro.fearAndGreedClassification ?: "Greed",
             btcDominancePct = macro.btcDominance ?: 58.0,
             altcoinSeasonIndex = calculatedAltSeason,
-            fundingRatePct = (markFunding?.fundingRate ?: 0.00011) * 100.0,
-            futuresMarkPrice = if (bus.btcMark.price > 0.0) bus.btcMark.price else (markFunding?.markPrice ?: btcPrice),
-            openInterestUsd = openInterest?.openInterestUsd ?: 21870000000.0,
+            fundingRatePct = if (markFunding?.fromExchange == true && markFunding.fundingRate != null) {
+                (markFunding.fundingRate ?: 0.0) * 100.0
+            } else {
+                0.0
+            },
+            futuresMarkPrice = if (bus.btcMark.price > 0.0) bus.btcMark.price else (markFunding?.markPrice ?: 0.0),
+            openInterestUsd = if (openInterest?.isAvailable == true) openInterest.openInterestUsd ?: 0.0 else 0.0,
             activeFuturesSymbol = activeFuturesSymbol.value,
             whaleNet24h = "+$142M Net Accumulation",
             marketStance = "Historical cycle alignment & institutional net flows",
@@ -667,39 +665,6 @@ class CryptoViewModel @JvmOverloads constructor(
         whaleRepository.setNotify200wSma(enabled)
     }
 
-    fun triggerTestWhaleAlert() {
-        whaleRepository.triggerTestWhaleAlert()
-    }
-
-    fun triggerTestCycleAlert(type: String) {
-        val app = getApplication<Application>()
-        when (type) {
-            "ZONE" -> com.example.util.NotificationHelper.sendCyclePushAlert(
-                context = app,
-                title = "🚨 Cycle Zone Shift: Green → Accumulate",
-                message = "Bitcoin is in the Green Accumulation Corridor ($67,200).",
-                details = "Historical cycles indicate favorable long-term asymmetrical risk/reward in this valuation band."
-            )
-            "PI_CYCLE" -> com.example.util.NotificationHelper.sendCyclePushAlert(
-                context = app,
-                title = "⚡ Pi Cycle Convergence Notice",
-                message = "111DMA ($62,400) vs 350DMA x 2 ($124,800) gap is at 49.8%.",
-                details = "No imminent top cross detected. Trajectory aligns with mid-cycle expansion phase."
-            )
-            "RAINBOW" -> com.example.util.NotificationHelper.sendCyclePushAlert(
-                context = app,
-                title = "🌈 Rainbow Valuation Band Migration",
-                message = "BTC has entered the 'BUY!' / Accumulation Band.",
-                details = "Power-law regression model indicates sustainable multi-year support baseline."
-            )
-            "200W_SMA" -> com.example.util.NotificationHelper.sendCyclePushAlert(
-                context = app,
-                title = "📈 200-Week SMA Baseline Alert",
-                message = "BTC price is +78.4% above 200W SMA ($38,200).",
-                details = "Structural multi-year bull market regime remains fully confirmed."
-            )
-        }
-    }
 
     fun setCurrency(currency: Currency) {
         repository.setCurrency(currency)

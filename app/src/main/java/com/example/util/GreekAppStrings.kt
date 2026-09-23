@@ -363,8 +363,6 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val whaleNotificationsDesc: String = "Λάβετε άμεσες ειδοποιήσεις push όταν πραγματοποιούνται τεράστιες αγορές ή καταθέσεις σε ανταλλακτήρια."
     override val whaleNotificationsProLockedDesc: String = "Αποκλειστική λειτουργία PRO. Ειδοποιήσεις push σε πραγματικό χρόνο για μεταφορές $10M+."
     override val whaleThresholdTitle: String = "Ελάχιστο Μέγεθος Ειδοποίησης Φαλαινών"
-    override val whaleTestAlertBtn: String = "Δοκιμή Ειδοποίησης Φαλαινών"
-    override val whaleTestAlertSuccess: String = "Η δοκιμαστική ειδοποίηση στάλθηκε στη συσκευή!"
     override val whaleFilterAll: String = "Όλες οι Φάλαινες"
     override val whaleFilterInflow: String = "🚨 Εισροές / Dumps"
     override val whaleFilterOutflow: String = "🟢 Συσσώρευση"

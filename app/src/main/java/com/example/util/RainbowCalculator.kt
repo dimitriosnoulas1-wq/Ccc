@@ -62,11 +62,7 @@ object RainbowCalculator {
     }
 
     fun resolveEffectivePrice(price: Double): Double {
-        if (price > 1000.0) return price
-        val registryPrice = com.example.data.repository.CoinDataRegistry.getAllCoins()
-            .firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }?.priceUsd
-        if (registryPrice != null && registryPrice > 1000.0) return registryPrice
-        return 63500.0
+        return if (price > 0.0) price else 0.0
     }
 
     fun generateRainbowChartSeries(

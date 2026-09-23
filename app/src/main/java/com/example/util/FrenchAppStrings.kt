@@ -337,8 +337,6 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val whaleNotificationsDesc: String = "Recevez des alertes instantanées lors d'achats massifs de baleines ou de transferts vers les échanges."
     override val whaleNotificationsProLockedDesc: String = "Fonctionnalité PRO exclusive. Alertes push en direct pour les transferts majeurs ($10M+)."
     override val whaleThresholdTitle: String = "Taille Minimale d'Alerte Baleine"
-    override val whaleTestAlertBtn: String = "Tester l'Alerte Baleine"
-    override val whaleTestAlertSuccess: String = "Notification test envoyée à l'appareil !"
     override val whaleFilterAll: String = "Toutes les Baleines"
     override val whaleFilterInflow: String = "🚨 Entrées / Ventes"
     override val whaleFilterOutflow: String = "🟢 Accumulation"

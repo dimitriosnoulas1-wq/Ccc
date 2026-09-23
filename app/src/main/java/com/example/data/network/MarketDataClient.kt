@@ -16,6 +16,8 @@ object MarketDataClient {
         .retryOnConnectionFailure(true)
         .build()
 
+    fun getDirect(url: String): String? = getOnce(url)
+
     fun getText(url: String, attempts: Int = 3): String? = getText(alternateUrls(url), attempts)
 
     fun getText(urls: List<String>, attempts: Int = 3): String? {
@@ -46,7 +48,7 @@ object MarketDataClient {
         return try {
             val request = Request.Builder()
                 .url(url)
-                .header("User-Agent", "CryptoCycles/1.132")
+                .header("User-Agent", "CryptoCycles/1.134")
                 .header("Accept", "application/json, application/rss+xml, application/xml, text/xml, */*")
                 .build()
             client.newCall(request).execute().use { response ->

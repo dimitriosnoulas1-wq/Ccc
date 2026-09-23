@@ -15,8 +15,8 @@ android {
     applicationId = "com.aistudio.cryptocycles.app"
     minSdk = 24
     targetSdk = 36
-    versionCode = 133
-    versionName = "1.133.0"
+    versionCode = 134
+    versionName = "1.134.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     val hubUrl = (System.getenv("MARKET_HUB_URL") ?: "").replace("\"", "")

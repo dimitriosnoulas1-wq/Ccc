@@ -194,9 +194,7 @@ fun FuturesTerminalScreen(
                     )
                 } catch (_: Throwable) {
                     MarketIntelligenceReport(
-                        symbol = activeFuturesSymbol,
-                        currentPrice = tickerData?.lastPrice ?: markFunding?.markPrice ?: currentCoin?.priceUsd ?: 100.0,
-                        priceChange24h = tickerData?.priceChangePercent24h ?: currentCoin?.change24h ?: 2.5
+                        symbol = activeFuturesSymbol
                     )
                 }
             }

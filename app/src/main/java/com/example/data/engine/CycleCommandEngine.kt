@@ -13,24 +13,28 @@ object CycleCommandEngine {
         etfFlowData: BitcoinEtfFlowData,
         liquidityData: StablecoinLiquidityData,
         futuresMarkFunding: FuturesMarkFunding?,
-        fearGreedScore: Int = 55,
-        altSeasonScore: Int = 31
+        fearGreedScore: Int? = null,
+        altSeasonScore: Int = -1
     ): CycleCommandState {
-        val halvingDays = 508
-        val totalDays = 1460
+        val halvingDays = com.example.util.HalvingCycleUtils.getDaysSince4thHalving()
+        val totalDays = (
+            (com.example.util.HalvingCycleUtils.HALVING_5TH_TIMESTAMP - com.example.util.HalvingCycleUtils.HALVING_4TH_TIMESTAMP) /
+                86_400_000L
+            ).toInt().coerceAtLeast(1)
 
-        val fundingRate = futuresMarkFunding?.fundingRate?.times(100.0) ?: 0.011
-        val isFundingHeated = fundingRate > 0.035
+        val fundingIsLive = futuresMarkFunding?.fundingRate != null
+        val fundingRate = if (fundingIsLive) futuresMarkFunding?.fundingRate?.times(100.0) ?: 0.0 else 0.0
+        val isFundingHeated = fundingIsLive && fundingRate > 0.035
 
-        val etf5d = etfFlowData.fiveDayCumulativeMillionUsd ?: 892.6
-        val stablecoinChangeBillion = liquidityData.change7dUsd / 1_000_000_000.0
-        val stablecoinTotalBillion = liquidityData.totalCirculatingUsd / 1_000_000_000.0
+        val etf5d = if (etfFlowData.isLive) etfFlowData.fiveDayCumulativeMillionUsd else 0.0
+        val stablecoinChangeBillion = if (liquidityData.isLive) liquidityData.change7dUsd / 1_000_000_000.0 else 0.0
+        val stablecoinTotalBillion = if (liquidityData.isLive) liquidityData.totalCirculatingUsd / 1_000_000_000.0 else 0.0
 
         // Determine Market Regime
         val regime = when {
-            fearGreedScore >= 80 || fundingRate > 0.05 -> MarketRegime.CYCLE_PEAK_EXIT
-            isFundingHeated || (fundingRate > 0.03 && etf5d < 0) -> MarketRegime.LEVERAGE_DISTRIBUTION
-            fearGreedScore < 30 || btcPrice < 45000 -> MarketRegime.ACCUMULATION
+            (fearGreedScore != null && fearGreedScore >= 80) || (fundingIsLive && fundingRate > 0.05) -> MarketRegime.CYCLE_PEAK_EXIT
+            isFundingHeated || (fundingIsLive && fundingRate > 0.03 && etfFlowData.isLive && etf5d < 0) -> MarketRegime.LEVERAGE_DISTRIBUTION
+            (fearGreedScore != null && fearGreedScore < 30) || (btcPrice > 0.0 && btcPrice < 45000) -> MarketRegime.ACCUMULATION
             else -> MarketRegime.CYCLE_EXPANSION
         }
 
@@ -45,20 +49,27 @@ object CycleCommandEngine {
         val timelineProgress = (halvingDays.toDouble() / totalDays.toDouble()).coerceIn(0.0, 1.0)
         score += (timelineProgress * 25).toInt()
 
-        // ETF 5D flow contribution (+10 if strong inflow, -10 if outflow)
-        if (etf5d > 500) score += 8
-        else if (etf5d < -300) score -= 8
+        // ETF 5D flow contribution only after a verified Farside parse
+        if (etfFlowData.isLive) {
+            if (etf5d > 500) score += 8
+            else if (etf5d < -300) score -= 8
+        }
 
-        // Stablecoin Liquidity contribution (+10 if expanding)
-        if (liquidityData.isLiquidityExpanding) score += 6
+        // Stablecoin Liquidity contribution only from a live DefiLlama read
+        if (liquidityData.isLive && liquidityData.isLiquidityExpanding) score += 6
 
         // Funding heat (+10 if high leverage)
         if (isFundingHeated) score += 12
 
         // Fear and Greed normalization
-        score = ((score * 0.6) + (fearGreedScore * 0.4)).toInt().coerceIn(10, 95)
+        score = if (fearGreedScore != null) {
+            ((score * 0.6) + (fearGreedScore * 0.4)).toInt().coerceIn(10, 95)
+        } else {
+            score.coerceIn(10, 95)
+        }
 
         val rainbowBand = when {
+            btcPrice <= 0.0 -> "Waiting for price"
             btcPrice < 48000 -> "Fire Sale / Accumulate Floor"
             btcPrice < 68000 -> "Accumulate / Support Base"
             btcPrice < 90000 -> "HODL / Steady Growth Corridor"
@@ -91,8 +102,10 @@ object CycleCommandEngine {
             etf5dNetFlowMillionUsd = etf5d,
             stablecoinTotalUsdBillion = stablecoinTotalBillion,
             stablecoin7dChangeBillion = stablecoinChangeBillion,
-            fearAndGreedIndex = fearGreedScore,
+            fearAndGreedIndex = fearGreedScore ?: -1,
             altcoinSeasonIndex = altSeasonScore,
+            etfFlowIsLive = etfFlowData.isLive,
+            fundingIsLive = fundingIsLive,
             keyStanceSummaryEn = summaryEn,
             keyStanceSummaryEl = summaryEl
         )

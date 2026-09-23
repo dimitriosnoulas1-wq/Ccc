@@ -365,7 +365,7 @@ object CoinLocalization {
                 "TAO" -> "Bittensor is an open-source protocol powering a decentralized machine learning network with competitive intelligence subnets."
                 "PEPE" -> "Pepe is a decentralized deflationary cultural memecoin celebrating the iconic internet cartoon character with deep community liquidity."
                 "XLM" -> "Stellar is an open-source, decentralized payment network engineered to connect financial institutions, banks, and payment systems globally with sub-cent transaction fees."
-                "XMN" -> "xMoney is an advanced Web3 crypto-fiat payment ecosystem integrating cryptocurrency gateways, merchant POS terminals, and debit cards with zero chargeback risks."
+                "HYPE" -> "Hyperliquid is a high-performance perpetual DEX and Layer 1 where on-chain open interest, funding, and liquidations are public."
                 else -> "${coin.name} is a leading digital asset operating in the ${coin.category.displayName} sector, providing decentralized protocol functionality."
             }
             AppLanguage.GERMAN -> when (coin.symbol) {
@@ -386,7 +386,7 @@ object CoinLocalization {
                 "TAO" -> "Bittensor ist ein Open-Source-Protokoll, das ein dezentrales maschinelles Lernnetzwerk mit spezialisierten KI-Subnetzen betreibt."
                 "PEPE" -> "Pepe ist ein deflationärer Meme-Coin mit tiefgreifender Community-Liquidität und breiter Marktbeachtung."
                 "XLM" -> "Stellar ist ein dezentrales Zahlungsnetzwerk, das Finanzinstitute, Banken und Menschen weltweit mit minimalen Transaktionsgebühren verbindet."
-                "XMN" -> "xMoney ist ein modernes Web3-Zahlungsökosystem, das Krypto-Gateways, Händler-Terminals und Debitkarten ohne Rückbuchungsrisiken integriert."
+                "HYPE" -> "Hyperliquid ist eine hochperformante Perpetual-DEX und Layer-1 mit öffentlichen Open-Interest-, Funding- und Liquidationsdaten."
                 else -> "${coin.name} ist ein führendes digitales Krypto-Asset mit dezentralen Netzwerkfunktionen und Smart-Contract-Architektur."
             }
             AppLanguage.FRENCH -> when (coin.symbol) {
@@ -396,7 +396,7 @@ object CoinLocalization {
                 "XRP" -> "Le registre XRP est un protocole de règlement décentralisé optimisé pour les transactions transfrontalières."
                 "BNB" -> "BNB Chain est une infrastructure pour applications décentralisées et trading Web3 à haute cadence."
                 "XLM" -> "Stellar est un réseau de paiement décentralisé reliant les banques et systèmes financiers avec des frais quasi nuls."
-                "XMN" -> "xMoney est une plateforme de paiement Web3 reliant cryptomonnaies, terminaux marchands et cartes de débit."
+                "HYPE" -> "Hyperliquid est un DEX de perpétuels et une Layer 1 haute performance dont l'open interest, le funding et les liquidations sont publics."
                 else -> "${coin.name} est un actif numérique du secteur ${coin.category.displayName} offrant des services décentralisés."
             }
             AppLanguage.SPANISH -> when (coin.symbol) {
@@ -406,7 +406,7 @@ object CoinLocalization {
                 "XRP" -> "XRP Ledger es un protocolo de liquidación descentralizado diseñado para pagos transfronterizos instantáneos."
                 "BNB" -> "BNB Chain es una infraestructura rápida para aplicaciones Web3 y el ecosistema BNB."
                 "XLM" -> "Stellar es una red de pagos descentralizada diseñada para conectar bancos y sistemas financieros con tarifas mínimas."
-                "XMN" -> "xMoney es un ecosistema de pagos Web3 que une criptomonedas con terminales de comercios y tarjetas de débito."
+                "HYPE" -> "Hyperliquid es un DEX de perpetuos y una Layer 1 de alto rendimiento con open interest, funding y liquidaciones públicas."
                 else -> "${coin.name} es un criptoactivo en el sector ${coin.category.displayName} con arquitectura descentralizada."
             }
             AppLanguage.ITALIAN -> when (coin.symbol) {
@@ -416,7 +416,7 @@ object CoinLocalization {
                 "XRP" -> "XRP Ledger è un protocollo di regolamento decentralizzato per transazioni internazionali istantanee."
                 "BNB" -> "BNB Chain offre una rete veloce e scalabile per contratti intelligenti e finanza decentralizzata."
                 "XLM" -> "Stellar è un protocollo di pagamento decentralizzato per connettere banche e sistemi finanziari con costi minimi."
-                "XMN" -> "xMoney è una piattaforma di pagamento Web3 che collega criptovalute, POS commerciali e carte di debito."
+                "HYPE" -> "Hyperliquid è un DEX di perpetual e una Layer 1 ad alte prestazioni con open interest, funding e liquidazioni pubblici."
                 else -> "${coin.name} è una risorsa digitale nel settore ${coin.category.displayName} con funzionalità di rete decentralizzata."
             }
             AppLanguage.GREEK -> coin.whitepaperSummary

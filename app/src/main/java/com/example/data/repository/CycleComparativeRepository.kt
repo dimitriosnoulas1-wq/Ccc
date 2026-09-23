@@ -41,7 +41,7 @@ class CycleComparativeRepository {
      */
     fun getComparativeReport(
         dayOffset: Int? = null,
-        currentBtcPrice: Double = 58240.0
+        currentBtcPrice: Double = 0.0
     ): CycleDayComparativeReport {
         val liveDay = getLiveDaysSinceAth()
         val targetDay = dayOffset ?: liveDay
@@ -49,7 +49,11 @@ class CycleComparativeRepository {
         val daysSinceHalving = getLiveDaysSinceHalving()
         val daysUntilHistoricalBottom = (HISTORICAL_AVG_BOTTOM_DAY - targetDay)
 
-        val currentDrawdown = ((currentBtcPrice - BTC_CYCLE_ATH_USD) / BTC_CYCLE_ATH_USD) * 100.0
+        val currentDrawdown = if (currentBtcPrice > 0.0) {
+            ((currentBtcPrice - BTC_CYCLE_ATH_USD) / BTC_CYCLE_ATH_USD) * 100.0
+        } else {
+            0.0
+        }
 
         val cycle2022 = calculateCycle2022ForDay(targetDay)
         val cycle2018 = calculateCycle2018ForDay(targetDay)

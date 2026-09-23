@@ -327,7 +327,6 @@ fun CryptoCyclesApp(
                                 whaleAlerts = whaleAlerts,
                                 whaleLeveragePositions = whaleLeveragePositions,
                                 whaleLeverageSummary = whaleLeverageSummary,
-                                onTriggerTestAlert = { viewModel.triggerTestWhaleAlert() },
                                 onOpenAiAssistant = { prompt -> viewModel.openAiAssistant(prompt) },
                                 onRefresh = { viewModel.manualRefresh() },
                                 viewModel = viewModel
@@ -354,12 +353,10 @@ fun CryptoCyclesApp(
                                 onOpenPrivacyPolicy = { showPrivacyPolicy = true },
                                 onWhaleNotificationsChanged = { viewModel.setWhaleNotificationsEnabled(it) },
                                 onWhaleThresholdChanged = { viewModel.setWhaleMinThreshold(it) },
-                                onTriggerTestAlert = { viewModel.triggerTestWhaleAlert() },
                                 onNotifyZoneChangeChanged = { viewModel.setNotifyZoneChange(it) },
                                 onNotifyPiCycleChanged = { viewModel.setNotifyPiCycle(it) },
                                 onNotifyRainbowBandChanged = { viewModel.setNotifyRainbowBand(it) },
                                 onNotify200wSmaChanged = { viewModel.setNotify200wSma(it) },
-                                onTriggerTestCycleAlert = { viewModel.triggerTestCycleAlert(it) },
                                 logCharts = viewModel.logCharts.collectAsState().value,
                                 onLogChartsChanged = { viewModel.setLogCharts(it) },
                                 onTogglePro = { viewModel.setProUnlocked(it) }

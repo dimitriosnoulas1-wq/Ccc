@@ -148,7 +148,7 @@ fun AltcoinSeasonIndexCard(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "${altData.score} / 100",
+                    text = if (altData.isAvailable) "${altData.score} / 100" else "—",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Black,
                     color = activeZoneColor
@@ -224,7 +224,7 @@ fun AltcoinSeasonIndexCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "+${String.format("%.1f", altData.btcGain90d)}%",
+                        text = if (altData.isAvailable) "+${String.format("%.1f", altData.btcGain90d)}%" else "—",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Black,
                         color = PhotonGoldBright

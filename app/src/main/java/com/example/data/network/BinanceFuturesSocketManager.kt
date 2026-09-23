@@ -1,6 +1,7 @@
 package com.example.data.network
 
 import com.example.data.model.CryptoCoin
+import com.example.data.model.QuoteState
 import com.example.data.model.FuturesBookTicker
 import com.example.data.model.FuturesConnectionStatus
 import com.example.data.model.FuturesLiquidationOrder
@@ -120,71 +121,8 @@ class BinanceFuturesSocketManager(
     }
 
     fun applyCoinSnapshot(symbol: String, coin: CryptoCoin? = null) {
-        val now = System.currentTimeMillis()
-        val multiplier = contractMultiplierFor(symbol)
-        val basePrice = coin?.priceUsd?.times(multiplier) ?: getFallbackPriceForSymbol(symbol)
-        val changePct = coin?.change24h ?: -0.32
-        val volUsd = if ((coin?.volume24h ?: 0.0) > 0) coin!!.volume24h else basePrice * 48520.0
-        val volBase = if (basePrice > 0) volUsd / basePrice else 1000.0
-        val high = if (changePct >= 0) basePrice * (1.0 + (changePct * 0.4) / 100.0).coerceAtLeast(1.015) else basePrice * 1.018
-        val low = if (changePct < 0) basePrice * (1.0 + (changePct * 0.5) / 100.0).coerceAtMost(0.985) else basePrice * 0.982
-        val priceChange = basePrice * (changePct / 100.0)
-
-        _tickerData.value = FuturesTickerData(
-            symbol = symbol,
-            lastPrice = basePrice,
-            priceChange24h = priceChange,
-            priceChangePercent24h = changePct,
-            high24h = high,
-            low24h = low,
-            volumeBase24h = volBase,
-            volumeQuote24h = volUsd,
-            eventTimeMs = now,
-            receivedTimeMs = now
-        )
-
-        val spreadAmount = (basePrice * 0.0002).coerceAtLeast(if (basePrice < 1.0) 0.0001 else 0.01)
-        val halfSpread = spreadAmount / 2.0
-        _bookTicker.value = FuturesBookTicker(
-            symbol = symbol,
-            bidPrice = basePrice - halfSpread,
-            bidQty = (10000.0 / basePrice).coerceAtLeast(0.1),
-            askPrice = basePrice + halfSpread,
-            askQty = (12000.0 / basePrice).coerceAtLeast(0.1),
-            spread = spreadAmount,
-            spreadPercent = (spreadAmount / basePrice) * 100.0,
-            eventTimeMs = now,
-            receivedTimeMs = now
-        )
-
-        val basis = basePrice * 0.0001
-        _markFunding.value = FuturesMarkFunding(
-            symbol = symbol,
-            markPrice = basePrice + basis,
-            indexPrice = basePrice,
-            basis = basis,
-            basisPercent = 0.01,
-            fundingRate = 0.0001,
-            nextFundingTimeMs = now + (8 * 3600 * 1000 - (now % (8 * 3600 * 1000))),
-            approxApr = 10.95,
-            eventTimeMs = now,
-            receivedTimeMs = now
-        )
-
-        val oiUsd = volUsd * 0.35
-        val oiBase = if (basePrice > 0) oiUsd / basePrice else 10000.0
-        _openInterest.value = FuturesOpenInterest(
-            symbol = symbol,
-            openInterest = oiBase,
-            openInterestUsd = oiUsd,
-            lastRefreshTimeMs = now,
-            isAvailable = true
-        )
-
-        // A synthesised snapshot is not a live socket event, so it must not claim a connection.
-        _connectionStatus.value = _connectionStatus.value.copy(
-            activeSymbol = symbol
-        )
+        // Live socket/REST fills the terminal. Never invent ticker, book, funding, or OI.
+        _connectionStatus.value = _connectionStatus.value.copy(activeSymbol = symbol)
     }
 
     /**
@@ -197,52 +135,17 @@ class BinanceFuturesSocketManager(
 
     /** Returns a price in the quoting convention of [sym], not the per-token price. */
     fun getFallbackPriceForSymbol(sym: String): Double {
-        val clean = sym.uppercase().removeSuffix("USDT").removePrefix("1000")
-        val live = liveCoinsMap[clean] ?: liveCoinsMap[sym.uppercase()]
-        val unitPrice = if (live != null && live.priceUsd > 0.0) {
-            live.priceUsd
-        } else when (clean) {
-            "BTC" -> 77250.0
-            "ETH" -> 3520.0
-            "SOL" -> 184.5
-            "BNB" -> 585.0
-            "XRP" -> 0.5840
-            "ADA" -> 0.4120
-            "DOGE" -> 0.1420
-            "AVAX" -> 28.40
-            "LINK" -> 12.80
-            "DOT" -> 4.85
-            "NEAR" -> 4.92
-            "SUI" -> 1.85
-            "PEPE" -> 0.00000985
-            "SHIB" -> 0.0000182
-            "ARB" -> 0.58
-            "OP" -> 1.45
-            "TIA" -> 5.80
-            "INJ" -> 22.40
-            "FET", "ASI" -> 1.35
-            "APT" -> 7.80
-            "TON" -> 5.60
-            "POL", "MATIC" -> 0.38
-            "TRX" -> 0.16
-            "BCH" -> 340.0
-            "LTC" -> 66.5
-            "XLM" -> 0.098
-            "KAS" -> 0.165
-            "RENDER", "RNDR" -> 6.20
-            else -> 10.0
-        }
-        return unitPrice * contractMultiplierFor(sym)
+        val (base, multiplier) = SymbolMath.canonical(sym)
+        val live = liveCoinsMap[base] ?: liveCoinsMap[sym.uppercase()]
+        val unit = live?.takeIf { it.quoteState == QuoteState.LIVE && it.priceUsd > 0.0 }?.priceUsd ?: 0.0
+        return unit * multiplier
     }
 
     fun formatSpotSymbol(symbol: String): String {
+        // Spot is the 1:1 USDT pair after canonicalization. RAYSOLUSDT is futures-only;
+        // the live spot market is RAYUSDT.
         val (base, _) = SymbolMath.canonical(symbol)
-        val spotBase = when (base) {
-            "BEAM" -> "BEAMX"
-            "RAY" -> "RAYSOL"
-            else -> base
-        }
-        return "${spotBase}USDT"
+        return "${base}USDT"
     }
 
     private fun initiateSymbol(symbol: String) {

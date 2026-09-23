@@ -97,12 +97,10 @@ fun SettingsScreen(
     onOpenPrivacyPolicy: () -> Unit,
     onWhaleNotificationsChanged: (Boolean) -> Unit = {},
     onWhaleThresholdChanged: (Double) -> Unit = {},
-    onTriggerTestAlert: () -> Unit = {},
     onNotifyZoneChangeChanged: (Boolean) -> Unit = {},
     onNotifyPiCycleChanged: (Boolean) -> Unit = {},
     onNotifyRainbowBandChanged: (Boolean) -> Unit = {},
     onNotify200wSmaChanged: (Boolean) -> Unit = {},
-    onTriggerTestCycleAlert: (String) -> Unit = {},
     logCharts: Boolean = true,
     onLogChartsChanged: (Boolean) -> Unit = {},
     onTogglePro: ((Boolean) -> Unit)? = null,
@@ -111,7 +109,6 @@ fun SettingsScreen(
     val strings = LocalAppStrings.current
     val palette = LocalAppColors.current
     val context = androidx.compose.ui.platform.LocalContext.current
-    var testAlertSent by remember { mutableStateOf(false) }
     var isRestoringSettings by remember { mutableStateOf(false) }
     var developerTapCount by remember { mutableStateOf(0) }
 
@@ -719,35 +716,6 @@ fun SettingsScreen(
                             }
                         }
 
-                        // Test Notification Button
-                        Button(
-                            onClick = {
-                                requestNotificationPermissionIfNecessary {
-                                    onTriggerTestAlert()
-                                    testAlertSent = true
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = NeonAmber.copy(alpha = 0.2f),
-                                contentColor = NeonAmber
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.NotificationsActive,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = NeonAmber
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (testAlertSent) strings.whaleTestAlertSuccess else strings.whaleTestAlertBtn,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NeonAmber
-                            )
-                        }
                     }
                 }
             }
@@ -755,7 +723,6 @@ fun SettingsScreen(
 
         // Cycle & Indicator Push Alerts (Zone change, Pi Cycle, Rainbow, 200W SMA)
         item {
-            var selectedTestCycleType by remember { mutableStateOf<String?>(null) }
             val activeCycleAlertsCount = listOf(
                 whaleSettings.notifyZoneChange,
                 whaleSettings.notifyPiCycle,
@@ -830,14 +797,7 @@ fun SettingsScreen(
                                 onNotifyZoneChangeChanged(false)
                             }
                         },
-                        palette = palette,
-                        highlightTest = selectedTestCycleType == "ZONE",
-                        onTestAlert = {
-                            requestNotificationPermissionIfNecessary {
-                                onTriggerTestCycleAlert("ZONE")
-                                selectedTestCycleType = "ZONE"
-                            }
-                        }
+                        palette = palette
                     )
 
                     // 2. Pi Cycle Gap/Cross Alert
@@ -856,14 +816,7 @@ fun SettingsScreen(
                                 onNotifyPiCycleChanged(false)
                             }
                         },
-                        palette = palette,
-                        highlightTest = selectedTestCycleType == "PI_CYCLE",
-                        onTestAlert = {
-                            requestNotificationPermissionIfNecessary {
-                                onTriggerTestCycleAlert("PI_CYCLE")
-                                selectedTestCycleType = "PI_CYCLE"
-                            }
-                        }
+                        palette = palette
                     )
 
                     // 3. Rainbow Band Alert (Pro-preferred)
@@ -883,14 +836,7 @@ fun SettingsScreen(
                                 onNotifyRainbowBandChanged(false)
                             }
                         },
-                        palette = palette,
-                        highlightTest = selectedTestCycleType == "RAINBOW",
-                        onTestAlert = {
-                            requestNotificationPermissionIfNecessary {
-                                onTriggerTestCycleAlert("RAINBOW")
-                                selectedTestCycleType = "RAINBOW"
-                            }
-                        }
+                        palette = palette
                     )
 
                     // 4. Distance to 200W SMA Alert
@@ -910,14 +856,7 @@ fun SettingsScreen(
                                 onNotify200wSmaChanged(false)
                             }
                         },
-                        palette = palette,
-                        highlightTest = selectedTestCycleType == "200W_SMA",
-                        onTestAlert = {
-                            requestNotificationPermissionIfNecessary {
-                                onTriggerTestCycleAlert("200W_SMA")
-                                selectedTestCycleType = "200W_SMA"
-                            }
-                        }
+                        palette = palette
                     )
                 }
             }
@@ -1477,9 +1416,7 @@ fun CycleAlertToggleRow(
     isChecked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     palette: AppThemePalette,
-    isProGated: Boolean = false,
-    highlightTest: Boolean = false,
-    onTestAlert: () -> Unit = {}
+    isProGated: Boolean = false
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1516,16 +1453,6 @@ fun CycleAlertToggleRow(
                 fontSize = 11.sp,
                 color = palette.textMuted
             )
-            if (isChecked) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = if (highlightTest) "Test notification sent" else "▶ Tap to test push notification",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = palette.primary,
-                    modifier = Modifier.clickable { onTestAlert() }
-                )
-            }
         }
         Spacer(modifier = Modifier.width(10.dp))
         HolographicToggle(

@@ -76,7 +76,7 @@ import java.util.Locale
 
 @Composable
 fun CycleDayComparisonCard(
-    currentBtcPrice: Double = 58240.0,
+    currentBtcPrice: Double = 0.0,
     onOpenAiAnalysis: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -524,7 +524,11 @@ private fun CurrentCycleDayCard(
                 }
 
                 Text(
-                    text = com.example.util.AppNumberFormatter.formatRawPrice(report.currentBtcPrice, decimals = 0),
+                    text = if (report.currentBtcPrice > 0.0) {
+                        com.example.util.AppNumberFormatter.formatRawPrice(report.currentBtcPrice, decimals = 0)
+                    } else {
+                        "—"
+                    },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.primary
@@ -541,7 +545,11 @@ private fun CurrentCycleDayCard(
                     color = palette.textSecondary
                 )
                 Text(
-                    text = com.example.util.AppNumberFormatter.formatPercent(report.currentDrawdownPercent, includeSign = true, decimals = 1),
+                    text = if (report.currentBtcPrice > 0.0) {
+                        com.example.util.AppNumberFormatter.formatPercent(report.currentDrawdownPercent, includeSign = true, decimals = 1)
+                    } else {
+                        "—"
+                    },
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = DrawdownRed

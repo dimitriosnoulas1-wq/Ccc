@@ -39,7 +39,15 @@ data class MarketIntelligenceReport(
     val invalidationLevelGr: String = "Αναμονή για επιβεβαίωση ορίων.",
     val currentPrice: Double = 0.0,
     val fundingRate: Double = 0.0,
-    val openInterestUsd: Double = 0.0
+    val openInterestUsd: Double = 0.0,
+    val hasLivePrice: Boolean = false,
+    val hasLiveChange24h: Boolean = false,
+    val hasLiveFunding: Boolean = false,
+    val hasLiveOpenInterest: Boolean = false,
+    val derivativesScore: Double? = null,
+    val derivativesFreshness: DerivativesFreshness = DerivativesFreshness.UNAVAILABLE,
+    val derivativesAsOfMs: Long = 0L,
+    val sourceLabel: String = ""
 )
 
 data class LiquidityCluster(
@@ -71,24 +79,32 @@ object MarketIntelligenceEngine {
         recentTrades: List<FuturesTrade>,
         recentLiquidations: List<FuturesLiquidationOrder>,
         macroSentiment: MacroMarketSentiment,
-        coinFallback: CryptoCoin? = null
+        coinFallback: CryptoCoin? = null,
+        derivatives: AggregatedDerivativesSnapshot? = null
     ): MarketIntelligenceReport {
         val (catalogBase, contractDivisor) = com.example.data.network.SymbolMath.canonical(symbol)
+        val agg = derivatives?.aggregated
         val exchangePrice = when {
             ticker?.fromExchange == true && (ticker.lastPrice ?: 0.0) > 0.0 -> (ticker.lastPrice ?: 0.0) / contractDivisor
             markFunding?.fromExchange == true && (markFunding.markPrice ?: 0.0) > 0.0 -> (markFunding.markPrice ?: 0.0) / contractDivisor
             coinFallback?.quoteState == QuoteState.LIVE && coinFallback.priceUsd > 0.0 -> coinFallback.priceUsd
+            (agg?.markPrice ?: 0.0) > 0.0 -> agg?.markPrice ?: 0.0
+            (agg?.lastPrice ?: 0.0) > 0.0 -> agg?.lastPrice ?: 0.0
             else -> 0.0
         }
         val price = exchangePrice
-        val change24h: Double = when {
-            ticker?.fromExchange == true && ticker.priceChangePercent24h != null -> ticker.priceChangePercent24h ?: 0.0
+        val changeObserved: Double? = when {
+            ticker?.fromExchange == true && ticker.priceChangePercent24h != null -> ticker.priceChangePercent24h
             coinFallback?.quoteState == QuoteState.LIVE -> coinFallback.change24h
-            else -> 0.0
+            agg?.change24hPct != null -> agg.change24hPct
+            else -> null
         }
-        val fundingObserved: Double? = markFunding?.takeIf { it.fromExchange }?.fundingRate
+        val change24h: Double = changeObserved ?: 0.0
+        val fundingObserved: Double? = agg?.fundingRate
+            ?: markFunding?.takeIf { it.fromExchange }?.fundingRate
         val fundingRate: Double = fundingObserved ?: 0.0
-        val oiObserved: Double? = openInterest?.openInterestUsd?.takeIf { openInterest.isAvailable && it > 0.0 }
+        val oiObserved: Double? = agg?.openInterestUsd?.takeIf { it > 0.0 }
+            ?: openInterest?.openInterestUsd?.takeIf { openInterest.isAvailable && it > 0.0 }
         val oiUsd: Double = oiObserved ?: 0.0
         val bidQty = bookTicker?.bidQty ?: 1.0
         val askQty = bookTicker?.askQty ?: 1.0
@@ -96,15 +112,21 @@ object MarketIntelligenceEngine {
 
         val buyTrades = recentTrades.count { !it.isBuyerMaker }
         val sellTrades = recentTrades.count { it.isBuyerMaker }
-        val buyRatio = if (buyTrades + sellTrades > 0) buyTrades.toDouble() / (buyTrades + sellTrades) else 0.5
+        val takerRatio = agg?.takerBuySellRatio
+        val buyRatio = when {
+            buyTrades + sellTrades > 0 -> buyTrades.toDouble() / (buyTrades + sellTrades)
+            takerRatio != null && takerRatio > 0.0 -> takerRatio / (takerRatio + 1.0)
+            else -> 0.5
+        }
 
         val symbolLiqs = recentLiquidations.filter { order ->
             val (orderBase, _) = com.example.data.network.SymbolMath.canonical(order.symbol)
             orderBase == catalogBase
         }
-        val longLiqs = symbolLiqs.filter { it.isLongLiquidated }.sumOf { it.valueUsd }
-        val shortLiqs = symbolLiqs.filter { !it.isLongLiquidated }.sumOf { it.valueUsd }
-        val hasLiquidationPrints = symbolLiqs.isNotEmpty()
+        val longLiqs = symbolLiqs.filter { it.isLongLiquidated }.sumOf { it.valueUsd } + (agg?.longLiqUsd ?: 0.0)
+        val shortLiqs = symbolLiqs.filter { !it.isLongLiquidated }.sumOf { it.valueUsd } + (agg?.shortLiqUsd ?: 0.0)
+        val hasLiquidationPrints = symbolLiqs.isNotEmpty() ||
+            ((agg?.longLiqUsd ?: 0.0) + (agg?.shortLiqUsd ?: 0.0)) > 0.0
 
         val fearGreed = macroSentiment.fearAndGreedValue ?: 55
 
@@ -127,10 +149,12 @@ object MarketIntelligenceEngine {
             oiUsd > 20_000_000 -> DriverImpact.MEDIUM
             else -> DriverImpact.LOW
         }
-        val oiDetail = when (oiImpact) {
-            DriverImpact.HIGH -> "Elevated institutional leverage positions active"
-            DriverImpact.MEDIUM -> "Steady perpetual open interest baseline"
-            else -> "Moderate open interest participation"
+        val venueNote = derivatives?.sourceLabel?.takeIf { it.isNotBlank() }?.let { " via $it" } ?: ""
+        val oiDetail = when {
+            oiObserved == null -> "Waiting for live open interest"
+            oiImpact == DriverImpact.HIGH -> "Elevated aggregated perpetual open interest$venueNote"
+            oiImpact == DriverImpact.MEDIUM -> "Steady aggregated perpetual open interest$venueNote"
+            else -> "Moderate open interest participation$venueNote"
         }
 
         // 3. Funding Skew
@@ -252,6 +276,20 @@ object MarketIntelligenceEngine {
             }
         }
 
+        val score = derivatives?.score?.value
+        val scoreNoteEn = when {
+            score == null -> ""
+            score >= 40.0 -> " Aggregated perps flow is bid-side constructive."
+            score <= -40.0 -> " Aggregated perps flow shows crowded longs."
+            else -> ""
+        }
+        val scoreNoteGr = when {
+            score == null -> ""
+            score >= 40.0 -> " Η συγκεντρωτική ροή perpetuals είναι εποικοδομητική στην πλευρά των αγορών."
+            score <= -40.0 -> " Η συγκεντρωτική ροή perpetuals δείχνει συνωστισμό Long."
+            else -> ""
+        }
+
         return MarketIntelligenceReport(
             symbol = symbol,
             regime = regime,
@@ -261,21 +299,29 @@ object MarketIntelligenceEngine {
                 fundingRate = fundingObserved,
                 openInterestUsd = oiObserved,
                 bidRatio = if (bookTicker?.fromExchange == true) bidRatio else null,
-                buyRatio = if (recentTrades.isNotEmpty()) buyRatio else null,
+                buyRatio = if (recentTrades.isNotEmpty() || takerRatio != null) buyRatio else null,
                 shortLiqsUsd = shortLiqs,
                 longLiqsUsd = longLiqs,
                 hasLiquidationPrints = hasLiquidationPrints
             ),
             drivers = drivers,
-            interpretationEn = interpretationEn,
-            interpretationGr = interpretationGr,
+            interpretationEn = interpretationEn + scoreNoteEn,
+            interpretationGr = interpretationGr + scoreNoteGr,
             cascadeRiskEn = cascadeRiskEn,
             cascadeRiskGr = cascadeRiskGr,
             invalidationLevelEn = invalidationEn,
             invalidationLevelGr = invalidationGr,
             currentPrice = price,
             fundingRate = fundingRate,
-            openInterestUsd = oiUsd
+            openInterestUsd = oiUsd,
+            hasLivePrice = price > 0.0,
+            hasLiveChange24h = changeObserved != null,
+            hasLiveFunding = fundingObserved != null,
+            hasLiveOpenInterest = oiObserved != null,
+            derivativesScore = score,
+            derivativesFreshness = derivatives?.freshness ?: DerivativesFreshness.UNAVAILABLE,
+            derivativesAsOfMs = derivatives?.asOfMs ?: 0L,
+            sourceLabel = derivatives?.sourceLabel.orEmpty()
         )
     }
 
