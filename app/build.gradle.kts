@@ -28,6 +28,17 @@ android {
       .replace("\n", "")
       .replace("\r", "")
     buildConfigField("String", "GEMINI_INJECTED_API_KEY", "\"$injectedGeminiKey\"")
+    val injectedOpenAiKey = (
+      System.getenv("OPENAI_API_KEY")
+        ?: System.getenv("OPENAI")
+        ?: System.getenv("ChatGPT")
+        ?: ""
+      )
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\n", "")
+      .replace("\r", "")
+    buildConfigField("String", "OPENAI_INJECTED_API_KEY", "\"$injectedOpenAiKey\"")
   }
 
   signingConfigs {

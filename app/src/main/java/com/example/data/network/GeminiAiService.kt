@@ -22,7 +22,8 @@ class GeminiAiService(
         .readTimeout(20, TimeUnit.SECONDS)
         .writeTimeout(12, TimeUnit.SECONDS)
         .build(),
-    private val apiKeyOverride: String? = null
+    private val apiKeyOverride: String? = null,
+    private val openAiKeyOverride: String? = null
 ) {
     companion object {
         private const val TAG = "GeminiAiService"
@@ -34,7 +35,18 @@ class GeminiAiService(
             "gemini-3.1-flash-lite",
             "gemini-3.6-flash"
         )
+        internal val OPENAI_MODELS = listOf(
+            "gpt-5-nano",
+            "gpt-4.1-nano",
+            "gpt-4o-mini"
+        )
         private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+        private const val OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+        private val PLACEHOLDER_KEYS = setOf(
+            "MY_GEMINI_API_KEY",
+            "MY_OPENAI_API_KEY",
+            "MY_CHATGPT_API_KEY"
+        )
     }
 
     suspend fun analyzeMarketQuery(
@@ -95,6 +107,21 @@ class GeminiAiService(
             }
         }
 
+        val openAiKey = resolveOpenAiApiKey()
+        if (openAiKey.isNotBlank()) {
+            for (model in OPENAI_MODELS) {
+                try {
+                    val responseText = callOpenAiChat(openAiKey, model, prompt, snapshot, targetLangName)
+                    if (responseText.isNotBlank()) {
+                        Log.d(TAG, "OpenAI backup call successful with model: $model")
+                        return@withContext responseText
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "OpenAI backup model $model failed: ${e.message}")
+                }
+            }
+        }
+
         // Conversational intelligence synthesizer fallback
         generateRealtimeQuantitativeAnalysis(prompt, snapshot, effectiveLanguage)
     }
@@ -108,9 +135,18 @@ class GeminiAiService(
         return sanitizeApiKey(buildKey).ifBlank { sanitizeApiKey(injectedKey) }
     }
 
+    private fun resolveOpenAiApiKey(): String {
+        if (openAiKeyOverride != null) {
+            return sanitizeApiKey(openAiKeyOverride)
+        }
+        val buildKey = runCatching { BuildConfig.OPENAI_API_KEY }.getOrDefault("")
+        val injectedKey = runCatching { BuildConfig.OPENAI_INJECTED_API_KEY }.getOrDefault("")
+        return sanitizeApiKey(buildKey).ifBlank { sanitizeApiKey(injectedKey) }
+    }
+
     private fun sanitizeApiKey(raw: String): String {
         val key = raw.trim()
-        return if (key.isNotBlank() && !key.equals("MY_GEMINI_API_KEY", ignoreCase = true)) {
+        return if (key.isNotBlank() && PLACEHOLDER_KEYS.none { it.equals(key, ignoreCase = true) }) {
             key
         } else {
             ""
@@ -176,62 +212,7 @@ class GeminiAiService(
     ): String {
         val url = "$BASE_URL/$modelName:generateContent?key=$apiKey"
 
-        val timeLine = if (snapshot.currentTimeString.isNotBlank()) {
-            "• Current Live Device Timestamp / System Time: ${snapshot.currentTimeString}"
-        } else ""
-
-        val targetedCoinSection = if (!snapshot.targetedCoinInfo.isNullOrBlank()) {
-            """
-            🎯 TARGETED COIN DATA REQUESTED BY USER:
-            ${snapshot.targetedCoinInfo}
-            """.trimIndent()
-        } else ""
-
-        val allMarketPricesLine = if (snapshot.allTrackedCoinsSummary.isNotBlank()) {
-            "• Live Spot Prices of Cryptocurrencies in App Database:\n  ${snapshot.allTrackedCoinsSummary}"
-        } else if (snapshot.topMarketPricesSummary.isNotBlank()) {
-            "• Live Top Market Prices:\n  ${snapshot.topMarketPricesSummary}"
-        } else ""
-
-        val lang = if (targetLangName.contains("Greek", ignoreCase = true) || targetLangName.contains("Ελληνικά", ignoreCase = true)) AppLanguage.GREEK else AppLanguage.ENGLISH
-        val btcPriceFormatted = com.example.util.AppNumberFormatter.formatPrice(snapshot.btcPrice, language = lang)
-        val ethPriceFormatted = com.example.util.AppNumberFormatter.formatPrice(snapshot.ethPrice, language = lang)
-        val solPriceFormatted = com.example.util.AppNumberFormatter.formatPrice(snapshot.solPrice, language = lang)
-        val fundingFormatted = com.example.util.AppNumberFormatter.formatPercent(snapshot.fundingRatePct, includeSign = true, decimals = 4, language = lang)
-        val btcDomFormatted = com.example.util.AppNumberFormatter.formatPercent(snapshot.btcDominancePct, includeSign = false, decimals = 1, language = lang)
-
-        val systemInstructionText = """
-            You are CryptoCycles AI Market Analyst, a cutting-edge, real-time live cryptocurrency and general intelligence agent (powered by Gemini AI) running directly inside the CryptoCycles app.
-            
-            CRITICAL BEHAVIOR & RELEVANCE DIRECTIVES:
-            1. DIRECT & FOCUSED ANSWER: Answer EXACTLY what the user is asking. If the user asks for the price or stats of a specific coin (e.g. XRP, SOL, DOGE, ADA, ETH, etc.), provide the EXACT live spot price, 24h percentage change, and relevant details immediately in your opening lines!
-            2. ABSOLUTELY NO UNWANTED BITCOIN PIVOTS: When the user asks about XRP or any other specific token, do NOT lecture them about Bitcoin, BTC Dominance, 4-year Halving, or Fear & Greed unless they specifically requested a Bitcoin or general macro cycle review. Keep your answer 100% focused on the coin or topic asked.
-            3. REAL-TIME DATA PRECISION: Always use the exact real-time prices and values from the Live Telemetry Context below. Never guess, invent, or approximate prices.
-            4. TIME & GENERAL QUERIES: If the user asks for the time/date, use the live device timestamp provided. If the user asks general or non-crypto questions, answer clearly, intelligently, and conversationally without forcing crypto into the conversation.
-            5. Multilingual & Natural: Default to $targetLangName. If the prompt is in Greek or Greeklish (e.g., "t timh exei to xrp twra", "ti wra einai", "poso kanei to sol"), ALWAYS reply in fluent, natural Greek (Ελληνικά). If the user asks in English, German, French, Spanish, etc., adapt immediately and reply fluently in that language!
-            6. Formatting: Use clean markdown with bold numbers and bullet points. Keep replies short unless the user asked for detail.
-            7. REFUSE EXECUTION ORDERS & TARGETS: You must refuse buy/sell execution orders and must not invent price targets. Explain data on screen only.
-            8. GREETINGS STAY EMPTY OF ANALYSIS: If the user only says hello / hi / γεια / test / "are you there", reply with ONE clean sentence such as "I'm here. What would you like to see?" or "Είμαι εδώ. Τι θα θέλατε να δούμε;". Do not dump prices, cycle lectures, or a menu of topics.
-            
-            Real-Time Live Telemetry Context:
-            $timeLine
-            $targetedCoinSection
-            $allMarketPricesLine
-            • Spot BTC: $btcPriceFormatted (${if (snapshot.btc24hChange >= 0) "+" else ""}${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = false, decimals = 2, language = lang)} 24h, ts: ${snapshot.btcTs})
-            • Spot ETH: $ethPriceFormatted (${if (snapshot.eth24hChange >= 0) "+" else ""}${com.example.util.AppNumberFormatter.formatPercent(snapshot.eth24hChange, includeSign = false, decimals = 2, language = lang)} 24h, ts: ${snapshot.ethTs})
-            • Spot SOL: $solPriceFormatted (${if (snapshot.sol24hChange >= 0) "+" else ""}${com.example.util.AppNumberFormatter.formatPercent(snapshot.sol24hChange, includeSign = false, decimals = 2, language = lang)} 24h, ts: ${snapshot.solTs})
-            • Cycle Phase: ${snapshot.cyclePhase ?: "N/A"}
-            • Cycle Day / Days Since Halving: Day ${snapshot.cycleDay} (${snapshot.daysSinceHalving} days since halving)
-            • Rainbow Band: ${snapshot.rainbowBand ?: "N/A"}
-            • 200W SMA Distance: ${snapshot.distance200w ?: "N/A"}
-            • Pi Cycle Gap: ${snapshot.piCycleGap ?: "N/A"}
-            • Market Sentiment: ${snapshot.fearAndGreedScore}/100 (${snapshot.fearAndGreedSentiment})
-            • BTC Dominance: $btcDomFormatted
-            • Altcoin Season Index: ${snapshot.altcoinSeasonIndex}
-            • Perpetual Funding Rate: $fundingFormatted (Mark: ${snapshot.futuresMarkPrice})
-            • Whale Net 24h Flow: ${snapshot.whaleNet24h ?: "N/A"}
-            • Shared Market Stance: ${snapshot.marketStance ?: "N/A"}
-        """.trimIndent()
+        val systemInstructionText = buildAnalystSystemInstruction(snapshot, targetLangName)
 
         val jsonBody = JSONObject().apply {
             put("systemInstruction", JSONObject().apply {
@@ -290,6 +271,123 @@ class GeminiAiService(
             textBuilder.append(part.optString("text", ""))
         }
         return textBuilder.toString().trim()
+    }
+
+    private fun callOpenAiChat(
+        apiKey: String,
+        modelName: String,
+        prompt: String,
+        snapshot: LiveMarketContextSnapshot,
+        targetLangName: String
+    ): String {
+        val jsonBody = JSONObject().apply {
+            put("model", modelName)
+            put(
+                "messages",
+                JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("role", "system")
+                        put("content", buildAnalystSystemInstruction(snapshot, targetLangName))
+                    })
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("content", prompt)
+                    })
+                }
+            )
+            put("max_completion_tokens", 1024)
+        }
+
+        val request = Request.Builder()
+            .url(OPENAI_URL)
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .post(jsonBody.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+
+        val responseString = client.newCall(request).execute().use { response ->
+            val bodyString = response.body?.string() ?: ""
+            if (!response.isSuccessful) {
+                Log.e(TAG, "OpenAI error code ${response.code}")
+                throw RuntimeException("OpenAI API Error: ${response.code}")
+            }
+            bodyString
+        }
+
+        val respJson = JSONObject(responseString)
+        val choices = respJson.optJSONArray("choices") ?: return ""
+        if (choices.length() == 0) return ""
+        return choices.getJSONObject(0)
+            .optJSONObject("message")
+            ?.optString("content")
+            .orEmpty()
+            .trim()
+    }
+
+    private fun buildAnalystSystemInstruction(
+        snapshot: LiveMarketContextSnapshot,
+        targetLangName: String
+    ): String {
+        val timeLine = if (snapshot.currentTimeString.isNotBlank()) {
+            "• Current Live Device Timestamp / System Time: ${snapshot.currentTimeString}"
+        } else ""
+
+        val targetedCoinSection = if (!snapshot.targetedCoinInfo.isNullOrBlank()) {
+            """
+            🎯 TARGETED COIN DATA REQUESTED BY USER:
+            ${snapshot.targetedCoinInfo}
+            """.trimIndent()
+        } else ""
+
+        val allMarketPricesLine = if (snapshot.allTrackedCoinsSummary.isNotBlank()) {
+            "• Live Spot Prices of Cryptocurrencies in App Database:\n  ${snapshot.allTrackedCoinsSummary}"
+        } else if (snapshot.topMarketPricesSummary.isNotBlank()) {
+            "• Live Top Market Prices:\n  ${snapshot.topMarketPricesSummary}"
+        } else ""
+
+        val lang = if (targetLangName.contains("Greek", ignoreCase = true) || targetLangName.contains("Ελληνικά", ignoreCase = true)) {
+            AppLanguage.GREEK
+        } else {
+            AppLanguage.ENGLISH
+        }
+        val btcPriceFormatted = com.example.util.AppNumberFormatter.formatPrice(snapshot.btcPrice, language = lang)
+        val ethPriceFormatted = com.example.util.AppNumberFormatter.formatPrice(snapshot.ethPrice, language = lang)
+        val solPriceFormatted = com.example.util.AppNumberFormatter.formatPrice(snapshot.solPrice, language = lang)
+        val fundingFormatted = com.example.util.AppNumberFormatter.formatPercent(snapshot.fundingRatePct, includeSign = true, decimals = 4, language = lang)
+        val btcDomFormatted = com.example.util.AppNumberFormatter.formatPercent(snapshot.btcDominancePct, includeSign = false, decimals = 1, language = lang)
+
+        return """
+            You are CryptoCycles AI Market Analyst, a real-time cryptocurrency and general intelligence agent running directly inside the CryptoCycles app.
+            
+            CRITICAL BEHAVIOR & RELEVANCE DIRECTIVES:
+            1. DIRECT & FOCUSED ANSWER: Answer EXACTLY what the user is asking. If the user asks for the price or stats of a specific coin (e.g. XRP, SOL, DOGE, ADA, ETH, etc.), provide the EXACT live spot price, 24h percentage change, and relevant details immediately in your opening lines!
+            2. ABSOLUTELY NO UNWANTED BITCOIN PIVOTS: When the user asks about XRP or any other specific token, do NOT lecture them about Bitcoin, BTC Dominance, 4-year Halving, or Fear & Greed unless they specifically requested a Bitcoin or general macro cycle review. Keep your answer 100% focused on the coin or topic asked.
+            3. REAL-TIME DATA PRECISION: Always use the exact real-time prices and values from the Live Telemetry Context below. Never guess, invent, or approximate prices.
+            4. TIME & GENERAL QUERIES: If the user asks for the time/date, use the live device timestamp provided. If the user asks general or non-crypto questions, answer clearly, intelligently, and conversationally without forcing crypto into the conversation.
+            5. Multilingual & Natural: Default to $targetLangName. If the prompt is in Greek or Greeklish (e.g., "t timh exei to xrp twra", "ti wra einai", "poso kanei to sol"), ALWAYS reply in fluent, natural Greek (Ελληνικά). If the user asks in English, German, French, Spanish, etc., adapt immediately and reply fluently in that language!
+            6. Formatting: Use clean markdown with bold numbers and bullet points. Keep replies short unless the user asked for detail.
+            7. REFUSE EXECUTION ORDERS & TARGETS: You must refuse buy/sell execution orders and must not invent price targets. Explain data on screen only.
+            8. GREETINGS STAY EMPTY OF ANALYSIS: If the user only says hello / hi / γεια / test / "are you there", reply with ONE clean sentence such as "I'm here. What would you like to see?" or "Είμαι εδώ. Τι θα θέλατε να δούμε;". Do not dump prices, cycle lectures, or a menu of topics.
+            
+            Real-Time Live Telemetry Context:
+            $timeLine
+            $targetedCoinSection
+            $allMarketPricesLine
+            • Spot BTC: $btcPriceFormatted (${if (snapshot.btc24hChange >= 0) "+" else ""}${com.example.util.AppNumberFormatter.formatPercent(snapshot.btc24hChange, includeSign = false, decimals = 2, language = lang)} 24h, ts: ${snapshot.btcTs})
+            • Spot ETH: $ethPriceFormatted (${if (snapshot.eth24hChange >= 0) "+" else ""}${com.example.util.AppNumberFormatter.formatPercent(snapshot.eth24hChange, includeSign = false, decimals = 2, language = lang)} 24h, ts: ${snapshot.ethTs})
+            • Spot SOL: $solPriceFormatted (${if (snapshot.sol24hChange >= 0) "+" else ""}${com.example.util.AppNumberFormatter.formatPercent(snapshot.sol24hChange, includeSign = false, decimals = 2, language = lang)} 24h, ts: ${snapshot.solTs})
+            • Cycle Phase: ${snapshot.cyclePhase ?: "N/A"}
+            • Cycle Day / Days Since Halving: Day ${snapshot.cycleDay} (${snapshot.daysSinceHalving} days since halving)
+            • Rainbow Band: ${snapshot.rainbowBand ?: "N/A"}
+            • 200W SMA Distance: ${snapshot.distance200w ?: "N/A"}
+            • Pi Cycle Gap: ${snapshot.piCycleGap ?: "N/A"}
+            • Market Sentiment: ${snapshot.fearAndGreedScore}/100 (${snapshot.fearAndGreedSentiment})
+            • BTC Dominance: $btcDomFormatted
+            • Altcoin Season Index: ${snapshot.altcoinSeasonIndex}
+            • Perpetual Funding Rate: $fundingFormatted (Mark: ${snapshot.futuresMarkPrice})
+            • Whale Net 24h Flow: ${snapshot.whaleNet24h ?: "N/A"}
+            • Shared Market Stance: ${snapshot.marketStance ?: "N/A"}
+        """.trimIndent()
     }
 
     private fun generateRealtimeQuantitativeAnalysis(

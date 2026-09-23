@@ -12,7 +12,7 @@ import org.junit.Test
 class ExampleUnitTest {
   @Test
   fun testGeminiAiServiceDirectQuery() = runBlocking {
-    val service = GeminiAiService(apiKeyOverride = "")
+    val service = GeminiAiService(apiKeyOverride = "", openAiKeyOverride = "")
     val snapshot = LiveMarketContextSnapshot(
       btcPrice = 85200.0,
       btc24hChange = 2.4,
@@ -64,6 +64,14 @@ class ExampleUnitTest {
     assertEquals(
       listOf("gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash"),
       GeminiAiService.MODELS
+    )
+  }
+
+  @Test
+  fun prefersCheapestOpenAiBackupModelsFirst() {
+    assertEquals(
+      listOf("gpt-5-nano", "gpt-4.1-nano", "gpt-4o-mini"),
+      GeminiAiService.OPENAI_MODELS
     )
   }
 }
