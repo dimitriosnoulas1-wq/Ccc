@@ -40,6 +40,13 @@ class GeminiAiService(
             "gpt-4.1-nano",
             "gpt-4o-mini"
         )
+        // Cloud / AI Studio secret names. Lookup is case-insensitive so `gpt`, `Gpt`, and `GPT` all match.
+        internal val OPENAI_SECRET_ALIASES = arrayOf(
+            "OPENAI_API_KEY",
+            "OPENAI",
+            "ChatGPT",
+            "gpt"
+        )
         private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
         private const val OPENAI_URL = "https://api.openai.com/v1/chat/completions"
         private val PLACEHOLDER_KEYS = setOf(
@@ -47,6 +54,14 @@ class GeminiAiService(
             "MY_OPENAI_API_KEY",
             "MY_CHATGPT_API_KEY"
         )
+
+        internal fun firstNamedValue(source: Map<String, String>, vararg names: String): String {
+            val wanted = names.map { it.lowercase(Locale.ROOT) }.toSet()
+            return source.entries
+                .firstOrNull { it.key.lowercase(Locale.ROOT) in wanted }
+                ?.value
+                .orEmpty()
+        }
     }
 
     suspend fun analyzeMarketQuery(
@@ -141,13 +156,7 @@ class GeminiAiService(
         }
         val buildKey = runCatching { BuildConfig.OPENAI_API_KEY }.getOrDefault("")
         val injectedKey = runCatching { BuildConfig.OPENAI_INJECTED_API_KEY }.getOrDefault("")
-        val runtimeKey = sequenceOf(
-            System.getenv("OPENAI_API_KEY"),
-            System.getenv("OPENAI"),
-            System.getenv("ChatGPT"),
-            System.getenv("gpt"),
-            System.getenv("GPT")
-        ).mapNotNull { it }.firstOrNull().orEmpty()
+        val runtimeKey = firstNamedValue(System.getenv(), *OPENAI_SECRET_ALIASES)
         return sanitizeApiKey(buildKey)
             .ifBlank { sanitizeApiKey(injectedKey) }
             .ifBlank { sanitizeApiKey(runtimeKey) }

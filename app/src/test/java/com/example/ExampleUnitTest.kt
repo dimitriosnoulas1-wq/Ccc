@@ -74,5 +74,38 @@ class ExampleUnitTest {
       GeminiAiService.OPENAI_MODELS
     )
   }
+
+  @Test
+  fun acceptsGptSecretNameInAnyCaseAsOpenAiBackup() {
+    assertTrue(GeminiAiService.OPENAI_SECRET_ALIASES.any { it.equals("gpt", ignoreCase = true) })
+    assertEquals(
+      "sk-test-backup",
+      GeminiAiService.firstNamedValue(
+        mapOf("Gpt" to "sk-test-backup"),
+        *GeminiAiService.OPENAI_SECRET_ALIASES
+      )
+    )
+    assertEquals(
+      "sk-test-backup",
+      GeminiAiService.firstNamedValue(
+        mapOf("GPT" to "sk-test-backup"),
+        *GeminiAiService.OPENAI_SECRET_ALIASES
+      )
+    )
+    assertEquals(
+      "sk-from-openai",
+      GeminiAiService.firstNamedValue(
+        mapOf("OPENAI_API_KEY" to "sk-from-openai", "Gpt" to "sk-other"),
+        *GeminiAiService.OPENAI_SECRET_ALIASES
+      )
+    )
+    assertEquals(
+      "",
+      GeminiAiService.firstNamedValue(
+        mapOf("Gemini" to "unused"),
+        *GeminiAiService.OPENAI_SECRET_ALIASES
+      )
+    )
+  }
 }
 

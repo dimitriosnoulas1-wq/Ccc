@@ -6,6 +6,14 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+fun firstEnvIgnoreCase(vararg names: String): String {
+  val wanted = names.map { it.lowercase() }.toSet()
+  return System.getenv().entries
+    .firstOrNull { it.key.lowercase() in wanted }
+    ?.value
+    .orEmpty()
+}
+
 android {
   namespace = "com.example"
   // AI Studio / fresh clones may only have the base SDK 36 image, not 36.1.
@@ -28,14 +36,12 @@ android {
       .replace("\n", "")
       .replace("\r", "")
     buildConfigField("String", "GEMINI_INJECTED_API_KEY", "\"$injectedGeminiKey\"")
-    val injectedOpenAiKey = (
-      System.getenv("OPENAI_API_KEY")
-        ?: System.getenv("OPENAI")
-        ?: System.getenv("ChatGPT")
-        ?: System.getenv("gpt")
-        ?: System.getenv("GPT")
-        ?: ""
-      )
+    val injectedOpenAiKey = firstEnvIgnoreCase(
+      "OPENAI_API_KEY",
+      "OPENAI",
+      "ChatGPT",
+      "gpt"
+    )
       .replace("\\", "\\\\")
       .replace("\"", "\\\"")
       .replace("\n", "")
