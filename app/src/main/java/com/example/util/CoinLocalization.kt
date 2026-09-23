@@ -191,9 +191,24 @@ object CoinLocalization {
         }
     }
 
+    fun liveRealizedMoves(coin: CryptoCoin): Triple<String, String, String> {
+        val change24 = if (coin.priceUpdatedAtMs > 0L) {
+            String.format(java.util.Locale.US, "%+.1f%%", coin.change24h)
+        } else "—"
+        val spark = coin.sparkline
+        val sparkMove = if (spark.size >= 2 && spark.first() > 0.0) {
+            val pct = ((spark.last() - spark.first()) / spark.first()) * 100.0
+            String.format(java.util.Locale.US, "%+.1f%%", pct)
+        } else "—"
+        val athMove = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0) {
+            String.format(java.util.Locale.US, "%+.1f%%", coin.drawdownPercent)
+        } else "—"
+        return Triple(change24, sparkMove, athMove)
+    }
+
     fun getProbabilitiesForCoin(coin: CryptoCoin): Triple<Int, Int, Int> {
         val isBullish = coin.change24h >= 0
-        val hashMod = kotlin.math.abs(coin.symbol.hashCode()) % 7
+        val hashMod = 0
         val baseP = if (isBullish) {
             val boost = (coin.change24h.coerceIn(0.0, 15.0) * 1.2).toInt()
             (65 + boost + hashMod).coerceIn(64, 88)
@@ -289,59 +304,30 @@ object CoinLocalization {
     }
 
     fun getCycleAlignmentNarrative(coin: CryptoCoin, language: AppLanguage): String {
-        val d1 = coin.analog.matchingDate2020
-        val d2 = coin.analog.matchingDate2016
         val name = coin.name
+        val price = if (coin.priceUsd > 0.0) com.example.util.AppNumberFormatter.formatPrice(coin.priceUsd) else "—"
+        val change = if (coin.priceUpdatedAtMs > 0L) String.format(java.util.Locale.US, "%+.1f%%", coin.change24h) else "—"
         return when (language) {
-            AppLanguage.ENGLISH -> "$name's current market structure correlates directly with historical analogs ($d1 & $d2)."
-            AppLanguage.GERMAN -> "Die aktuelle Marktstruktur von $name korreliert direkt με historischen Analoga ($d1 & $d2)."
-            AppLanguage.FRENCH -> "La structure de marché actuelle de $name correspond directement aux analogues historiques ($d1 & $d2)."
-            AppLanguage.SPANISH -> "La estructura de mercado actual de $name se correlaciona directamente con análogos históricos ($d1 & $d2)."
-            AppLanguage.ITALIAN -> "La struttura di mercato attuale di $name si correla direttamente con gli analoghi storici ($d1 & $d2)."
-            AppLanguage.GREEK -> "Η τρέχουσα θέση του $name ευθυγραμμίζεται άμεσα με ιστορικές φάσεις συσσώρευσης ($d1 και $d2)."
+            AppLanguage.ENGLISH -> "$name is trading at $price ($change 24h) on the live Binance/CoinGecko feed."
+            AppLanguage.GERMAN -> "$name handelt bei $price ($change 24h) im Live-Feed."
+            AppLanguage.FRENCH -> "$name se négocie à $price ($change 24h) sur le flux live."
+            AppLanguage.SPANISH -> "$name cotiza a $price ($change 24h) en el feed en vivo."
+            AppLanguage.ITALIAN -> "$name quota $price ($change 24h) sul feed live."
+            AppLanguage.GREEK -> "Το $name διαπραγματεύεται στα $price ($change 24ω) από το live feed."
         }
     }
 
     fun getCycleStatisticsNarrative(coin: CryptoCoin, language: AppLanguage): String {
-        val isBullish = coin.change24h >= 0
-        val rawPct = coin.projectedNextMove4w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+28.5%" else "-16.2%" }
-        val gainAvg = if (!isBullish && !rawPct.startsWith("-")) "-${rawPct.removePrefix("+")}" else rawPct
         val symbol = coin.symbol
-        val totalAnalogs = 13 + (kotlin.math.abs(coin.symbol.hashCode()) % 4)
-        val p3 = getProbabilitiesForCoin(coin).third
-        val winCount = ((totalAnalogs * p3) / 100).coerceIn(8, totalAnalogs - 1)
-
+        val volume = if (coin.volume24h > 0.0) com.example.util.AppNumberFormatter.formatCompactCurrency(coin.volume24h) else "—"
+        val mcap = if (coin.marketCap > 0.0) com.example.util.AppNumberFormatter.formatCompactCurrency(coin.marketCap) else "—"
         return when (language) {
-            AppLanguage.ENGLISH -> {
-                val moveDir = if (isBullish) "rose" else "retreated"
-                val wins = "$winCount of $totalAnalogs"
-                "Across $totalAnalogs matching cycle analogs, $symbol $moveDir $wins times over the 4-week forward window (average $gainAvg move)."
-            }
-            AppLanguage.GERMAN -> {
-                val moveDir = if (isBullish) "stieg" else "fiel"
-                val wins = "$winCount von $totalAnalogs"
-                "In $totalAnalogs vergleichbaren Zyklen $moveDir $symbol $wins Mal im folgenden 4-Wochen-Zeitraum (durchschnittlich $gainAvg)."
-            }
-            AppLanguage.FRENCH -> {
-                val moveDir = if (isBullish) "a progressé" else "a reculé"
-                val wins = "$winCount fois sur $totalAnalogs"
-                "Sur $totalAnalogs analogues de cycle, $symbol $moveDir $wins au cours des 4 semaines suivantes (variation moyenne $gainAvg)."
-            }
-            AppLanguage.SPANISH -> {
-                val moveDir = if (isBullish) "subió" else "retrocedió"
-                val wins = "$winCount de $totalAnalogs"
-                "En $totalAnalogs análogos de ciclos similares, $symbol $moveDir $wins veces en el siguiente período de 4 semanas (promedio $gainAvg)."
-            }
-            AppLanguage.ITALIAN -> {
-                val moveDir = if (isBullish) "è salito" else "è sceso"
-                val wins = "$winCount volte su $totalAnalogs"
-                "In $totalAnalogs analoghi di ciclo corrispondenti, $symbol $moveDir $wins volte nelle 4 settimane successive (variazione media $gainAvg)."
-            }
-            AppLanguage.GREEK -> {
-                val moveDir = if (isBullish) "σημείωσε ανοδική διάσπαση" else "σημείωσε καθοδική διόρθωση"
-                val wins = "$winCount από τις $totalAnalogs"
-                "Σε $totalAnalogs παρόμοιους ιστορικούς κύκλους, το $symbol $moveDir τις $wins φορές στο επόμενο παράθυρο 4 εβδομάδων (μέση μεταβολή $gainAvg)."
-            }
+            AppLanguage.ENGLISH -> "$symbol live 24h volume is $volume with market cap $mcap. No invented analog win-rate is shown."
+            AppLanguage.GERMAN -> "$symbol Live-24h-Volumen $volume, Marktkapitalisierung $mcap."
+            AppLanguage.FRENCH -> "Volume live 24h de $symbol : $volume, capitalisation $mcap."
+            AppLanguage.SPANISH -> "Volumen live 24h de $symbol: $volume, capitalización $mcap."
+            AppLanguage.ITALIAN -> "Volume live 24h di $symbol: $volume, market cap $mcap."
+            AppLanguage.GREEK -> "Live όγκος 24ω του $symbol: $volume, κεφαλαιοποίηση $mcap."
         }
     }
 

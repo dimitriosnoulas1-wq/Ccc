@@ -23,13 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,12 +49,9 @@ import com.example.ui.theme.TextCyanSlate
 import com.example.ui.theme.TextPureWhite
 import com.example.ui.theme.holographicCard
 import com.example.util.LocalAppStrings
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.random.Random
 
 data class LiveOrderExecution(
     val id: String,
@@ -76,83 +67,36 @@ data class LiveOrderExecution(
 fun LiveOrderFlowSection(
     activeCoin: CryptoCoin,
     currency: Currency,
+    recentTrades: List<com.example.data.model.FuturesTrade> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
-    var buyDominance by remember { mutableFloatStateOf(64.5f) }
-    val orderHistory = remember { mutableStateListOf<LiveOrderExecution>() }
-
-    // 24/7 Live Stream Simulator producing smooth ticks
-    LaunchedEffect(activeCoin.id) {
-        val sampleSymbols = listOf(activeCoin.symbol, "BTC", "ETH", "SOL", "XLM", "XMN", "XRP")
-        val exchanges = listOf("Binance USDT-M")
-        val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
-
-        // Seed initial orders safely
-        if (orderHistory.isEmpty()) {
-            repeat(4) { idx ->
-                val isBuy = Random.nextFloat() > 0.38f
-                val sym = sampleSymbols[idx % sampleSymbols.size]
-                val valUsd = Random.nextDouble(5000.0, 95000.0)
-                val coinPrice = activeCoin.priceUsd.coerceAtLeast(0.000001)
-                val rawAmt = valUsd / coinPrice
-                val amt = if (coinPrice >= 1000.0) {
-                    com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 3).removePrefix("$")
-                } else if (coinPrice >= 10.0) {
-                    com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 1).removePrefix("$")
-                } else {
-                    com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 0).removePrefix("$")
-                }
-                orderHistory.add(
-                    LiveOrderExecution(
-                        id = "init_$idx",
-                        timestamp = timeFormat.format(Date(System.currentTimeMillis() - (4 - idx) * 2000L)),
-                        symbol = sym,
-                        isBuy = isBuy,
-                        amount = amt,
-                        valueUsd = valUsd,
-                        exchange = exchanges.random()
-                    )
-                )
-            }
-        }
-
-        val tickInterval = 2200L
-
-        while (isActive) {
-            delay(tickInterval)
-            val isBuy = Random.nextFloat() > 0.36f
-            val sym = if (Random.nextFloat() > 0.4f) activeCoin.symbol else sampleSymbols.random()
-            val valUsd = Random.nextDouble(4000.0, 110000.0)
-            val coinPrice = activeCoin.priceUsd.coerceAtLeast(0.000001)
-            val rawAmt = valUsd / coinPrice
-            val amt = if (coinPrice >= 1000.0) {
+    val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.US) }
+    val orderHistory = remember(recentTrades, activeCoin.symbol) {
+        recentTrades.take(6).map { trade ->
+            val rawAmt = trade.qty
+            val amt = if (trade.price >= 1000.0) {
                 com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 3).removePrefix("$")
-            } else if (coinPrice >= 10.0) {
+            } else if (trade.price >= 10.0) {
                 com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 1).removePrefix("$")
             } else {
                 com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 0).removePrefix("$")
             }
-
-            val newOrder = LiveOrderExecution(
-                id = "${System.currentTimeMillis()}_${Random.nextInt(1000)}",
-                timestamp = timeFormat.format(Date()),
-                symbol = sym,
-                isBuy = isBuy,
+            LiveOrderExecution(
+                id = trade.id.toString(),
+                timestamp = timeFormat.format(Date(trade.timeMs)),
+                symbol = trade.symbol.removeSuffix("USDT"),
+                isBuy = !trade.isSell,
                 amount = amt,
-                valueUsd = valUsd,
-                exchange = exchanges.random()
+                valueUsd = trade.valueUsd,
+                exchange = "Binance USDT-M"
             )
-
-            orderHistory.add(0, newOrder)
-            if (orderHistory.size > 6) {
-                orderHistory.removeAt(orderHistory.size - 1)
-            }
-
-            // Fluctuate buy dominance smoothly
-            val delta = (Random.nextFloat() - 0.48f) * 1.8f
-            buyDominance = (buyDominance + delta).coerceIn(45.0f, 82.0f)
         }
+    }
+    val buyDominance = remember(recentTrades) {
+        val buys = recentTrades.filter { !it.isSell }.sumOf { it.valueUsd }
+        val total = recentTrades.sumOf { it.valueUsd }
+        if (total > 0.0) ((buys / total) * 100.0).toFloat() else 50f
     }
 
     Box(
@@ -188,8 +132,6 @@ fun LiveOrderFlowSection(
                         letterSpacing = 1.sp,
                         color = QuantumCyan
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    DemoDataLabel()
                 }
             }
 

@@ -74,5 +74,20 @@ class ExampleUnitTest {
       GeminiAiService.OPENAI_MODELS
     )
   }
+
+  @Test
+  fun liveTelemetryDefaultsAreEmptyNotDemo() {
+    val etf = com.example.data.model.BitcoinEtfFlowData()
+    assertFalse(etf.isLive)
+    assertEquals(0.0, etf.oneDayNetFlowMillionUsd, 0.0)
+    val stables = com.example.data.model.StablecoinLiquidityData()
+    assertFalse(stables.isLive)
+    assertEquals(0.0, stables.totalCirculatingUsd, 0.0)
+    val av = com.example.data.model.LiveMovingAverages(dma350 = 50_000.0, isLive = true)
+    assertEquals(100_000.0, av.dma350x2)
+    val snapshot = com.example.data.model.LiveMarketContextSnapshot()
+    assertNull(snapshot.whaleNet24h)
+    assertNull(snapshot.cyclePhase)
+  }
 }
 

@@ -130,14 +130,15 @@ fun SignalsScreen(
     whaleAlerts: List<WhaleAlert> = emptyList(),
     whaleLeveragePositions: List<WhaleLeveragePosition> = emptyList(),
     whaleLeverageSummary: WhaleLeverageSummary = WhaleLeverageSummary(
-        totalLongVolumeUsd = 148_500_000.0,
-        totalShortVolumeUsd = 86_200_000.0,
-        longRatioPercent = 63.3,
-        shortRatioPercent = 36.7,
-        activeMegaPositionsCount = 18,
-        largestPositionUsd = 24_800_000.0,
+        totalLongVolumeUsd = 0.0,
+        totalShortVolumeUsd = 0.0,
+        longRatioPercent = 0.0,
+        shortRatioPercent = 0.0,
+        activeMegaPositionsCount = 0,
+        largestPositionUsd = 0.0,
         dominantSide = com.example.data.model.LeveragePositionSide.LONG
     ),
+    recentTrades: List<com.example.data.model.FuturesTrade> = emptyList(),
     isRefreshing: Boolean = false,
     isConnected: Boolean = false,
     priceSource: String = "Binance",
@@ -345,12 +346,13 @@ fun SignalsScreen(
             item {
                 LiveOrderFlowSection(
                     activeCoin = activeCoin,
-                    currency = currency
+                    currency = currency,
+                    recentTrades = recentTrades
                 )
             }
         }
 
-        // 🐋 Super Whale Mega Leverage Tracker (2x - 50x Live Positions across Hyperliquid, Binance, Bybit, GMX)
+        // Live venue open interest + liquidation tape
         item {
             WhaleLeverageTrackerSection(
                 positions = whaleLeveragePositions,
@@ -1328,22 +1330,10 @@ fun SignalsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val (p1, p2, p4) = CoinLocalization.getProbabilitiesForCoin(activeCoin)
-                    val raw1 = activeCoin.projectedNextMove1w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+5.4%" else "-3.8%" }
-                    val raw2 = activeCoin.projectedNextMove2w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+12.8%" else "-7.4%" }
-                    val raw4 = activeCoin.projectedNextMove4w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+27.5%" else "-14.2%" }
-
-                    val gain1 = if (!isBullish && !raw1.startsWith("-")) "-${raw1.removePrefix("+")}" else raw1
-                    val gain2 = if (!isBullish && !raw2.startsWith("-")) "-${raw2.removePrefix("+")}" else raw2
-                    val gain4 = if (!isBullish && !raw4.startsWith("-")) "-${raw4.removePrefix("+")}" else raw4
-
-                    val win1Label = if (isGreek) "$p1% πιθαν." else "$p1% win"
-                    val win2Label = if (isGreek) "$p2% πιθαν." else "$p2% win"
-                    val win4Label = if (isGreek) "$p4% πιθαν." else "$p4% win"
-
-                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = gain1, winRate = win1Label, modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = gain2, winRate = win2Label, modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = gain4, winRate = win4Label, modifier = Modifier.weight(1f))
+                    val liveMoves = CoinLocalization.liveRealizedMoves(activeCoin)
+                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = liveMoves.first, winRate = if (isGreek) "live 24ω" else "live 24h", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = liveMoves.second, winRate = if (isGreek) "live 7ημ" else "live 7d", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = liveMoves.third, winRate = if (isGreek) "από ATH" else "from ATH", modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -1378,9 +1368,9 @@ fun SignalsScreen(
                     WhyWeSayThisPoint(
                         number = 3,
                         text = if (isGreek) {
-                            "Η τρέχουσα φάση του κύκλου αναγνωρίζεται ως ${activeCoin.analog.cyclePhaseName} με δείκτη ρίσκου στο ${signal.riskScore}/100."
+                            "Η τρέχουσα φάση είναι ${signal.cycleClockPhase} με live δείκτη κύκλου ${signal.riskScore}/100."
                         } else {
-                            "Current cycle phase is identified as ${activeCoin.analog.cyclePhaseName} with risk score at ${signal.riskScore}/100."
+                            "Current phase is ${signal.cycleClockPhase} with live cycle score ${signal.riskScore}/100."
                         }
                     )
                     WhyWeSayThisPoint(

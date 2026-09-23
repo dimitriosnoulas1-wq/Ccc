@@ -1,14 +1,14 @@
 package com.example.data.model
 
 data class StablecoinLiquidityData(
-    val totalCirculatingUsd: Double = 172_450_000_000.0,
-    val change7dUsd: Double = 1_850_000_000.0,
-    val change7dPercent: Double = 1.08,
-    val usdtDominancePercent: Double = 69.8,
-    val usdcCirculatingUsd: Double = 35_400_000_000.0,
-    val isLiquidityExpanding: Boolean = true,
-    val sourceName: String = "DefiLlama (Global Stablecoin Supply)",
-    val asOfDate: String = "Live Aggregated",
+    val totalCirculatingUsd: Double = 0.0,
+    val change7dUsd: Double = 0.0,
+    val change7dPercent: Double = 0.0,
+    val usdtDominancePercent: Double = 0.0,
+    val usdcCirculatingUsd: Double = 0.0,
+    val isLiquidityExpanding: Boolean = false,
+    val sourceName: String = "DefiLlama",
+    val asOfDate: String = "—",
     val isLive: Boolean = false
 )
 

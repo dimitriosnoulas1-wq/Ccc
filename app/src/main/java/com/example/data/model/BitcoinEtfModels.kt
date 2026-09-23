@@ -1,10 +1,10 @@
 package com.example.data.model
 
 data class BitcoinEtfFlowData(
-    val oneDayNetFlowMillionUsd: Double = 184.2,
-    val fiveDayCumulativeMillionUsd: Double = 892.6,
-    val asOfDate: String = "Post-NYSE Close",
-    val isAvailable: Boolean = true,
+    val oneDayNetFlowMillionUsd: Double = 0.0,
+    val fiveDayCumulativeMillionUsd: Double = 0.0,
+    val asOfDate: String = "—",
+    val isAvailable: Boolean = false,
     val isLive: Boolean = false,
-    val sourceName: String = "Farside Investors (Public Institutional Flow)"
+    val sourceName: String = "Farside Investors"
 )
