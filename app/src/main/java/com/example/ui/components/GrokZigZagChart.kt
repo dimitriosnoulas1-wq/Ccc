@@ -63,7 +63,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CryptoCoin
 import com.example.data.model.Currency
-import com.example.data.model.CyclePhase
 import com.example.ui.theme.CosmicBorder
 import com.example.ui.theme.CosmicSurface
 import com.example.ui.theme.CosmicSurfaceElevated
