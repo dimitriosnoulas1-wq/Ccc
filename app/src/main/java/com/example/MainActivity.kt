@@ -51,6 +51,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +74,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.screens.CoinDetailSheet
+import com.example.ui.screens.CycleHomePage
 import com.example.ui.screens.FuturesTerminalScreen
 import com.example.ui.screens.LearnBlockchainScreen
 import com.example.ui.screens.MacroScreen
@@ -165,6 +167,10 @@ fun CryptoCyclesApp(
     val etfFlowData by viewModel.etfFlowData.collectAsState()
     val stablecoinLiquidityData by viewModel.stablecoinLiquidityData.collectAsState()
     val forwardAuditLogs by viewModel.forwardAuditLogs.collectAsState()
+    val dailyCycleLogs by viewModel.dailyCycleLogs.collectAsState()
+    val btcCycleReading by viewModel.btcCycleReading.collectAsState()
+    val showCoinsCatalog by viewModel.showCoinsCatalog.collectAsState()
+    val cycleDayAlertEnabled by viewModel.cycleDayAlertEnabled.collectAsState()
     val liveMovingAverages by viewModel.liveMovingAverages.collectAsState()
     val globalRiskSnapshot by viewModel.globalRiskSnapshot.collectAsState()
     val futuresRecentTrades by viewModel.futuresRecentTrades.collectAsState()
@@ -197,6 +203,13 @@ fun CryptoCyclesApp(
 
     var showPrivacyPolicy by remember { mutableStateOf(false) }
     var showLaunchSequence by remember { mutableStateOf(true) }
+    val hostActivity = LocalContext.current as? Activity
+    LaunchedEffect(hostActivity?.intent) {
+        val tab = hostActivity?.intent?.getStringExtra("EXTRA_NAV_TAB")
+        if (tab.equals("MARKETS", ignoreCase = true)) {
+            viewModel.openCycleChart()
+        }
+    }
 
     val appStrings = remember(selectedLanguage) {
         com.example.util.AppNumberFormatter.currentLanguage = selectedLanguage
@@ -254,7 +267,7 @@ fun CryptoCyclesApp(
                             .padding(paddingValues)
                     ) {
                         when (selectedTab) {
-                            MainTab.MARKETS -> MarketsScreen(
+                            MainTab.MARKETS -> if (showCoinsCatalog) MarketsScreen(
                                 coins = coins,
                                 featuredHeroCoin = featuredHeroCoin,
                                 searchQuery = searchQuery,
@@ -293,7 +306,32 @@ fun CryptoCyclesApp(
                                     com.example.util.AppSoundManager.playTechClick()
                                     viewModel.setTab(targetTab)
                                 },
-                                onRefresh = { viewModel.manualRefresh() }
+                                onRefresh = { viewModel.manualRefresh() },
+                                onBackToCycle = { viewModel.hideCoinsCatalog() }
+                            ) else CycleHomePage(
+                                reading = btcCycleReading,
+                                latestPriceUsd = if (centralizedPriceState.btcSpotPrice > 0.0) {
+                                    centralizedPriceState.btcSpotPrice
+                                } else centralizedPriceState.btcPerpPrice,
+                                etfFlowData = etfFlowData,
+                                stablecoinLiquidityData = stablecoinLiquidityData,
+                                dailyLogs = dailyCycleLogs,
+                                isProUnlocked = isProUnlocked,
+                                isRefreshing = isRefreshing,
+                                unreadAlertsCount = unreadAlertsCount,
+                                cycleDayAlertEnabled = cycleDayAlertEnabled,
+                                onCycleDayAlertChanged = { enabled ->
+                                    if (enabled && !isProUnlocked) {
+                                        viewModel.openProModal()
+                                    } else {
+                                        viewModel.setCycleDayAlertEnabled(enabled)
+                                    }
+                                },
+                                onOpenChart = { viewModel.openCycleChart() },
+                                onOpenCoins = { viewModel.showCoinsCatalog() },
+                                onOpenProModal = { viewModel.openProModal() },
+                                onRefresh = { viewModel.manualRefresh() },
+                                onAlertHistoryClick = { viewModel.openAlertHistory() }
                             )
 
                             MainTab.FUTURES -> FuturesTerminalRoute(
@@ -376,6 +414,14 @@ fun CryptoCyclesApp(
                                 onNotifyPiCycleChanged = { viewModel.setNotifyPiCycle(it) },
                                 onNotifyRainbowBandChanged = { viewModel.setNotifyRainbowBand(it) },
                                 onNotify200wSmaChanged = { viewModel.setNotify200wSma(it) },
+                                cycleDayAlertEnabled = cycleDayAlertEnabled,
+                                onCycleDayAlertChanged = { enabled ->
+                                    if (enabled && !isProUnlocked) {
+                                        viewModel.openProModal()
+                                    } else {
+                                        viewModel.setCycleDayAlertEnabled(enabled)
+                                    }
+                                },
                                 logCharts = viewModel.logCharts.collectAsState().value,
                                 onLogChartsChanged = { viewModel.setLogCharts(it) },
                                 onTogglePro = { viewModel.setProUnlocked(it) }

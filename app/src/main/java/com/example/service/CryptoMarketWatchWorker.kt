@@ -86,6 +86,11 @@ class CryptoMarketWatchWorker(
                 }
             }
 
+            try {
+                com.example.util.CycleDayAlertDispatcher.refresh(context)
+            } catch (_: Exception) {
+            }
+
             Result.success()
         } catch (_: Exception) {
             Result.success() // Keep worker resilient

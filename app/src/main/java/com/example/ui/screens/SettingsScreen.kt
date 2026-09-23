@@ -101,6 +101,8 @@ fun SettingsScreen(
     onNotifyPiCycleChanged: (Boolean) -> Unit = {},
     onNotifyRainbowBandChanged: (Boolean) -> Unit = {},
     onNotify200wSmaChanged: (Boolean) -> Unit = {},
+    cycleDayAlertEnabled: Boolean = false,
+    onCycleDayAlertChanged: (Boolean) -> Unit = {},
     logCharts: Boolean = true,
     onLogChartsChanged: (Boolean) -> Unit = {},
     onTogglePro: ((Boolean) -> Unit)? = null,
@@ -780,6 +782,28 @@ fun SettingsScreen(
                             }
                         }
                     }
+
+                    CycleAlertToggleRow(
+                        title = if (strings.language.code == "el") "Ειδοποίηση ημέρας κύκλου" else "Cycle day-count alert",
+                        desc = if (strings.language.code == "el") {
+                            "Μία γραμμή: ημέρα N. Το 2016 αυτή η μέρα ήταν …, το 2020 ήταν …"
+                        } else {
+                            "One line: Day N. In 2016 this day-count was …, in 2020 it was …"
+                        },
+                        isChecked = cycleDayAlertEnabled && isProUnlocked,
+                        onCheckedChange = { isChecked ->
+                            if (!isProUnlocked && isChecked) {
+                                onOpenProModal()
+                            } else if (isChecked) {
+                                requestNotificationPermissionIfNecessary {
+                                    onCycleDayAlertChanged(true)
+                                }
+                            } else {
+                                onCycleDayAlertChanged(false)
+                            }
+                        },
+                        palette = palette
+                    )
 
                     // 1. Zone Change Alert
                     CycleAlertToggleRow(

@@ -28,7 +28,10 @@ data class CycleFractalData(
     val usesHalving: Boolean = false,
     val eventDays: List<Pair<Int, String>> = emptyList(),
     val windowLabel: String = "",
-    val axisDays: Int = 800
+    val axisDays: Int = 800,
+    val multipleNow: Double? = null,
+    val multiple2016: Double? = null,
+    val multiple2020: Double? = null
 )
 
 object CycleFractalEngine {

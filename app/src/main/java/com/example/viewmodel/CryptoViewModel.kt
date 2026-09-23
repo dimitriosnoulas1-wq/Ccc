@@ -40,6 +40,7 @@ import com.example.data.repository.BitcoinEtfRepository
 import com.example.data.repository.CryptoRepository
 import com.example.data.repository.DefiLlamaLiquidityRepository
 import com.example.data.repository.DerivativesRepository
+import com.example.data.repository.DailyCycleLogRepository
 import com.example.data.repository.ForwardAuditTrailRepository
 import com.example.data.repository.FuturesTerminalRepository
 import com.example.data.repository.LiveMacroFeedsRepository
@@ -227,6 +228,20 @@ class CryptoViewModel @JvmOverloads constructor(
     private val forwardAuditRepo: ForwardAuditTrailRepository =
         ForwardAuditTrailRepository(application.applicationContext)
     val forwardAuditLogs: StateFlow<List<ForwardSignalAuditEntry>> = forwardAuditRepo.auditLogs
+
+    private val dailyCycleLogRepo = DailyCycleLogRepository(application.applicationContext)
+    val dailyCycleLogs = dailyCycleLogRepo.logs
+
+    private val _btcCycleReading = MutableStateFlow<com.example.util.CycleFractalData?>(null)
+    val btcCycleReading: StateFlow<com.example.util.CycleFractalData?> = _btcCycleReading.asStateFlow()
+
+    private val _showCoinsCatalog = MutableStateFlow(false)
+    val showCoinsCatalog: StateFlow<Boolean> = _showCoinsCatalog.asStateFlow()
+
+    private val _cycleDayAlertEnabled = MutableStateFlow(
+        com.example.util.CycleDayAlertPrefs.isEnabled(application.applicationContext)
+    )
+    val cycleDayAlertEnabled: StateFlow<Boolean> = _cycleDayAlertEnabled.asStateFlow()
 
     val liveMacroSignal: StateFlow<MacroCycleSignal> = combine(
         cycleCommandState,
@@ -654,6 +669,7 @@ class CryptoViewModel @JvmOverloads constructor(
             launch(Dispatchers.IO) { repository.refreshLivePrices() }
             launch(Dispatchers.IO) { futuresRepository.refresh() }
             launch(Dispatchers.IO) { refreshDerivativesAndMacro() }
+            launch(Dispatchers.IO) { refreshCycleHome() }
 
             while (isActive) {
                 delay(12000)
@@ -672,6 +688,43 @@ class CryptoViewModel @JvmOverloads constructor(
 
     fun setTab(tab: MainTab) {
         _selectedTab.value = tab
+        if (tab != MainTab.MARKETS) {
+            _showCoinsCatalog.value = false
+        }
+    }
+
+    fun showCoinsCatalog() {
+        _showCoinsCatalog.value = true
+    }
+
+    fun hideCoinsCatalog() {
+        _showCoinsCatalog.value = false
+    }
+
+    fun openCycleChart() {
+        val btc = allCoins.value.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
+        _showCoinsCatalog.value = false
+        _selectedTab.value = MainTab.MARKETS
+        selectCoin(btc)
+    }
+
+    fun setCycleDayAlertEnabled(enabled: Boolean) {
+        val greek = selectedLanguage.value == AppLanguage.GREEK
+        com.example.util.CycleDayAlertPrefs.setEnabled(getApplication(), enabled, greek)
+        _cycleDayAlertEnabled.value = enabled
+        if (enabled) {
+            viewModelScope.launch(Dispatchers.IO) { refreshCycleHome() }
+        }
+    }
+
+    private suspend fun refreshCycleHome() {
+        val price = centralizedPriceState.value.let { if (it.btcSpotPrice > 0.0) it.btcSpotPrice else it.btcPerpPrice }
+        val data = com.example.util.CycleDayAlertDispatcher.refresh(
+            context = getApplication(),
+            priceUsd = price,
+            logRepository = dailyCycleLogRepo
+        )
+        _btcCycleReading.value = data
     }
 
     fun setSearchQuery(query: String) {
@@ -759,6 +812,11 @@ class CryptoViewModel @JvmOverloads constructor(
 
     fun setLanguage(language: AppLanguage) {
         repository.setLanguage(language)
+        com.example.util.CycleDayAlertPrefs.setEnabled(
+            getApplication(),
+            _cycleDayAlertEnabled.value,
+            language == AppLanguage.GREEK
+        )
     }
 
     fun setTheme(theme: com.example.data.model.AppThemeOption) {
@@ -799,6 +857,13 @@ class CryptoViewModel @JvmOverloads constructor(
                             android.util.Log.w("CryptoViewModel", "DefiLlama liquidity refresh warning", t)
                         }
                     }
+                    val cycleJob = launch(Dispatchers.IO) {
+                        try {
+                            refreshCycleHome()
+                        } catch (t: Throwable) {
+                            android.util.Log.w("CryptoViewModel", "Cycle home refresh warning", t)
+                        }
+                    }
                     val derivJob = launch(Dispatchers.IO) {
                         try {
                             refreshDerivativesAndMacro()
@@ -806,7 +871,7 @@ class CryptoViewModel @JvmOverloads constructor(
                             android.util.Log.w("CryptoViewModel", "Derivatives refresh warning", t)
                         }
                     }
-                    joinAll(futuresJob, pricesJob, etfJob, liqJob, derivJob)
+                    joinAll(futuresJob, pricesJob, etfJob, liqJob, cycleJob, derivJob)
                 }
             } catch (t: Throwable) {
                 android.util.Log.w("CryptoViewModel", "Refresh failed", t)

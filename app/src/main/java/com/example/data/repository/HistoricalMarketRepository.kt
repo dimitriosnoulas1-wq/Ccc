@@ -232,8 +232,17 @@ object HistoricalMarketRepository {
             usesHalving = symbol.equals("BTC", ignoreCase = true) || cycle2016.isNotEmpty() || cycle2020.isNotEmpty(),
             eventDays = listOf(0 to "Halving"),
             windowLabel = "Day $currentDay / $axisDays",
-            axisDays = axisDays
+            axisDays = axisDays,
+            multipleNow = multipleAt(cycleNow, currentDay),
+            multiple2016 = multipleAt(cycle2016, currentDay),
+            multiple2020 = multipleAt(cycle2020, currentDay)
         )
+    }
+
+    private fun multipleAt(drafts: List<CycleDraft>, day: Int): Double? {
+        val hit = drafts.minByOrNull { abs(it.day - day) } ?: return null
+        if (abs(hit.day - day) > 14) return null
+        return hit.multiple
     }
 
     private data class CycleDraft(val day: Int, val multiple: Double, val price: Double, val label: String)
