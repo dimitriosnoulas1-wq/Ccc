@@ -694,11 +694,17 @@ class CryptoViewModel @JvmOverloads constructor(
     }
 
     fun showCoinsCatalog() {
+        openCoinsCatalog()
+    }
+
+    fun openCoinsCatalog(query: String = "") {
+        _searchQuery.value = query
         _showCoinsCatalog.value = true
     }
 
     fun hideCoinsCatalog() {
         _showCoinsCatalog.value = false
+        _searchQuery.value = ""
     }
 
     fun openCycleChart() {
