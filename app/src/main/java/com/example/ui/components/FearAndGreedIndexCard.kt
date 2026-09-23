@@ -84,7 +84,7 @@ fun FearAndGreedIndexCard(
             .holographicCard(
                 shape = RoundedCornerShape(24.dp),
                 glowColor = sentimentColor,
-                pulseColor = if (fearGreedData.score >= 50) QuantumCyan else SoftCrimson
+                pulseColor = if (!fearGreedData.isLive) Color(0xFF64748B) else if (fearGreedData.score >= 50) QuantumCyan else SoftCrimson
             )
             .padding(18.dp)
             .testTag("fear_greed_index_card")
@@ -136,6 +136,7 @@ fun FearAndGreedIndexCard(
             value = if (fearGreedData.isLive) fearGreedData.score.toFloat() else 0f,
             height = 155.dp,
             statusLabel = sentimentLabel,
+            valueLabel = if (fearGreedData.isLive) fearGreedData.score.toString() else "—",
             startLabel = "0 (FEAR)",
             endLabel = "100 (GREED)",
             gaugeColors = listOf(

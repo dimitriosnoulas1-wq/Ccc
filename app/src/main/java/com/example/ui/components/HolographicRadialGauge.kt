@@ -72,7 +72,8 @@ fun HolographicRadialGauge(
     ),
     activeColor: Color = QuantumCyan,
     showTicks: Boolean = true,
-    animationDurationMillis: Int = 1000
+    animationDurationMillis: Int = 1000,
+    valueLabel: String? = null
 ) {
     val normalizedValue = ((value - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
 
@@ -253,7 +254,7 @@ fun HolographicRadialGauge(
             modifier = Modifier.padding(top = 22.dp)
         ) {
             Text(
-                text = "${value.toInt()}",
+                text = valueLabel ?: "${value.toInt()}",
                 fontSize = 42.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-1).sp,
