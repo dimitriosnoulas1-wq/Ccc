@@ -61,7 +61,6 @@ import com.example.util.LocalAppStrings
 @Composable
 fun WhaleRadarSection(
     alerts: List<WhaleAlert>,
-    onTriggerTestAlert: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
@@ -142,19 +141,6 @@ fun WhaleRadarSection(
                         maxLines = 1
                     )
                 }
-            }
-
-            if (onTriggerTestAlert != null) {
-                Text(
-                    text = "Send test alert",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = QuantumCyan,
-                    modifier = Modifier.clickable {
-                        com.example.util.AppSoundManager.playTechClick()
-                        onTriggerTestAlert.invoke()
-                    }
-                )
             }
 
             // Compact Filter Chips

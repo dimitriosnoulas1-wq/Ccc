@@ -60,63 +60,52 @@ class BitcoinEtfRepository(
 
     private fun parseFarsideHtml(html: String): BitcoinEtfFlowData? {
         try {
-            // Match table rows containing date and Total flow numbers
-            // Looking for table data with decimal values in (parentheses) or regular numbers
-            val rowPattern = Pattern.compile("<tr[^>]*>([\\s\\S]*?)<\\/tr>", Pattern.CASE_INSENSITIVE)
+            val rowPattern = Pattern.compile("<tr[^>]*>([\\s\\S]*?)</tr>", Pattern.CASE_INSENSITIVE)
+            val cellPattern = Pattern.compile("<t[dh][^>]*>([\\s\\S]*?)</t[dh]>", Pattern.CASE_INSENSITIVE)
+            val datePattern = Pattern.compile("^\\d{1,2}\\s+[A-Za-z]{3}\\s+\\d{4}$")
             val matcher = rowPattern.matcher(html)
-            val rows = mutableListOf<String>()
+            val dated = mutableListOf<Pair<String, Double>>()
             while (matcher.find()) {
-                val row = matcher.group(1) ?: ""
-                if (row.contains("Total", ignoreCase = true) || row.contains("<td>", ignoreCase = true)) {
-                    rows.add(row)
-                }
-            }
-
-            // Extract numeric totals from the most recent rows
-            val totals = mutableListOf<Double>()
-            var latestDate = getFormattedTodayDate()
-
-            val tdPattern = Pattern.compile("<td[^>]*>([\\s\\S]*?)<\\/td>", Pattern.CASE_INSENSITIVE)
-            for (row in rows.reversed()) {
-                val tdMatcher = tdPattern.matcher(row)
+                val row = matcher.group(1) ?: continue
+                val cellMatcher = cellPattern.matcher(row)
                 val cells = mutableListOf<String>()
-                while (tdMatcher.find()) {
-                    val cellText = tdMatcher.group(1)?.replace(Regex("<[^>]*>"), "")?.trim() ?: ""
-                    if (cellText.isNotBlank()) {
-                        cells.add(cellText)
-                    }
+                while (cellMatcher.find()) {
+                    val text = cellMatcher.group(1)
+                        ?.replace(Regex("<[^>]*>"), "")
+                        ?.replace("&nbsp;", " ")
+                        ?.replace("\\s+".toRegex(), " ")
+                        ?.trim()
+                        .orEmpty()
+                    if (text.isNotBlank()) cells.add(text)
                 }
-
-                if (cells.size >= 3) {
-                    val lastCell = cells.last().replace("$", "").replace(",", "").trim()
-                    val isNegative = lastCell.startsWith("(") && lastCell.endsWith(")")
-                    val cleanedNum = lastCell.replace("(", "").replace(")", "").trim()
-                    val num = cleanedNum.toDoubleOrNull()
-                    if (num != null) {
-                        val finalNum = if (isNegative) -num else num
-                        totals.add(finalNum)
-                        if (cells.first().length >= 4 && !cells.first().contains("Total", ignoreCase = true)) {
-                            latestDate = cells.first()
-                        }
-                    }
-                }
-                if (totals.size >= 5) break
+                if (cells.size < 3) continue
+                val date = cells.first()
+                if (!datePattern.matcher(date).matches()) continue
+                val total = parseFlowCell(cells.last()) ?: continue
+                dated.add(date to total)
             }
-
-            if (totals.isNotEmpty()) {
-                val latest1D = totals.first()
-                val fiveDaySum = totals.take(5).sum()
-                return BitcoinEtfFlowData(
-                    oneDayNetFlowMillionUsd = latest1D,
-                    fiveDayCumulativeMillionUsd = fiveDaySum,
-                    asOfDate = latestDate,
-                    isAvailable = true,
-                    sourceName = "Farside Investors (Verified Live Feed)"
-                )
-            }
+            if (dated.isEmpty()) return null
+            val usable = dated.filter { it.second != 0.0 }.ifEmpty { dated }
+            val latest = usable.last()
+            val fiveDay = usable.takeLast(5).sumOf { it.second }
+            return BitcoinEtfFlowData(
+                oneDayNetFlowMillionUsd = latest.second,
+                fiveDayCumulativeMillionUsd = fiveDay,
+                asOfDate = latest.first,
+                isAvailable = true,
+                isLive = true,
+                sourceName = "Farside Investors (Verified Live Feed)"
+            )
         } catch (_: Throwable) {
         }
         return null
+    }
+
+    private fun parseFlowCell(raw: String): Double? {
+        val cleaned = raw.replace("$", "").replace(",", "").trim()
+        val negative = cleaned.startsWith("(") && cleaned.endsWith(")")
+        val number = cleaned.removePrefix("(").removeSuffix(")").trim().toDoubleOrNull() ?: return null
+        return if (negative) -number else number
     }
 
     private fun getFormattedTodayDate(): String {

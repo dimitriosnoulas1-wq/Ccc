@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -23,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,7 +35,6 @@ import com.example.ui.theme.TachyonMint
 import com.example.ui.theme.SoftCrimson
 import com.example.ui.theme.holographicCard
 import com.example.util.AlertHistoryManager
-import com.example.util.NotificationHelper
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +46,6 @@ fun AlertHistorySheet(
     onNavigateToTab: (String) -> Unit
 ) {
     val palette = LocalAppColors.current
-    val context = LocalContext.current
     var selectedCategory by remember { mutableStateOf(AlertCategory.ALL) }
 
     val filteredAlerts = remember(alerts, selectedCategory) {
@@ -139,42 +135,11 @@ fun AlertHistorySheet(
                 }
             }
 
-            // Quick Actions: Test Alert & Mark All Read
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(
-                    onClick = {
-                        NotificationHelper.sendFundingAlertNotification(
-                            context = context,
-                            title = "⚡ TEST: BINANCE FUNDING SPIKE (>+0.05%)",
-                            message = "Δοκιμαστική ειδοποίηση: Ακραία υπερθέρμανση Longs στα παράγωγα.",
-                            details = "Η μηχανή ειδοποιήσεων WorkManager λειτουργεί πλήρως σε background κατάσταση."
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = QuantumCyan.copy(alpha = 0.15f),
-                        contentColor = QuantumCyan
-                    ),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = if (isGreek) "Δοκιμή Alert" else "Test Push Alert",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
                 Button(
                     onClick = { AlertHistoryManager.markAllAsRead() },
                     modifier = Modifier.weight(1f),

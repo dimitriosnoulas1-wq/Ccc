@@ -118,51 +118,64 @@ fun MarketIntelligenceCard(
     val cleanSym = symbol.uppercase().removeSuffix("USDT").removePrefix("1000")
     val baseSymbol = (coin?.symbol ?: cleanSym).uppercase().ifEmpty { "BTC" }
 
-    // Resolve dynamic price, 24h change, OI, and funding rate to prevent any dashes ("--") or 0.00%
+    val tickerPrice = ticker?.lastPrice
+    val markPrice = markFunding?.markPrice
+    val liveCoin = coin?.takeIf { it.quoteState == com.example.data.model.QuoteState.LIVE }
     val resolvedPrice = when {
-        ticker?.lastPrice != null && ticker.lastPrice > 0.0 -> ticker.lastPrice
-        markFunding?.markPrice != null && markFunding.markPrice > 0.0 -> markFunding.markPrice
-        report.currentPrice > 0.0 && report.symbol.contains(baseSymbol, ignoreCase = true) -> report.currentPrice
-        coin?.priceUsd != null && coin.priceUsd > 0.0 -> coin.priceUsd
-        baseSymbol == "BTC" -> 67450.0
-        baseSymbol == "ETH" -> 3480.0
-        baseSymbol == "SOL" -> 148.50
-        baseSymbol == "BNB" -> 590.0
-        baseSymbol == "XRP" -> 0.58
-        baseSymbol == "DOGE" -> 0.125
-        baseSymbol == "ADA" -> 0.45
-        baseSymbol == "AVAX" -> 28.5
-        baseSymbol == "LINK" -> 12.8
-        baseSymbol == "SUI" -> 1.85
-        else -> 10.0
+        ticker?.fromExchange == true && tickerPrice != null && tickerPrice > 0.0 -> tickerPrice
+        markFunding?.fromExchange == true && markPrice != null && markPrice > 0.0 -> markPrice
+        report.hasLivePrice && report.currentPrice > 0.0 -> report.currentPrice
+        liveCoin != null && liveCoin.priceUsd > 0.0 -> liveCoin.priceUsd
+        else -> 0.0
     }
 
     val resolvedChange24h = when {
-        ticker?.priceChangePercent24h != null && ticker.priceChangePercent24h != 0.0 -> ticker.priceChangePercent24h
-        report.priceChange24h != 0.0 && report.symbol.contains(baseSymbol, ignoreCase = true) -> report.priceChange24h
-        coin?.change24h != null && coin.change24h != 0.0 -> coin.change24h
-        else -> 2.15
+        ticker?.fromExchange == true && ticker?.priceChangePercent24h != null -> ticker?.priceChangePercent24h
+        report.hasLiveChange24h -> report.priceChange24h
+        liveCoin != null -> liveCoin.change24h
+        else -> null
     }
 
+    val oiFromSocket = openInterest?.openInterestUsd
     val resolvedOiUsd = when {
-        openInterest?.openInterestUsd != null && openInterest.openInterestUsd > 0.0 -> openInterest.openInterestUsd
-        report.openInterestUsd > 0.0 && report.symbol.contains(baseSymbol, ignoreCase = true) -> report.openInterestUsd
-        coin != null && coin.volume24h > 0.0 -> coin.volume24h * 0.35
-        else -> resolvedPrice * 45000.0 * 0.35
+        report.hasLiveOpenInterest && report.openInterestUsd > 0.0 -> report.openInterestUsd
+        openInterest?.isAvailable == true && oiFromSocket != null && oiFromSocket > 0.0 -> oiFromSocket
+        else -> 0.0
     }
 
+    val socketFunding = markFunding?.fundingRate
     val resolvedFundingRate = when {
-        markFunding?.fundingRate != null && markFunding.fundingRate != 0.0 -> markFunding.fundingRate
-        report.fundingRate != 0.0 && report.symbol.contains(baseSymbol, ignoreCase = true) -> report.fundingRate
-        else -> 0.0001
+        report.hasLiveFunding -> report.fundingRate
+        markFunding?.fromExchange == true && socketFunding != null -> socketFunding
+        else -> null
+    }
+
+    val sourceLabel = report.sourceLabel.ifBlank { "Binance" }
+    val tickerMs = ticker?.receivedTimeMs ?: 0L
+    val freshnessMs = when {
+        report.derivativesAsOfMs > 0L -> report.derivativesAsOfMs
+        tickerMs > 0L -> tickerMs
+        else -> 0L
+    }
+    val freshnessStatus = when (report.derivativesFreshness) {
+        com.example.data.model.DerivativesFreshness.FRESH -> DataFreshnessStatus.LIVE
+        com.example.data.model.DerivativesFreshness.DELAYED -> DataFreshnessStatus.DELAYED
+        com.example.data.model.DerivativesFreshness.STALE -> DataFreshnessStatus.STALE
+        com.example.data.model.DerivativesFreshness.DEGRADED -> DataFreshnessStatus.DELAYED
+        com.example.data.model.DerivativesFreshness.UNAVAILABLE -> freshnessFor(freshnessMs)
     }
 
     val activeReport = report.copy(
         symbol = "${baseSymbol}USDT",
         currentPrice = resolvedPrice,
-        priceChange24h = resolvedChange24h,
+        priceChange24h = resolvedChange24h ?: 0.0,
         openInterestUsd = resolvedOiUsd,
-        fundingRate = resolvedFundingRate
+        fundingRate = resolvedFundingRate ?: 0.0,
+        hasLivePrice = resolvedPrice > 0.0,
+        hasLiveChange24h = resolvedChange24h != null,
+        hasLiveFunding = resolvedFundingRate != null,
+        hasLiveOpenInterest = resolvedOiUsd > 0.0,
+        sourceLabel = sourceLabel
     )
 
     val isPos = activeReport.priceChange24h >= 0
@@ -221,9 +234,9 @@ fun MarketIntelligenceCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     DataFreshnessBadge(
-                        status = freshnessFor(ticker?.receivedTimeMs ?: 0L),
-                        timeAgo = formatPriceAge(ticker?.receivedTimeMs ?: 0L),
-                        source = "Binance"
+                        status = freshnessStatus,
+                        timeAgo = formatPriceAge(freshnessMs),
+                        source = sourceLabel
                     )
 
                     // Interactive Info Icon Button (Icons.Default.Info / "What is this?")
@@ -286,9 +299,9 @@ fun MarketIntelligenceCard(
             // Core Market Insight Narrative (Dark Cosmic Palette)
             Text(
                 text = if (isGreek)
-                    activeReport.interpretationGr.ifEmpty { "Η τιμή κινείται ανοδικά ενώ το OI και το funding επεκτείνονται. Αυτό επιβεβαιώνει ανοδική τοποθέτηση, ωστόσο η μόχλευση αρχίζει να συγκεντρώνεται." }
+                    activeReport.interpretationGr.ifEmpty { "Αναμονή για ζωντανά δεδομένα παραγώγων." }
                 else
-                    activeReport.interpretationEn.ifEmpty { "Price is trending higher while OI and funding are expanding. This confirms bullish positioning, but leverage is becoming crowded." },
+                    activeReport.interpretationEn.ifEmpty { "Waiting for live derivatives data." },
                 fontSize = 12.sp,
                 color = if (palette.isLight) palette.textSecondary else Color(0xFF94A3B8),
                 lineHeight = 16.sp,
@@ -553,12 +566,19 @@ fun BullishConfidenceOrbCard(
     )
 
     val isPos = report.priceChange24h >= 0
-    val changePrefix = if (isPos) "+" else ""
-    val changeColor = if (isPos) TachyonMint else SoftCrimson
+    val changeColor = when {
+        !report.hasLiveChange24h -> Color(0xFF94A3B8)
+        isPos -> TachyonMint
+        else -> SoftCrimson
+    }
 
     // Dynamic Live Price
     val decimals = if (report.currentPrice >= 1.0) 2 else 4
-    val displayPrice = "$" + com.example.util.AppNumberFormatter.formatRawPrice(report.currentPrice, decimals = decimals)
+    val displayPrice = if (report.hasLivePrice && report.currentPrice > 0.0) {
+        "$" + com.example.util.AppNumberFormatter.formatRawPrice(report.currentPrice, decimals = decimals)
+    } else {
+        "—"
+    }
 
     // Dynamic Regime Title inside Orb
     val regimeTitle = if (isGreek) {
@@ -588,20 +608,28 @@ fun BullishConfidenceOrbCard(
 
     // Pod 1: Live Base Symbol Price (Cyan)
     val card1Title = "• $baseSymbol $priceWord"
-    val card1Value = if (report.currentPrice >= 1000.0) {
-        com.example.util.AppNumberFormatter.formatCompactCurrency(report.currentPrice)
-    } else {
-        "$" + com.example.util.AppNumberFormatter.formatRawPrice(report.currentPrice, decimals = decimals)
+    val card1Value = when {
+        !report.hasLivePrice || report.currentPrice <= 0.0 -> "—"
+        report.currentPrice >= 1000.0 -> com.example.util.AppNumberFormatter.formatCompactCurrency(report.currentPrice)
+        else -> "$" + com.example.util.AppNumberFormatter.formatRawPrice(report.currentPrice, decimals = decimals)
     }
 
     // Pod 2: Live Open Interest (Gold)
     val card2Title = if (isGreek) "ΑΝΟΙΧΤΟ ΣΥΜΒΟΛΑΙΟ" else "OPEN INTEREST"
-    val card2Value = com.example.util.AppNumberFormatter.formatCompactCurrency(report.openInterestUsd)
+    val card2Value = if (report.hasLiveOpenInterest && report.openInterestUsd > 0.0) {
+        com.example.util.AppNumberFormatter.formatCompactCurrency(report.openInterestUsd)
+    } else {
+        "—"
+    }
 
     // Pod 3: Live Funding Rate (Amber)
     val fundingPercent = report.fundingRate * 100.0
     val card3Title = if (isGreek) "ΕΠΙΤΟΚΙΟ" else "FUNDING RATE"
-    val card3Value = com.example.util.AppNumberFormatter.formatPercent(fundingPercent, includeSign = true, decimals = 4)
+    val card3Value = if (report.hasLiveFunding) {
+        com.example.util.AppNumberFormatter.formatPercent(fundingPercent, includeSign = true, decimals = 4)
+    } else {
+        "—"
+    }
 
     Column(
         modifier = modifier
@@ -662,7 +690,11 @@ fun BullishConfidenceOrbCard(
                     fontFamily = FontFamily.Monospace,
                     color = Color.White
                 )
-                val chgFormatted = com.example.util.AppNumberFormatter.formatPercent(report.priceChange24h, includeSign = true, decimals = 2)
+                val chgFormatted = if (report.hasLiveChange24h) {
+                    com.example.util.AppNumberFormatter.formatPercent(report.priceChange24h, includeSign = true, decimals = 2)
+                } else {
+                    "—"
+                }
                 Text(
                     text = "$chgFormatted 24H CHANGE",
                     fontSize = 10.sp,

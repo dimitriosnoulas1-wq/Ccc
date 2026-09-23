@@ -212,53 +212,6 @@ object NotificationHelper {
         }
     }
 
-    fun sendWhaleAlertNotification(
-        context: Context,
-        alert: com.example.data.model.WhaleAlert,
-        isTest: Boolean = false
-    ) {
-        val title = when (alert.type) {
-            com.example.data.model.WhaleAlertType.EXCHANGE_INFLOW -> "🚨 WHALE DUMP WARNING: ${alert.formattedUsd} ${alert.coinSymbol}"
-            com.example.data.model.WhaleAlertType.EXCHANGE_OUTFLOW -> "🟢 MEGA ACCUMULATION: ${alert.formattedUsd} ${alert.coinSymbol}"
-            com.example.data.model.WhaleAlertType.WHALE_BUY -> "🚀 WHALE BUY IMPULSE: ${alert.formattedUsd} ${alert.coinSymbol}"
-            com.example.data.model.WhaleAlertType.WHALE_TRANSFER -> "🐋 WHALE MOVE: ${alert.formattedUsd} ${alert.coinSymbol}"
-        }
-        val body = "${alert.formattedAmount} (${alert.formattedUsd}) → ${alert.destination}"
-        val details = "${alert.marketImpactVerdict}\n\n• From: ${alert.source}\n• To: ${alert.destination}\n• Tx: ${alert.txHash.take(18)}..."
-
-        recordAndNotify(
-            context = context,
-            eventId = alert.id,
-            channelId = CHANNEL_WHALES,
-            title = title,
-            body = body,
-            details = details,
-            navTab = "SIGNALS",
-            type = if (isTest) "WHALE_TEST" else "WHALE",
-            bypassPermission = isTest || BuildConfig.DEBUG
-        )
-    }
-
-    fun sendCyclePushAlert(
-        context: Context,
-        title: String,
-        message: String,
-        details: String
-    ) {
-        val eventId = "cycle-${title.hashCode()}-${System.currentTimeMillis() / 60_000}"
-        recordAndNotify(
-            context = context,
-            eventId = eventId,
-            channelId = CHANNEL_CYCLE,
-            title = title,
-            body = message,
-            details = details,
-            navTab = "SIGNALS",
-            type = "CYCLE",
-            bypassPermission = BuildConfig.DEBUG
-        )
-    }
-
     fun sendFundingAlertNotification(
         context: Context,
         title: String,

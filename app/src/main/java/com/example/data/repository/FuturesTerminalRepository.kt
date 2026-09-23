@@ -9,11 +9,13 @@ import com.example.data.model.FuturesMarkFunding
 import com.example.data.model.FuturesOpenInterest
 import com.example.data.model.FuturesTickerData
 import com.example.data.model.FuturesTrade
+import com.example.data.model.AggregatedDerivativesSnapshot
 import com.example.data.model.MacroMarketSentiment
 import com.example.data.network.BinanceFuturesSocketManager
 import com.example.data.network.SymbolMath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +48,9 @@ class FuturesTerminalRepository(
     private val _recentLiquidations = MutableStateFlow<List<FuturesLiquidationOrder>>(emptyList())
     val recentLiquidations: StateFlow<List<FuturesLiquidationOrder>> = _recentLiquidations.asStateFlow()
 
+    private val _derivatives = MutableStateFlow<AggregatedDerivativesSnapshot?>(null)
+    val derivatives: StateFlow<AggregatedDerivativesSnapshot?> = _derivatives.asStateFlow()
+
     val marketIntelligenceReport: StateFlow<com.example.data.model.MarketIntelligenceReport> = combine(
         currentSymbol,
         tickerData,
@@ -65,8 +70,8 @@ class FuturesTerminalRepository(
         val trades = t3b.third
         Pair(Triple(sym, ticker, funding), Triple(book, oi, trades))
     }.combine(
-        combine(recentLiquidations, macroSentiment) { liqs, macro ->
-            Pair(liqs, macro)
+        combine(recentLiquidations, macroSentiment, _derivatives) { liqs, macro, deriv ->
+            Triple(liqs, macro, deriv)
         }
     ) { pairAB, pairCD ->
         val sym = pairAB.first.first
@@ -77,6 +82,7 @@ class FuturesTerminalRepository(
         val trades = pairAB.second.third
         val liqs = pairCD.first
         val macro = pairCD.second
+        val deriv = pairCD.third
         try {
             com.example.data.model.MarketIntelligenceEngine.analyze(
                 symbol = sym,
@@ -86,7 +92,8 @@ class FuturesTerminalRepository(
                 openInterest = oi,
                 recentTrades = trades,
                 recentLiquidations = liqs,
-                macroSentiment = macro
+                macroSentiment = macro,
+                derivatives = deriv
             )
         } catch (_: Throwable) {
             com.example.data.model.MarketIntelligenceReport(symbol = sym)
@@ -122,6 +129,23 @@ class FuturesTerminalRepository(
                         _recentTrades.value = (listOf(trade) + _recentTrades.value).take(30)
                     }
                 }
+            }
+        }
+
+        scope.launch {
+            var lastSymbol = ""
+            while (true) {
+                val sym = currentSymbol.value
+                if (sym != lastSymbol) {
+                    lastSymbol = sym
+                    _derivatives.value = null
+                }
+                try {
+                    _derivatives.value = DerivativesRepository.fetch(sym)
+                } catch (_: Throwable) {
+                    // Keep the last good snapshot; never invent a replacement.
+                }
+                delay(10_000L)
             }
         }
 

@@ -95,16 +95,15 @@ fun PrimaryFuturesPriceCard(
     val isMatchingMark = markFunding?.symbol.equals(symbol, ignoreCase = true) ||
             markFunding?.symbol.equals(symbol.removePrefix("1000"), ignoreCase = true)
 
-    val fallbackPrice = coin?.priceUsd ?: if (symbol.uppercase().contains("BTC")) 77250.0 else 10.0
-    val lastPrice = if (isMatchingTicker && ticker?.lastPrice != null) ticker.lastPrice else fallbackPrice
-    val markPrice = if (isMatchingMark && markFunding?.markPrice != null) markFunding.markPrice else (lastPrice * 1.0001)
-    val indexPrice = if (isMatchingMark && markFunding?.indexPrice != null) markFunding.indexPrice else lastPrice
-    val basis = if (isMatchingMark && markFunding?.basis != null) markFunding.basis else (markPrice - indexPrice)
-    val basisPct = if (isMatchingMark && markFunding?.basisPercent != null) markFunding.basisPercent else 0.01
+    val lastPrice = if (isMatchingTicker) ticker?.lastPrice else null
+    val markPrice = if (isMatchingMark) markFunding?.markPrice else null
+    val indexPrice = if (isMatchingMark) markFunding?.indexPrice else null
+    val basis = if (isMatchingMark) markFunding?.basis else null
+    val basisPct = if (isMatchingMark) markFunding?.basisPercent else null
 
-    val changePct = if (isMatchingTicker && ticker?.priceChangePercent24h != null) ticker.priceChangePercent24h else (coin?.change24h ?: 0.0)
-    val isPositiveChange = changePct >= 0
-    val changeColor = if (isPositiveChange) TachyonMint else SoftCrimson
+    val changePct = if (isMatchingTicker) ticker?.priceChangePercent24h else null
+    val isPositiveChange = (changePct ?: 0.0) >= 0
+    val changeColor = if (changePct == null) Color(0xFF94A3B8) else if (isPositiveChange) TachyonMint else SoftCrimson
 
     val ageSec = if (isMatchingTicker && ticker != null) ((nowMs - ticker.receivedTimeMs) / 1000.0).coerceAtLeast(0.0) else null
     val isStale = (ageSec ?: 0.0) > 5.0
@@ -149,7 +148,7 @@ fun PrimaryFuturesPriceCard(
             ) {
                 Column {
                     Text(
-                        text = formatPrice(lastPrice),
+                        text = if (lastPrice != null && lastPrice > 0.0) formatPrice(lastPrice) else "—",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = SyneFont,
@@ -190,7 +189,11 @@ fun PrimaryFuturesPriceCard(
                         .border(0.6.dp, changeColor.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    val changeFormatted = com.example.util.AppNumberFormatter.formatPercent(changePct, includeSign = true, decimals = 2)
+                    val changeFormatted = if (changePct == null) {
+                        "—"
+                    } else {
+                        com.example.util.AppNumberFormatter.formatPercent(changePct, includeSign = true, decimals = 2)
+                    }
                     Text(
                         text = changeFormatted,
                         fontSize = 13.sp,
@@ -215,7 +218,7 @@ fun PrimaryFuturesPriceCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = strings.futuresMarkPrice, fontSize = 10.sp, fontFamily = SpaceGroteskFont, color = Color(0xFF94A3B8))
                     Text(
-                        text = formatPrice(markPrice),
+                        text = if (markPrice != null && markPrice > 0.0) formatPrice(markPrice) else "—",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = JetBrainsMonoFont,
@@ -226,7 +229,7 @@ fun PrimaryFuturesPriceCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = strings.futuresIndexPrice, fontSize = 10.sp, fontFamily = SpaceGroteskFont, color = Color(0xFF94A3B8))
                     Text(
-                        text = formatPrice(indexPrice),
+                        text = if (indexPrice != null && indexPrice > 0.0) formatPrice(indexPrice) else "—",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = JetBrainsMonoFont,
@@ -236,15 +239,21 @@ fun PrimaryFuturesPriceCard(
 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Text(text = strings.futuresBasis, fontSize = 10.sp, fontFamily = SpaceGroteskFont, color = Color(0xFF94A3B8))
-                    val sign = if (basis >= 0) "+" else ""
-                    val basisRaw = com.example.util.AppNumberFormatter.formatRawPrice(basis, 2)
-                    val basisPctFormatted = com.example.util.AppNumberFormatter.formatPercent(basisPct, includeSign = false, decimals = 3)
+                    val liveBasis = basis
+                    val liveBasisPct = basisPct
+                    val sign = if ((liveBasis ?: 0.0) >= 0) "+" else ""
+                    val basisRaw = if (liveBasis == null) null else com.example.util.AppNumberFormatter.formatRawPrice(liveBasis, 2)
+                    val basisPctFormatted = if (liveBasisPct == null) {
+                        null
+                    } else {
+                        com.example.util.AppNumberFormatter.formatPercent(liveBasisPct, includeSign = false, decimals = 3)
+                    }
                     Text(
-                        text = "$sign$basisRaw ($basisPctFormatted)",
+                        text = if (basisRaw != null && basisPctFormatted != null) "$sign$basisRaw ($basisPctFormatted)" else "—",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = JetBrainsMonoFont,
-                        color = if (basis >= 0) TachyonMint else SoftCrimson
+                        color = if ((liveBasis ?: 0.0) >= 0) TachyonMint else SoftCrimson
                     )
                 }
             }
@@ -309,13 +318,12 @@ fun BestBidAskCard(
     val isMatchingBook = bookTicker?.symbol.equals(symbol, ignoreCase = true) ||
             bookTicker?.symbol.equals(symbol.removePrefix("1000"), ignoreCase = true)
 
-    val fallbackPrice = coin?.priceUsd ?: 10.0
-    val bidPrice = if (isMatchingBook && bookTicker?.bidPrice != null) bookTicker.bidPrice else (fallbackPrice * 0.9999)
-    val askPrice = if (isMatchingBook && bookTicker?.askPrice != null) bookTicker.askPrice else (fallbackPrice * 1.0001)
-    val bidQty = if (isMatchingBook && bookTicker?.bidQty != null) bookTicker.bidQty else (50000.0 / fallbackPrice).coerceAtLeast(0.1)
-    val askQty = if (isMatchingBook && bookTicker?.askQty != null) bookTicker.askQty else (42000.0 / fallbackPrice).coerceAtLeast(0.1)
-    val spread = if (isMatchingBook && bookTicker?.spread != null) bookTicker.spread else maxOf(0.0001, askPrice - bidPrice)
-    val spreadPct = if (isMatchingBook && bookTicker?.spreadPercent != null) bookTicker.spreadPercent else ((spread / bidPrice) * 100.0)
+    val bidPrice = if (isMatchingBook) bookTicker?.bidPrice else null
+    val askPrice = if (isMatchingBook) bookTicker?.askPrice else null
+    val bidQty = if (isMatchingBook) bookTicker?.bidQty else null
+    val askQty = if (isMatchingBook) bookTicker?.askQty else null
+    val spread = if (isMatchingBook) bookTicker?.spread else null
+    val spreadPct = if (isMatchingBook) bookTicker?.spreadPercent else null
 
     val ageSec = if (isMatchingBook && bookTicker != null) ((nowMs - bookTicker.receivedTimeMs) / 1000.0).coerceAtLeast(0.0) else null
     val isStale = (ageSec ?: 0.0) > 5.0
@@ -365,14 +373,14 @@ fun BestBidAskCard(
                 ) {
                     Text(text = strings.futuresBestBid, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TachyonMint)
                     Text(
-                        text = formatPrice(bidPrice),
+                        text = if (bidPrice != null && bidPrice > 0.0) formatPrice(bidPrice) else "—",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = JetBrainsMonoFont,
                         color = TachyonMint
                     )
                     Text(
-                        text = "${strings.futuresSizePrefix} ${com.example.util.AppNumberFormatter.formatRawPrice(bidQty, 3)}",
+                        text = "${strings.futuresSizePrefix} ${if (bidQty == null) "—" else com.example.util.AppNumberFormatter.formatRawPrice(bidQty, 3)}",
                         fontSize = 11.sp,
                         fontFamily = JetBrainsMonoFont,
                         color = palette.textSecondary
@@ -391,14 +399,14 @@ fun BestBidAskCard(
                 ) {
                     Text(text = strings.futuresBestAsk, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = SoftCrimson)
                     Text(
-                        text = formatPrice(askPrice),
+                        text = if (askPrice != null && askPrice > 0.0) formatPrice(askPrice) else "—",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = JetBrainsMonoFont,
                         color = SoftCrimson
                     )
                     Text(
-                        text = "${strings.futuresSizePrefix} ${com.example.util.AppNumberFormatter.formatRawPrice(askQty, 3)}",
+                        text = "${strings.futuresSizePrefix} ${if (askQty == null) "—" else com.example.util.AppNumberFormatter.formatRawPrice(askQty, 3)}",
                         fontSize = 11.sp,
                         fontFamily = JetBrainsMonoFont,
                         color = palette.textSecondary
@@ -415,10 +423,14 @@ fun BestBidAskCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = strings.futuresOrderbookSpread, fontSize = 11.sp, color = palette.textMuted)
-                val spreadRaw = com.example.util.AppNumberFormatter.formatRawPrice(spread, 4)
-                val spreadPctFormatted = com.example.util.AppNumberFormatter.formatPercent(spreadPct, includeSign = false, decimals = 4)
+                val spreadRaw = if (spread == null) null else com.example.util.AppNumberFormatter.formatRawPrice(spread, 4)
+                val spreadPctFormatted = if (spreadPct == null) {
+                    null
+                } else {
+                    com.example.util.AppNumberFormatter.formatPercent(spreadPct, includeSign = false, decimals = 4)
+                }
                 Text(
-                    text = "$$spreadRaw ($spreadPctFormatted)",
+                    text = if (spreadRaw != null && spreadPctFormatted != null) "$$spreadRaw ($spreadPctFormatted)" else "—",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = JetBrainsMonoFont,
@@ -480,12 +492,13 @@ fun FundingRateCard(
     val isMatchingMark = markFunding?.symbol.equals(symbol, ignoreCase = true) ||
             markFunding?.symbol.equals(symbol.removePrefix("1000"), ignoreCase = true)
 
-    val rate: Double = (if (isMatchingMark) markFunding?.fundingRate else null) ?: 0.0001
-    val nextFundingMs: Long = (if (isMatchingMark) markFunding?.nextFundingTimeMs else null)?.takeIf { it > 0L } ?: ((nowMs / 28800000L + 1) * 28800000L)
-    val approxApr: Double = (if (isMatchingMark) markFunding?.approxApr else null) ?: (rate * 3.0 * 365.0 * 100.0)
+    val rate: Double? = if (isMatchingMark) markFunding?.fundingRate else null
+    val nextFundingMs: Long = (if (isMatchingMark) markFunding?.nextFundingTimeMs else null)?.takeIf { it > 0L } ?: 0L
+    val approxApr: Double? = if (isMatchingMark) markFunding?.approxApr else null
 
-    val ratePct = rate * 100.0
+    val ratePct = rate?.times(100.0)
     val rateColor = when {
+        rate == null -> Color(0xFF94A3B8)
         rate > 0.0 -> TachyonMint
         rate < 0.0 -> SoftCrimson
         else -> palette.textPrimary
@@ -548,7 +561,11 @@ fun FundingRateCard(
             ) {
                 Column {
                     Text(text = strings.futuresCurrentFundingRate, fontSize = 11.sp, color = palette.textMuted)
-                    val formattedRate = com.example.util.AppNumberFormatter.formatPercent(ratePct, includeSign = true, decimals = 4)
+                    val formattedRate = if (ratePct == null) {
+                        "—"
+                    } else {
+                        com.example.util.AppNumberFormatter.formatPercent(ratePct, includeSign = true, decimals = 4)
+                    }
                     Text(
                         text = formattedRate,
                         fontSize = 20.sp,
@@ -588,9 +605,13 @@ fun FundingRateCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = strings.futuresApproxAprLabel, fontSize = 11.sp, color = palette.textSecondary)
-                    val aprFormatted = com.example.util.AppNumberFormatter.formatPercent(approxApr, includeSign = true, decimals = 2)
+                    val aprFormatted = if (approxApr == null) {
+                        "—"
+                    } else {
+                        com.example.util.AppNumberFormatter.formatPercent(approxApr, includeSign = true, decimals = 2)
+                    }
                     Text(
-                        text = "$aprFormatted (approx)",
+                        text = if (approxApr == null) "—" else "$aprFormatted (approx)",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = JetBrainsMonoFont,
@@ -630,14 +651,10 @@ fun OpenInterestCard(
     val isMatchingOi = openInterest?.symbol.equals(symbol, ignoreCase = true) ||
             openInterest?.symbol.equals(symbol.removePrefix("1000"), ignoreCase = true)
 
-    val fallbackPrice = coin?.priceUsd ?: 10.0
-    val fallbackOiUsd = fallbackPrice * 45000.0 * 0.35
-    val fallbackOi = if (fallbackPrice > 0) fallbackOiUsd / fallbackPrice else 10000.0
-
-    val oi: Double = (if (isMatchingOi) openInterest?.openInterest else null) ?: fallbackOi
-    val oiUsd: Double = (if (isMatchingOi) openInterest?.openInterestUsd else null) ?: fallbackOiUsd
-    val isAvail = true
-    val lastRefreshMs: Long = (if (isMatchingOi) openInterest?.lastRefreshTimeMs else null)?.takeIf { it > 0L } ?: nowMs
+    val oi = if (isMatchingOi) openInterest?.openInterest else null
+    val oiUsd = if (isMatchingOi) openInterest?.openInterestUsd else null
+    val isAvail = isMatchingOi && openInterest?.isAvailable == true && oiUsd != null && oiUsd > 0.0
+    val lastRefreshMs: Long = (if (isMatchingOi) openInterest?.lastRefreshTimeMs else null)?.takeIf { it > 0L } ?: 0L
     val ageSec = if (lastRefreshMs > 0) ((nowMs - lastRefreshMs) / 1000).coerceAtLeast(0) else 0
 
     Card(
@@ -696,14 +713,14 @@ fun OpenInterestCard(
             ) {
                 Column {
                     Text(
-                        text = formatUsdCompact(oiUsd),
+                        text = if (isAvail && oiUsd != null) formatUsdCompact(oiUsd) else "—",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
                         fontFamily = JetBrainsMonoFont,
                         color = palette.textPrimary
                     )
                     Text(
-                        text = "${formatNumberCompact(oi)} ${strings.futuresContracts} (${symbol.removeSuffix("USDT")})",
+                        text = if (oi != null) "${formatNumberCompact(oi)} ${strings.futuresContracts} (${symbol.removeSuffix("USDT")})" else "—",
                         fontSize = 11.sp,
                         fontFamily = JetBrainsMonoFont,
                         color = palette.textSecondary

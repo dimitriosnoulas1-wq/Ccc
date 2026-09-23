@@ -367,8 +367,6 @@ open class AppStrings(
     open val whaleNotificationsDesc: String = "Receive instant push alerts when massive whale buys or exchange dumps occur."
     open val whaleNotificationsProLockedDesc: String = "Exclusive PRO feature. Real-time push alerts for market-moving whale transfers ($10M+)."
     open val whaleThresholdTitle: String = "Whale Alert Minimum Size"
-    open val whaleTestAlertBtn: String = "Test Whale Alert Notification"
-    open val whaleTestAlertSuccess: String = "Push notification dispatched to device!"
     open val whaleFilterAll: String = "All Whales"
     open val whaleFilterInflow: String = "🚨 Inflows / Dumps"
     open val whaleFilterOutflow: String = "🟢 Accumulation"

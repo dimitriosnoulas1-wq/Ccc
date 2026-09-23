@@ -40,8 +40,8 @@ data class ForecastCardModel(
     val simpleExplanation: String,
     val technicalEvidences: List<String>,
     val riskWarning: String,
-    val dataQualityScore: String = "Illustrative model",
-    val modelVersion: String = "v105-QuantEngine-STABLE"
+    val dataQualityScore: String = "Live inputs only",
+    val modelVersion: String = "v133-QuantEngine"
 )
 
 object QuantForecastEngine {

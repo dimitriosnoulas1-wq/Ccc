@@ -162,22 +162,6 @@ fun freshnessFor(updatedAtMs: Long, nowMs: Long = System.currentTimeMillis()): D
 }
 
 @Composable
-fun DemoDataLabel(modifier: Modifier = Modifier) {
-    Text(
-        text = "DEMO DATA",
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color(0xFF00F5FF).copy(alpha = 0.18f))
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-            .testTag("demo_data_label"),
-        fontSize = 9.sp,
-        fontWeight = FontWeight.Black,
-        letterSpacing = 0.4.sp,
-        color = Color(0xFF00F5FF)
-    )
-}
-
-@Composable
 fun DataFreshnessBadge(
     status: DataFreshnessStatus = DataFreshnessStatus.LIVE,
     timeAgo: String = "1.2s",

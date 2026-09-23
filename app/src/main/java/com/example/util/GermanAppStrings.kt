@@ -337,8 +337,6 @@ class GermanAppStrings : AppStrings(AppLanguage.GERMAN) {
     override val whaleNotificationsDesc: String = "Erhalten Sie sofortige Benachrichtigungen bei massiven Wal-Käufen oder Börsen-Dumps."
     override val whaleNotificationsProLockedDesc: String = "Exklusive PRO-Funktion. Echtzeit-Alerts für marktverändernde Transfers ($10M+)."
     override val whaleThresholdTitle: String = "Mindestgröße für Wal-Alerts"
-    override val whaleTestAlertBtn: String = "Wal-Alert testen"
-    override val whaleTestAlertSuccess: String = "Test-Benachrichtigung an das Gerät gesendet!"
     override val whaleFilterAll: String = "Alle Wale"
     override val whaleFilterInflow: String = "🚨 Zuflüsse / Dumps"
     override val whaleFilterOutflow: String = "🟢 Akkumulation"

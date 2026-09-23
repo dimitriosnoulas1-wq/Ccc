@@ -42,6 +42,7 @@ object AppNumberFormatter {
         language: AppLanguage = currentLanguage,
         decimals: Int? = null
     ): String {
+        if (price <= 0.0 || price.isNaN()) return "—"
         val converted = price * currency.rateToUsd
         val locale = getLocale(language)
         val symbols = getDecimalFormatSymbols(locale)

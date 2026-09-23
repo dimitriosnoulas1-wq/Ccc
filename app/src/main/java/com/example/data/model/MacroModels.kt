@@ -115,19 +115,14 @@ data class RainbowPoint(
 )
 
 data class AltcoinSeasonData(
-    val score: Int = 31, // 0 to 100
-    val previousMonthScore: Int = 28,
-    val previousYearScore: Int = 24,
-    val topOutperformingCoins: List<Pair<String, Double>> = listOf(
-        "SOL" to +42.5,
-        "SUI" to +55.0,
-        "RENDER" to +38.8,
-        "NEAR" to +24.2,
-        "FET" to +18.5
-    ),
-    val btcGain90d: Double = 34.5,
-    val top50OutperformedCount: Int = 15,
-    val totalTop50Count: Int = 50
+    val score: Int = 0,
+    val previousMonthScore: Int = 0,
+    val previousYearScore: Int = 0,
+    val topOutperformingCoins: List<Pair<String, Double>> = emptyList(),
+    val btcGain90d: Double = 0.0,
+    val top50OutperformedCount: Int = 0,
+    val totalTop50Count: Int = 0,
+    val isAvailable: Boolean = false
 ) {
     val isAltSeason: Boolean get() = score > 75
     val isBtcSeason: Boolean get() = score < 25

@@ -1,8 +1,8 @@
 package com.example.data.network
 
 /**
- * Binance quotes a few assets as bundles (1000PEPE, 1000000MOG) or under a rebranded ticker
- * (BEAMX, RAYSOL). Everything that turns an exchange symbol into a catalog coin goes through here
+ * Binance quotes a few assets as bundles (1000PEPE) or under a rebranded ticker (RAYSOL).
+ * Everything that turns an exchange symbol into a catalog coin goes through here
  * so the spot list and the futures terminal cannot drift apart.
  */
 object SymbolMath {
@@ -24,7 +24,6 @@ object SymbolMath {
             else -> clean to 1.0
         }
         val base = when (body) {
-            "BEAMX" -> "BEAM"
             "RAYSOL" -> "RAY"
             else -> body
         }
@@ -34,7 +33,6 @@ object SymbolMath {
     fun aliases(symbol: String): List<String> {
         val sym = stripQuote(symbol)
         return when (sym) {
-            "BEAM" -> listOf("BEAM", "BEAMX")
             "RAY" -> listOf("RAY", "RAYSOL")
             else -> listOf(sym)
         }
@@ -91,9 +89,7 @@ object SymbolMath {
         }
         val base = stripQuote(symbol)
         return when (base) {
-            "BEAM" -> "BEAMXUSDT"
             "RAY" -> "RAYSOLUSDT"
-            "MOG" -> "1000000MOGUSDT"
             "PEPE", "SHIB", "BONK", "FLOKI", "LUNC", "SATS", "RATS", "CHEEMS", "CAT" -> "1000${base}USDT"
             else -> "${base}USDT"
         }

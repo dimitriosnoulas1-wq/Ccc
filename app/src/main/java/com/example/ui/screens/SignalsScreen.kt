@@ -138,7 +138,6 @@ fun SignalsScreen(
         largestPositionUsd = 24_800_000.0,
         dominantSide = com.example.data.model.LeveragePositionSide.LONG
     ),
-    onTriggerTestAlert: () -> Unit = {},
     isRefreshing: Boolean = false,
     isConnected: Boolean = false,
     priceSource: String = "Binance",
@@ -154,20 +153,12 @@ fun SignalsScreen(
 
     val btcForecast by (viewModel?.btcForecast?.collectAsState() ?: remember {
         mutableStateOf(
-            com.example.engine.forecasting.ForecastCardModel(
-                asset = "BTC",
-                currentPrice = 77250.0,
-                regime = com.example.engine.forecasting.MarketRegime.BULL,
-                direction = com.example.engine.forecasting.ForecastDirection.BULLISH,
-                compositeScore = 45,
-                probabilities = com.example.engine.forecasting.ProbabilityScenario(60, 25, 15),
-                confidencePct = 85,
-                keySupport = 75000.0,
-                keyResistance = 79000.0,
-                invalidationLevel = 73000.0,
-                simpleExplanation = "Market shows buyers in control.",
-                technicalEvidences = listOf("EMA Bullish", "RSI Healthy"),
-                riskWarning = "Strictly respect invalidation."
+            com.example.engine.forecasting.QuantForecastEngine.computeForecast(
+                symbol = "BTC",
+                currentPrice = 0.0,
+                historicalPrices = emptyList(),
+                highs = emptyList(),
+                lows = emptyList()
             )
         )
     })
@@ -346,8 +337,7 @@ fun SignalsScreen(
             // PRO UNLOCKED -> COMPACT LIVE ON-CHAIN WHALE RADAR
             item {
                 WhaleRadarSection(
-                    alerts = whaleAlerts,
-                    onTriggerTestAlert = onTriggerTestAlert
+                    alerts = whaleAlerts
                 )
             }
 
@@ -477,7 +467,7 @@ fun SignalsScreen(
 
                 val quickSymbols = listOf(
                     "BTC", "ETH", "SOL", "XRP", "XLM", "BNB", "DOGE", "ADA", "SUI",
-                    "AVAX", "LINK", "NEAR", "INJ", "KAS", "RENDER", "TAO", "PEPE", "XMN"
+                    "AVAX", "LINK", "NEAR", "INJ", "KAS", "RENDER", "TAO", "PEPE", "HYPE"
                 )
                 val quickCoins = when (selectedSignalsTab) {
                     1 -> coins.filter { it.isFavorite }

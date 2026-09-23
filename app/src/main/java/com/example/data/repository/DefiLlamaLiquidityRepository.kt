@@ -85,7 +85,8 @@ class DefiLlamaLiquidityRepository(
                     usdcCirculatingUsd = usdcCirculating,
                     isLiquidityExpanding = change7d >= 0.0,
                     sourceName = "DefiLlama (Verified Real-Time)",
-                    asOfDate = "Live DefiLlama Feed"
+                    asOfDate = "Live DefiLlama Feed",
+                    isLive = true
                 )
             }
         } catch (_: Throwable) {

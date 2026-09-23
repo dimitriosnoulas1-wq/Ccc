@@ -17,4 +17,9 @@ object MarketHub {
         val root = baseUrl.trimEnd('/')
         return "$root/v1/proxy?u=" + URLEncoder.encode(originUrl, "UTF-8")
     }
+
+    fun derivativesUrl(symbol: String): String {
+        val root = baseUrl.trimEnd('/')
+        return "$root/v1/derivatives?symbol=" + URLEncoder.encode(symbol, "UTF-8")
+    }
 }

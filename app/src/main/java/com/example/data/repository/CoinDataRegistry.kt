@@ -34,7 +34,9 @@ object CoinDataRegistry {
         historicalCyclePoints2016 = listOf(0.08f, 0.20f, 0.40f, 0.75f, 1.0f, 0.40f)
     )
 
-    fun getAllCoins(): List<CryptoCoin> = listOf(
+    fun getAllCoins(): List<CryptoCoin> = catalog().map { it.withoutSeedQuote() }
+
+    private fun catalog(): List<CryptoCoin> = listOf(
         // 1. BITCOIN
         CryptoCoin(
             id = "bitcoin", symbol = "BTC", name = "Bitcoin", rank = 1,

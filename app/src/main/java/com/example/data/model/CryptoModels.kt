@@ -125,7 +125,18 @@ data class CryptoCoin(
         get() = if (priceUpdatedAtMs <= 0L) Long.MAX_VALUE else System.currentTimeMillis() - priceUpdatedAtMs
 
     val drawdownPercent: Double
-        get() = if (athUsd > 0) ((priceUsd - athUsd) / athUsd) * 100.0 else 0.0
+        get() = if (athUsd > 0 && priceUsd > 0) ((priceUsd - athUsd) / athUsd) * 100.0 else 0.0
+
+    /** Drop baked-in catalog quotes so the UI never shows a seed price as live. */
+    fun withoutSeedQuote(): CryptoCoin = copy(
+        priceUsd = 0.0,
+        change24h = 0.0,
+        volume24h = 0.0,
+        marketCap = 0.0,
+        sparkline = emptyList(),
+        priceUpdatedAtMs = 0L,
+        quoteState = QuoteState.PENDING
+    )
 
     val calculatedAthDaysAgo: Int
         get() = com.example.util.HalvingCycleUtils.parseAthDaysAgo(athDate, athDaysAgo)

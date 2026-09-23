@@ -8,7 +8,8 @@ data class StablecoinLiquidityData(
     val usdcCirculatingUsd: Double = 35_400_000_000.0,
     val isLiquidityExpanding: Boolean = true,
     val sourceName: String = "DefiLlama (Global Stablecoin Supply)",
-    val asOfDate: String = "Live Aggregated"
+    val asOfDate: String = "Live Aggregated",
+    val isLive: Boolean = false
 )
 
 enum class MarketRegime(
@@ -50,17 +51,19 @@ enum class MarketRegime(
 
 data class CycleCommandState(
     val regime: MarketRegime = MarketRegime.CYCLE_EXPANSION,
-    val compositeCycleScore: Int = 62, // 0 to 100
-    val halvingDaysElapsed: Int = 508,
+    val compositeCycleScore: Int = 0,
+    val halvingDaysElapsed: Int = 0,
     val halvingCycleLength: Int = 1460,
-    val rainbowBandName: String = "Accumulate / Support Floor",
-    val fundingRatePercent: Double = 0.011,
+    val rainbowBandName: String = "—",
+    val fundingRatePercent: Double = 0.0,
     val isFundingHeated: Boolean = false,
-    val etf5dNetFlowMillionUsd: Double = 892.6,
-    val stablecoinTotalUsdBillion: Double = 172.4,
-    val stablecoin7dChangeBillion: Double = 1.85,
-    val fearAndGreedIndex: Int = 68,
-    val altcoinSeasonIndex: Int = 31,
-    val keyStanceSummaryEn: String = "Liquidity expands via Spot ETFs and Stablecoin inflow. Macro structure remains aligned with historical mid-cycle bull expansion.",
-    val keyStanceSummaryEl: String = "Η ρευστότητα επεκτείνεται μέσω Spot ETFs και νέων Stablecoins. Η μακροοικονομική δομή συμβαδίζει με την ιστορική επέκταση μέσου κύκλου."
+    val etf5dNetFlowMillionUsd: Double = 0.0,
+    val stablecoinTotalUsdBillion: Double = 0.0,
+    val stablecoin7dChangeBillion: Double = 0.0,
+    val fearAndGreedIndex: Int = -1,
+    val altcoinSeasonIndex: Int = -1,
+    val etfFlowIsLive: Boolean = false,
+    val fundingIsLive: Boolean = false,
+    val keyStanceSummaryEn: String = "Waiting for live market data.",
+    val keyStanceSummaryEl: String = "Αναμονή ζωντανών δεδομένων αγοράς."
 )

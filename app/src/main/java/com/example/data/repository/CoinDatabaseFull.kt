@@ -173,35 +173,13 @@ object CoinDatabaseFull {
             )
         )
 
-        // xMoney (XMN) - Utrust rebrand on MultiversX & Crypto payments
-        list.add(
-            CryptoCoin(
-                id = "xmoney", symbol = "XMN", name = "xMoney", rank = 2077,
-                priceUsd = 0.0007515, athUsd = 0.1017, athDaysAgo = 410, athDate = "15 Jan 2024",
-                atlUsd = 0.00045, atlDate = "05 Jul 2024", change24h = -2.45, volume24h = 420000.0,
-                marketCap = 780000.0, circulatingSupply = 1038000000.0, totalSupply = 1038000000.0,
-                maxSupply = 1038000000.0, supplyUnit = "XMN", category = CoinCategory.UTILITY,
-                isPro = true,
-                analog = analog("20 Dec 2020", "15 May 2017", 255, 650.0, 1800.0, 0.0085, 0.00035, CyclePhase.ACCUMULATION, "Crypto-Fiat Payment Rails (xMoney)", 0.35f),
-                sparkline = listOf(0.00078, 0.00077, 0.00076, 0.000755, 0.000752, 0.0007515),
-                whereItMovesNow = "Σε ζώνη συσσώρευσης μετά το rebrand από Utrust (UTK) σε xMoney (XMN) και την ενσωμάτωση στο MultiversX.",
-                whereItMovedPast = "2024 ($0.1017) -> 2024 ($0.00075).",
-                nextPredictedMoveNarrative = "Η επέκταση του δικτύου πληρωμών xMoney, των crypto POS τερματικών και των καρτών διαμορφώνει σταθερή βάση όγκου.",
-                projectedNextMove1w = "+5.8% (65% win rate)", projectedNextMove2w = "+12.4% (71% win rate)", projectedNextMove4w = "+28.0% (78% win rate)",
-                genesisDate = "10 Jan 2024", founderOrCreator = "MultiversX & xMoney Foundation (ex-Utrust)",
-                consensusMechanism = "Secure Proof of Stake (SPoS on MultiversX)",
-                whitepaperSummary = "Το xMoney (πρώην Utrust / UTK) είναι το token πληρωμών Web3 του οικοσυστήματος MultiversX με μηδενικά chargebacks και άμεση μετατροπή crypto-fiat.",
-                technologyDetails = "MultiversX ESDT token standard, State Sharding, xMoney Crypto Debit Cards, Merchant Invoicing API.",
-                tokenomicsDetails = "Συνολικό supply 1.038.000.000 XMN με εκπτώσεις συναλλαγών για εμπόρους, cashback και burn fees.",
-                useCases = listOf("Merchant Web3 crypto payments", "xMoney Visa Debit Card benefits", "B2B invoicing settlement", "Staking & Merchant fee discounts")
-            )
-        )
+        // Remaining catalog coins: only assets that Binance still trades (spot or USDT-M perp).
 
-        // Add 95+ more Coins systematically covering all categories
+
         val additionalCoins = getRemainingCoins()
         list.addAll(additionalCoins)
 
-        return list
+        return list.map { it.withoutSeedQuote() }
     }
 
     private fun getRemainingCoins(): List<CryptoCoin> {
@@ -284,7 +262,6 @@ object CoinDatabaseFull {
             Triple("the-graph", "GRT", "The Graph") to ("0.28" to CoinCategory.AI_INFRA),
             Triple("akash-network", "AKT", "Akash Network") to ("4.20" to CoinCategory.AI_INFRA),
             Triple("arweave", "AR", "Arweave") to ("28.50" to CoinCategory.RWA_DEPIN),
-            Triple("helium", "HNT", "Helium") to ("7.80" to CoinCategory.RWA_DEPIN),
             Triple("ondo-finance", "ONDO", "Ondo Finance") to ("1.35" to CoinCategory.RWA_DEPIN),
             Triple("pendle", "PENDLE", "Pendle") to ("5.80" to CoinCategory.DEFI),
             Triple("jupiter-exchange-solana", "JUP", "Jupiter") to ("1.18" to CoinCategory.DEFI),
@@ -292,18 +269,14 @@ object CoinDatabaseFull {
             Triple("sei-network", "SEI", "Sei Network") to ("0.58" to CoinCategory.LAYER1),
             Triple("worldcoin-wld", "WLD", "Worldcoin") to ("2.45" to CoinCategory.AI_INFRA),
             Triple("blockstack", "STX", "Stacks") to ("2.15" to CoinCategory.LAYER2),
-            Triple("the-open-network", "TON", "Toncoin") to ("5.90" to CoinCategory.LAYER1),
             Triple("tron", "TRX", "TRON") to ("0.24" to CoinCategory.LAYER1),
             Triple("immutable-x", "IMX", "Immutable") to ("1.75" to CoinCategory.LAYER2),
             Triple("bonk", "BONK", "Bonk") to ("0.000032" to CoinCategory.MEME),
             Triple("shiba-inu", "SHIB", "Shiba Inu") to ("0.000024" to CoinCategory.MEME),
             Triple("dogwifcoin", "WIF", "dogwifhat") to ("2.85" to CoinCategory.MEME),
             Triple("floki", "FLOKI", "Floki") to ("0.00021" to CoinCategory.MEME),
-            Triple("based-brett", "BRETT", "Brett") to ("0.16" to CoinCategory.MEME),
-            Triple("popcat", "POPCAT", "Popcat") to ("1.45" to CoinCategory.MEME),
             Triple("ethena", "ENA", "Ethena") to ("0.78" to CoinCategory.DEFI),
             Triple("eigenlayer", "EIGEN", "EigenLayer") to ("3.85" to CoinCategory.DEFI),
-            Triple("mantle", "MNT", "Mantle") to ("0.92" to CoinCategory.LAYER2),
             Triple("starknet", "STRK", "Starknet") to ("0.58" to CoinCategory.LAYER2),
             Triple("zksync", "ZK", "ZKsync") to ("0.18" to CoinCategory.LAYER2),
             Triple("layerzero", "ZRO", "LayerZero") to ("4.50" to CoinCategory.UTILITY),
@@ -318,44 +291,41 @@ object CoinDatabaseFull {
             Triple("raydium", "RAY", "Raydium") to ("4.20" to CoinCategory.DEFI),
             Triple("aerodrome-finance", "AERO", "Aerodrome") to ("1.25" to CoinCategory.DEFI),
             Triple("morpho", "MORPHO", "Morpho") to ("2.40" to CoinCategory.DEFI),
-            Triple("blur", "BLUR", "Blur") to ("0.28" to CoinCategory.UTILITY),
             Triple("chiliz", "CHZ", "Chiliz") to ("0.085" to CoinCategory.UTILITY),
             Triple("gala", "GALA", "GALA") to ("0.038" to CoinCategory.RWA_DEPIN),
-            Triple("beam-2", "BEAM", "Beam") to ("0.024" to CoinCategory.RWA_DEPIN),
             Triple("axie-infinity", "AXS", "Axie Infinity") to ("6.40" to CoinCategory.RWA_DEPIN),
             Triple("the-sandbox", "SAND", "The Sandbox") to ("0.38" to CoinCategory.RWA_DEPIN),
             Triple("decentraland", "MANA", "Decentraland") to ("0.42" to CoinCategory.RWA_DEPIN),
-            Triple("oasis-network", "ROSE", "Oasis Network") to ("0.095" to CoinCategory.LAYER1),
             Triple("mina-protocol", "MINA", "Mina Protocol") to ("0.68" to CoinCategory.LAYER1),
             Triple("tezos", "XTZ", "Tezos") to ("0.85" to CoinCategory.LAYER1),
-            Triple("kava", "KAVA", "Kava") to ("0.52" to CoinCategory.LAYER1),
-            Triple("coredaoorg", "CORE", "Core DAO") to ("1.15" to CoinCategory.LAYER1),
-            Triple("zetachain", "ZETA", "ZetaChain") to ("0.72" to CoinCategory.LAYER1),
-            Triple("dymension", "DYM", "Dymension") to ("1.85" to CoinCategory.LAYER1),
-            Triple("manta-network", "MANTA", "Manta Network") to ("0.88" to CoinCategory.LAYER2),
-            Triple("blast", "BLAST", "Blast") to ("0.012" to CoinCategory.LAYER2),
-            Triple("taiko", "TAIKO", "Taiko") to ("1.85" to CoinCategory.LAYER2),
-            Triple("notcoin", "NOT", "Notcoin") to ("0.0085" to CoinCategory.MEME),
-            Triple("dogs-2", "DOGS", "Dogs") to ("0.00065" to CoinCategory.MEME),
-            Triple("mog-coin", "MOG", "Mog Coin") to ("0.0000018" to CoinCategory.MEME),
-            Triple("turbo", "TURBO", "Turbo") to ("0.0078" to CoinCategory.MEME),
             Triple("jasmycoin", "JASMY", "JasmyCoin") to ("0.024" to CoinCategory.RWA_DEPIN),
-            Triple("iotex", "IOTX", "IoTeX") to ("0.048" to CoinCategory.RWA_DEPIN),
             Triple("theta-token", "THETA", "Theta Network") to ("1.65" to CoinCategory.AI_INFRA),
             Triple("golem", "GLM", "Golem") to ("0.38" to CoinCategory.AI_INFRA),
-            Triple("io", "IO", "io.net") to ("2.65" to CoinCategory.AI_INFRA),
-            Triple("aethir", "ATH", "Aethir") to ("0.068" to CoinCategory.AI_INFRA),
             Triple("compound-governance-token", "COMP", "Compound") to ("52.0" to CoinCategory.DEFI),
             Triple("convex-finance", "CVX", "Convex Finance") to ("2.85" to CoinCategory.DEFI),
-            Triple("rocket-pool", "RPL", "Rocket Pool") to ("12.5" to CoinCategory.DEFI),
-            Triple("frax-share", "FRAX", "Frax") to ("0.290" to CoinCategory.DEFI),
-            Triple("threshold-network-token", "T", "Threshold") to ("0.028" to CoinCategory.UTILITY),
+            Triple("ethereum-name-service", "ENS", "Ethereum Name Service") to ("7.02" to CoinCategory.DEFI),
             Triple("pancakeswap-token", "CAKE", "PancakeSwap") to ("2.40" to CoinCategory.DEFI),
-            Triple("flare-networks", "FLR", "Flare") to ("0.022" to CoinCategory.LAYER1),
-            Triple("metis-token", "METIS", "Metis") to ("48.5" to CoinCategory.LAYER2),
-            Triple("neiro", "NEIRO", "Neiro") to ("0.00185" to CoinCategory.MEME),
             Triple("iota", "IOTA", "IOTA") to ("0.225" to CoinCategory.RWA_DEPIN),
-            Triple("zilliqa", "ZIL", "Zilliqa") to ("0.021" to CoinCategory.RWA_DEPIN)
+            Triple("hyperliquid", "HYPE", "Hyperliquid") to ("94.81" to CoinCategory.DEFI),
+            Triple("zcash", "ZEC", "Zcash") to ("1631.57" to CoinCategory.LAYER1),
+            Triple("bitcoin-cash", "BCH", "Bitcoin Cash") to ("354.71" to CoinCategory.LAYER1),
+            Triple("litecoin", "LTC", "Litecoin") to ("62.21" to CoinCategory.LAYER1),
+            Triple("ethereum-classic", "ETC", "Ethereum Classic") to ("9.48" to CoinCategory.LAYER1),
+            Triple("pump-fun", "PUMP", "Pump.fun") to ("0.00420177" to CoinCategory.MEME),
+            Triple("aster-2", "ASTER", "Aster") to ("0.711786" to CoinCategory.DEFI),
+            Triple("pudgy-penguins", "PENGU", "Pudgy Penguins") to ("0.01013954" to CoinCategory.MEME),
+            Triple("virtual-protocol", "VIRTUAL", "Virtuals Protocol") to ("0.756012" to CoinCategory.AI_INFRA),
+            Triple("ether-fi", "ETHFI", "Ether.fi") to ("0.697589" to CoinCategory.DEFI),
+            Triple("vechain", "VET", "VeChain") to ("0.00962013" to CoinCategory.LAYER1),
+            Triple("quant-network", "QNT", "Quant") to ("73.84" to CoinCategory.UTILITY),
+            Triple("dash", "DASH", "Dash") to ("63.17" to CoinCategory.LAYER1),
+            Triple("world-liberty-financial", "WLFI", "World Liberty Financial") to ("0.05778" to CoinCategory.RWA_DEPIN),
+            Triple("official-trump", "TRUMP", "Official Trump") to ("2.16" to CoinCategory.MEME),
+            Triple("lighter", "LIT", "Lighter") to ("5.13" to CoinCategory.DEFI),
+            Triple("pax-gold", "PAXG", "PAX Gold") to ("4305.88" to CoinCategory.RWA_DEPIN),
+            Triple("just", "JST", "JUST") to ("0.111958" to CoinCategory.DEFI),
+            Triple("spx6900", "SPX", "SPX6900") to ("0.49048" to CoinCategory.MEME),
+            Triple("midnight-3", "NIGHT", "Midnight") to ("0.02461972" to CoinCategory.LAYER1)
         )
 
         tokenCatalog.forEachIndexed { index, (triple, data) ->

@@ -246,11 +246,15 @@ class GeminiAiService(
 
         val daysSinceHalvingCalc = ((now - halvingTimestamp) / (1000L * 60 * 60 * 24)).coerceAtLeast(1)
 
-        val btcPriceFormatted = if (snapshot.btcPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.btcPrice, language = language) else "$78,611.00"
-        val ethPriceFormatted = if (snapshot.ethPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.ethPrice, language = language) else "$2,650.00"
-        val solPriceFormatted = if (snapshot.solPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.solPrice, language = language) else "$175.00"
-        val fundingFormatted = com.example.util.AppNumberFormatter.formatPercent(snapshot.fundingRatePct, includeSign = true, decimals = 4, language = language)
-        val oiFormatted = if (snapshot.openInterestUsd > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(snapshot.openInterestUsd, language = language) else "$24.5B"
+        val btcPriceFormatted = if (snapshot.btcPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.btcPrice, language = language) else "—"
+        val ethPriceFormatted = if (snapshot.ethPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.ethPrice, language = language) else "—"
+        val solPriceFormatted = if (snapshot.solPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.solPrice, language = language) else "—"
+        val fundingFormatted = if (snapshot.futuresMarkPrice > 0.0 || snapshot.openInterestUsd > 0.0 || snapshot.fundingRatePct != 0.0) {
+            com.example.util.AppNumberFormatter.formatPercent(snapshot.fundingRatePct, includeSign = true, decimals = 4, language = language)
+        } else {
+            "—"
+        }
+        val oiFormatted = if (snapshot.openInterestUsd > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(snapshot.openInterestUsd, language = language) else "—"
         val btcDomFormatted = com.example.util.AppNumberFormatter.formatPercent(snapshot.btcDominancePct, includeSign = false, decimals = 1, language = language)
         val halvingDays = if (snapshot.daysSinceHalving > 0) "${snapshot.daysSinceHalving}d" else "${daysSinceHalvingCalc}d"
         val altIndex = snapshot.altcoinSeasonIndex
