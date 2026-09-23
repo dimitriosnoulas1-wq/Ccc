@@ -107,5 +107,56 @@ class ExampleUnitTest {
       )
     )
   }
+
+  @Test
+  fun liveTelemetryDefaultsAreEmptyNotDemo() {
+    val etf = com.example.data.model.BitcoinEtfFlowData()
+    assertFalse(etf.isLive)
+    assertEquals(0.0, etf.oneDayNetFlowMillionUsd, 0.0)
+    val stables = com.example.data.model.StablecoinLiquidityData()
+    assertFalse(stables.isLive)
+    assertEquals(0.0, stables.totalCirculatingUsd, 0.0)
+    val av = com.example.data.model.LiveMovingAverages(dma350 = 50_000.0, isLive = true)
+    assertEquals(100_000.0, av.dma350x2)
+    val snapshot = com.example.data.model.LiveMarketContextSnapshot()
+    assertNull(snapshot.whaleNet24h)
+    assertNull(snapshot.cyclePhase)
+  }
+
+  @Test
+  fun catalogSeedDropsInventedProjections() {
+    val coin = com.example.data.repository.CoinDataRegistry.getAllCoins().first()
+    assertEquals("—", coin.projectedNextMove1w)
+    assertEquals("—", coin.projectedNextMove2w)
+    assertEquals("—", coin.projectedNextMove4w)
+    assertEquals(0.0, coin.analog.projectedCyclePeak, 0.0)
+    assertEquals(0.0, coin.analog.projectedCycleBottom, 0.0)
+    val moves = com.example.util.CoinLocalization.liveRealizedMoves(coin)
+    assertEquals("—", moves.first)
+    assertEquals("—", com.example.util.CoinLocalization.getProjected1w(coin, AppLanguage.ENGLISH))
+    val (p1, p2, p3) = com.example.util.CoinLocalization.getProbabilitiesForCoin(coin)
+    assertEquals(0, p1)
+    assertEquals(0, p2)
+    assertEquals(0, p3)
+  }
+
+  @Test
+  fun liveMovesUseRealPrintsNotInventedTargets() {
+    val seed = com.example.data.repository.CoinDataRegistry.getAllCoins().first()
+    val live = seed.copy(
+      priceUsd = 100.0,
+      change24h = 2.5,
+      athUsd = 200.0,
+      sparkline = listOf(90.0, 95.0, 100.0),
+      priceUpdatedAtMs = System.currentTimeMillis(),
+      quoteState = com.example.data.model.QuoteState.LIVE
+    )
+    val moves = com.example.util.CoinLocalization.liveRealizedMoves(live)
+    assertEquals("+2.5%", moves.first)
+    assertEquals("+11.1%", moves.second)
+    assertEquals("-50.0%", moves.third)
+    assertFalse(com.example.util.AppStrings().backtestBadgeText.contains("72.8"))
+    assertFalse(com.example.util.AppStrings().nextMoveHeader.contains("PREDICTED"))
+  }
 }
 

@@ -82,7 +82,7 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val movementAnalysisHeader: String = "ANALYSE DU MOUVEMENT & HISTORIQUE DU CYCLE"
     override val whereItMovesNowLabel: String = "Où il évolue actuellement :"
     override val whereItMovedPastLabel: String = "Où il a évolué lors des cycles passés :"
-    override val nextMoveHeader: String = "PROCHAIN MOUVEMENT PRÉVU (ANALOGUES HISTORIQUES)"
+    override val nextMoveHeader: String = "MOUVEMENTS LIVE RÉALISÉS"
     override val cycleFractalLabel: String = "Jour Fractal du Cycle"
     override val historicalMatchLabel: String = "Correspondance de Modèle Historique"
     override val target1w: String = "1 Semaine"
@@ -100,8 +100,8 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val proAnalyticsTitle: String = "Analyse de Cycle Pro"
     override val proAnalyticsDesc: String = "Débloquez les comparaisons complètes 2020 & 2016 et projections pour"
     override val proAnalyticsButton: String = "Débloquer Pro (3,99 €/mois)"
-    override val projectedPeakLabel: String = "Scénario Multiplicateur 2021 (Référence historique uniquement)"
-    override val projectedBottomLabel: String = "Zone Basse du Cycle (Historique)"
+    override val projectedPeakLabel: String = "ATH"
+    override val projectedBottomLabel: String = "ATL"
 
     // Market Stats & Token Supply
     override val marketStatsHeader: String = "STATISTIQUES DU MARCHÉ & OFFRE DE TOKENS"
@@ -159,9 +159,9 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val timeframe1wk: String = "en 1 sem."
     override val timeframe2wk: String = "en 2 sem."
     override val timeframe4wk: String = "en 4 sem."
-    override val winRate71: String = "A monté 10 fois sur 14 (référence historique)"
-    override val winRate79: String = "A monté 12 fois sur 15 (référence historique)"
-    override val winRate86: String = "A monté 13 fois sur 15 (référence historique)"
+    override val winRate71: String = "Live 24h"
+    override val winRate79: String = "Live sparkline"
+    override val winRate86: String = "Depuis ATH"
     override val whyWeSayThisTitle: String = "Contexte Historique et Réserves sur le Cycle"
     override val whyPoint1: String = "Cette semaine du cycle ressemble au 28 juin 2018 — même phase, mouvement similaire."
     override val whyPoint2: String = "Nous avons examiné 14 semaines similaires dans le passé. Au cours des 4 semaines suivantes, le prix a augmenté 12 fois sur 14 (généralement +29.5%)."
@@ -567,7 +567,7 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val aiPromptPrefixFutures: String = "Interprète les taux de funding actuels, l'open interest et les risques de liquidation sur les futures."
     override val aiPromptPrefixWhales: String = "Que révèlent les alertes récentes sur les mouvements de baleines concernant l'accumulation ou la distribution institutionnelle ?"
     override val aiPromptPrefixAltseason: String = "Évalue si les conditions de marché, la dominance du BTC et le sentiment favorisent une Altseason actuellement."
-    override val backtestBadgeText: String = "Backtest Vérifié 90J : Win Rate 72.8% | Profit Factor : 2.14"
+    override val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
     override val derivativesRiskGuardrail: String = "Protocole Dérivés : Tradez de manière responsable. Ne risquez jamais plus de 1-2% du capital par position."
 
     // Market Intelligence Explainer Modal ("What is this & How it works")

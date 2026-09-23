@@ -154,194 +154,66 @@ object CoinLocalization {
     }
 
     fun getNextPredictedMoveNarrative(coin: CryptoCoin, language: AppLanguage): String {
-        return when (language) {
-            AppLanguage.ENGLISH -> when (coin.symbol) {
-                "BTC" -> "Historically corresponds to the mid-cycle re-accumulation period. Cycle models project consolidation prior to an expansive breakout toward cycle targets."
-                "ETH" -> "Cycle analog metrics indicate strong upward expansion once the ETH/BTC ratio rebounds from its cycle baseline."
-                "SOL" -> "In similar cycle phases, SOL exhibits a 2x–3x outperformance beta relative to the broader Layer-1 benchmark average."
-                "XRP" -> "Historical multi-cycle compression patterns indicate sharp impulsive expansion once macro resistance is broken."
-                "BNB" -> "Consistent liquidity absorption points toward steady cyclical appreciation toward new all-time high expansions."
-                else -> "Cycle analog alignment indicates strong upside expansion potential following the current consolidation phase."
-            }
-            AppLanguage.GERMAN -> when (coin.symbol) {
-                "BTC" -> "Entspricht historisch der Zyklus-Zwischenphase. Modelle prognostizieren Konsolidierung vor einem dynamischen Ausbruch Richtung Zyklusziele."
-                "ETH" -> "Historische Daten signalisieren starke Aufwärtsdynamik, sobald sich das ETH/BTC-Verhältnis vom Zyklusboden erholt."
-                "SOL" -> "In vergleichbaren Phasen verzeichnet SOL eine 2x–3x Outperformance gegenüber dem Layer-1-Durchschnitt."
-                else -> "Zyklusmodelle signalisieren hohes Aufwärtspotenzial nach Abschluss der Konsolidierung."
-            }
-            AppLanguage.FRENCH -> when (coin.symbol) {
-                "BTC" -> "Correspond historiquement à la phase de réaccumulation médiane. Les modèles prévoient une consolidation avant un rebond vers les cibles du cycle."
-                "ETH" -> "Les données historiques indiquent une forte expansion haussière dès le rebond du ratio ETH/BTC."
-                "SOL" -> "Dans des phases similaires, SOL surperforme de 2x à 3x la moyenne des plateformes Layer 1."
-                else -> "Les modèles de cycle indiquent un fort potentiel de hausse après la phase de consolidation actuelle."
-            }
-            AppLanguage.SPANISH -> when (coin.symbol) {
-                "BTC" -> "Históricamente corresponde a la fase de reacumulación media del ciclo. Los modelos proyectan consolidación antes de una ruptura alcista hacia objetivos del ciclo."
-                "ETH" -> "Los análogos de ciclo indican una fuerte expansión alcista una vez que el ratio ETH/BTC repunte desde el soporte."
-                "SOL" -> "En fases de ciclo similares, SOL muestra un rendimiento 2x–3x superior al promedio de Layer 1."
-                else -> "Los análogos históricos proyectan un sólido impulso alcista tras completar la consolidación actual."
-            }
-            AppLanguage.ITALIAN -> when (coin.symbol) {
-                "BTC" -> "Corrisponde storicamente alla fase di riaccumulo di metà ciclo. I modelli proiettano consolidamento prima dell'allungo verso i target del ciclo."
-                "ETH" -> "I dati analogici storici indicano una forte espansione rialzista non appena il rapporto ETH/BTC rimbalza dai minimi."
-                "SOL" -> "In fasi simili, SOL sovraperforma di 2x–3x la media dei progetti Layer-1 concorrenti."
-                else -> "I modelli ciclici indicano una forte espansione rialzista dopo l'attuale fase di consolidamento."
-            }
-            AppLanguage.GREEK -> coin.nextPredictedMoveNarrative
-        }
+        return getCycleAlignmentNarrative(coin, language)
+    }
+
+    fun liveRealizedMoves(coin: CryptoCoin): Triple<String, String, String> {
+        val change24 = if (coin.priceUpdatedAtMs > 0L) {
+            String.format(java.util.Locale.US, "%+.1f%%", coin.change24h)
+        } else "—"
+        val spark = coin.sparkline
+        val sparkMove = if (spark.size >= 2 && spark.first() > 0.0) {
+            val pct = ((spark.last() - spark.first()) / spark.first()) * 100.0
+            String.format(java.util.Locale.US, "%+.1f%%", pct)
+        } else "—"
+        val athMove = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0) {
+            String.format(java.util.Locale.US, "%+.1f%%", coin.drawdownPercent)
+        } else "—"
+        return Triple(change24, sparkMove, athMove)
     }
 
     fun getProbabilitiesForCoin(coin: CryptoCoin): Triple<Int, Int, Int> {
-        val isBullish = coin.change24h >= 0
-        val hashMod = kotlin.math.abs(coin.symbol.hashCode()) % 7
-        val baseP = if (isBullish) {
-            val boost = (coin.change24h.coerceIn(0.0, 15.0) * 1.2).toInt()
-            (65 + boost + hashMod).coerceIn(64, 88)
-        } else {
-            val drop = (kotlin.math.abs(coin.change24h).coerceIn(0.0, 15.0) * 1.2).toInt()
-            (62 + drop + hashMod).coerceIn(60, 85)
-        }
-        val p1 = baseP
-        val p2 = (p1 + 5 + (hashMod % 3)).coerceAtMost(92)
-        val p3 = (p2 + 4 + (hashMod % 4)).coerceAtMost(95)
-        return Triple(p1, p2, p3)
+        // Paid app: never invent win-rate percentages. Callers must use live prints or "—".
+        return Triple(0, 0, 0)
     }
 
-    fun getProjected1w(coin: CryptoCoin, language: AppLanguage): String {
-        val isBullish = coin.change24h >= 0
-        val p1 = getProbabilitiesForCoin(coin).first
-        val rawPct = coin.projectedNextMove1w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+5.4%" else "-3.8%" }
-        val pct = if (!isBullish && !rawPct.startsWith("-")) "-${rawPct.removePrefix("+")}" else rawPct
-        val probText = if (isBullish) {
-            when (language) {
-                AppLanguage.ENGLISH -> "upward probability"
-                AppLanguage.GERMAN -> "Aufwärtswahrscheinlichkeit"
-                AppLanguage.FRENCH -> "de probabilité haussière"
-                AppLanguage.SPANISH -> "de probabilidad alcista"
-                AppLanguage.ITALIAN -> "probabilità di rialzo"
-                AppLanguage.GREEK -> "πιθανότητα ανόδου"
-            }
-        } else {
-            when (language) {
-                AppLanguage.ENGLISH -> "downward probability"
-                AppLanguage.GERMAN -> "Abwärtswahrscheinlichkeit"
-                AppLanguage.FRENCH -> "de probabilité baissière"
-                AppLanguage.SPANISH -> "de probabilidad bajista"
-                AppLanguage.ITALIAN -> "probabilità di ribasso"
-                AppLanguage.GREEK -> "πιθανότητα πτώσης"
-            }
-        }
-        return "$pct ($p1% $probText)"
+    fun getProjected1w(coin: CryptoCoin, @Suppress("UNUSED_PARAMETER") language: AppLanguage): String {
+        return liveRealizedMoves(coin).first
     }
 
-    fun getProjected2w(coin: CryptoCoin, language: AppLanguage): String {
-        val isBullish = coin.change24h >= 0
-        val p2 = getProbabilitiesForCoin(coin).second
-        val rawPct = coin.projectedNextMove2w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+12.8%" else "-7.4%" }
-        val pct = if (!isBullish && !rawPct.startsWith("-")) "-${rawPct.removePrefix("+")}" else rawPct
-        val probText = if (isBullish) {
-            when (language) {
-                AppLanguage.ENGLISH -> "upward probability"
-                AppLanguage.GERMAN -> "Aufwärtswahrscheinlichkeit"
-                AppLanguage.FRENCH -> "de probabilité haussière"
-                AppLanguage.SPANISH -> "de probabilidad alcista"
-                AppLanguage.ITALIAN -> "probabilità di rialzo"
-                AppLanguage.GREEK -> "πιθανότητα ανόδου"
-            }
-        } else {
-            when (language) {
-                AppLanguage.ENGLISH -> "downward probability"
-                AppLanguage.GERMAN -> "Abwärtswahrscheinlichkeit"
-                AppLanguage.FRENCH -> "de probabilité baissière"
-                AppLanguage.SPANISH -> "de probabilidad bajista"
-                AppLanguage.ITALIAN -> "probabilità di ribasso"
-                AppLanguage.GREEK -> "πιθανότητα πτώσης"
-            }
-        }
-        return "$pct ($p2% $probText)"
+    fun getProjected2w(coin: CryptoCoin, @Suppress("UNUSED_PARAMETER") language: AppLanguage): String {
+        return liveRealizedMoves(coin).second
     }
 
-    fun getProjected4w(coin: CryptoCoin, language: AppLanguage): String {
-        val isBullish = coin.change24h >= 0
-        val p3 = getProbabilitiesForCoin(coin).third
-        val rawPct = coin.projectedNextMove4w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+27.5%" else "-14.2%" }
-        val pct = if (!isBullish && !rawPct.startsWith("-")) "-${rawPct.removePrefix("+")}" else rawPct
-        val probText = if (isBullish) {
-            when (language) {
-                AppLanguage.ENGLISH -> "upward probability"
-                AppLanguage.GERMAN -> "Aufwärtswahrscheinlichkeit"
-                AppLanguage.FRENCH -> "de probabilité haussière"
-                AppLanguage.SPANISH -> "de probabilidad alcista"
-                AppLanguage.ITALIAN -> "probabilità di rialzo"
-                AppLanguage.GREEK -> "πιθανότητα ανόδου"
-            }
-        } else {
-            when (language) {
-                AppLanguage.ENGLISH -> "downward probability"
-                AppLanguage.GERMAN -> "Abwärtswahrscheinlichkeit"
-                AppLanguage.FRENCH -> "de probabilité baissière"
-                AppLanguage.SPANISH -> "de probabilidad bajista"
-                AppLanguage.ITALIAN -> "probabilità di ribasso"
-                AppLanguage.GREEK -> "πιθανότητα πτώσης"
-            }
-        }
-        return "$pct ($p3% $probText)"
+    fun getProjected4w(coin: CryptoCoin, @Suppress("UNUSED_PARAMETER") language: AppLanguage): String {
+        return liveRealizedMoves(coin).third
     }
 
     fun getCycleAlignmentNarrative(coin: CryptoCoin, language: AppLanguage): String {
-        val d1 = coin.analog.matchingDate2020
-        val d2 = coin.analog.matchingDate2016
         val name = coin.name
+        val price = if (coin.priceUsd > 0.0) com.example.util.AppNumberFormatter.formatPrice(coin.priceUsd) else "—"
+        val change = if (coin.priceUpdatedAtMs > 0L) String.format(java.util.Locale.US, "%+.1f%%", coin.change24h) else "—"
         return when (language) {
-            AppLanguage.ENGLISH -> "$name's current market structure correlates directly with historical analogs ($d1 & $d2)."
-            AppLanguage.GERMAN -> "Die aktuelle Marktstruktur von $name korreliert direkt με historischen Analoga ($d1 & $d2)."
-            AppLanguage.FRENCH -> "La structure de marché actuelle de $name correspond directement aux analogues historiques ($d1 & $d2)."
-            AppLanguage.SPANISH -> "La estructura de mercado actual de $name se correlaciona directamente con análogos históricos ($d1 & $d2)."
-            AppLanguage.ITALIAN -> "La struttura di mercato attuale di $name si correla direttamente con gli analoghi storici ($d1 & $d2)."
-            AppLanguage.GREEK -> "Η τρέχουσα θέση του $name ευθυγραμμίζεται άμεσα με ιστορικές φάσεις συσσώρευσης ($d1 και $d2)."
+            AppLanguage.ENGLISH -> "$name is trading at $price ($change 24h) on the live Binance/CoinGecko feed."
+            AppLanguage.GERMAN -> "$name handelt bei $price ($change 24h) im Live-Feed."
+            AppLanguage.FRENCH -> "$name se négocie à $price ($change 24h) sur le flux live."
+            AppLanguage.SPANISH -> "$name cotiza a $price ($change 24h) en el feed en vivo."
+            AppLanguage.ITALIAN -> "$name quota $price ($change 24h) sul feed live."
+            AppLanguage.GREEK -> "Το $name διαπραγματεύεται στα $price ($change 24ω) από το live feed."
         }
     }
 
     fun getCycleStatisticsNarrative(coin: CryptoCoin, language: AppLanguage): String {
-        val isBullish = coin.change24h >= 0
-        val rawPct = coin.projectedNextMove4w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+28.5%" else "-16.2%" }
-        val gainAvg = if (!isBullish && !rawPct.startsWith("-")) "-${rawPct.removePrefix("+")}" else rawPct
         val symbol = coin.symbol
-        val totalAnalogs = 13 + (kotlin.math.abs(coin.symbol.hashCode()) % 4)
-        val p3 = getProbabilitiesForCoin(coin).third
-        val winCount = ((totalAnalogs * p3) / 100).coerceIn(8, totalAnalogs - 1)
-
+        val volume = if (coin.volume24h > 0.0) com.example.util.AppNumberFormatter.formatCompactCurrency(coin.volume24h) else "—"
+        val mcap = if (coin.marketCap > 0.0) com.example.util.AppNumberFormatter.formatCompactCurrency(coin.marketCap) else "—"
         return when (language) {
-            AppLanguage.ENGLISH -> {
-                val moveDir = if (isBullish) "rose" else "retreated"
-                val wins = "$winCount of $totalAnalogs"
-                "Across $totalAnalogs matching cycle analogs, $symbol $moveDir $wins times over the 4-week forward window (average $gainAvg move)."
-            }
-            AppLanguage.GERMAN -> {
-                val moveDir = if (isBullish) "stieg" else "fiel"
-                val wins = "$winCount von $totalAnalogs"
-                "In $totalAnalogs vergleichbaren Zyklen $moveDir $symbol $wins Mal im folgenden 4-Wochen-Zeitraum (durchschnittlich $gainAvg)."
-            }
-            AppLanguage.FRENCH -> {
-                val moveDir = if (isBullish) "a progressé" else "a reculé"
-                val wins = "$winCount fois sur $totalAnalogs"
-                "Sur $totalAnalogs analogues de cycle, $symbol $moveDir $wins au cours des 4 semaines suivantes (variation moyenne $gainAvg)."
-            }
-            AppLanguage.SPANISH -> {
-                val moveDir = if (isBullish) "subió" else "retrocedió"
-                val wins = "$winCount de $totalAnalogs"
-                "En $totalAnalogs análogos de ciclos similares, $symbol $moveDir $wins veces en el siguiente período de 4 semanas (promedio $gainAvg)."
-            }
-            AppLanguage.ITALIAN -> {
-                val moveDir = if (isBullish) "è salito" else "è sceso"
-                val wins = "$winCount volte su $totalAnalogs"
-                "In $totalAnalogs analoghi di ciclo corrispondenti, $symbol $moveDir $wins volte nelle 4 settimane successive (variazione media $gainAvg)."
-            }
-            AppLanguage.GREEK -> {
-                val moveDir = if (isBullish) "σημείωσε ανοδική διάσπαση" else "σημείωσε καθοδική διόρθωση"
-                val wins = "$winCount από τις $totalAnalogs"
-                "Σε $totalAnalogs παρόμοιους ιστορικούς κύκλους, το $symbol $moveDir τις $wins φορές στο επόμενο παράθυρο 4 εβδομάδων (μέση μεταβολή $gainAvg)."
-            }
+            AppLanguage.ENGLISH -> "$symbol live 24h volume is $volume with market cap $mcap. No invented analog win-rate is shown."
+            AppLanguage.GERMAN -> "$symbol Live-24h-Volumen $volume, Marktkapitalisierung $mcap."
+            AppLanguage.FRENCH -> "Volume live 24h de $symbol : $volume, capitalisation $mcap."
+            AppLanguage.SPANISH -> "Volumen live 24h de $symbol: $volume, capitalización $mcap."
+            AppLanguage.ITALIAN -> "Volume live 24h di $symbol: $volume, market cap $mcap."
+            AppLanguage.GREEK -> "Live όγκος 24ω του $symbol: $volume, κεφαλαιοποίηση $mcap."
         }
     }
 

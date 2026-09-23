@@ -158,7 +158,16 @@ fun CryptoCyclesApp(
     val selectedCurrency by viewModel.selectedCurrency.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()
     val selectedTheme by viewModel.selectedTheme.collectAsState()
-    val macroSignal by viewModel.macroSignal.collectAsState()
+    val macroSignal by viewModel.liveMacroSignal.collectAsState()
+    val whaleFlow by viewModel.whaleFlowSnapshot.collectAsState()
+    val cycleCommandState by viewModel.cycleCommandState.collectAsState()
+    val derivativesSnapshot by viewModel.derivativesSnapshot.collectAsState()
+    val etfFlowData by viewModel.etfFlowData.collectAsState()
+    val stablecoinLiquidityData by viewModel.stablecoinLiquidityData.collectAsState()
+    val forwardAuditLogs by viewModel.forwardAuditLogs.collectAsState()
+    val liveMovingAverages by viewModel.liveMovingAverages.collectAsState()
+    val globalRiskSnapshot by viewModel.globalRiskSnapshot.collectAsState()
+    val futuresRecentTrades by viewModel.futuresRecentTrades.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLiveConnected by viewModel.isLiveConnected.collectAsState()
     val isCacheStale by viewModel.isCacheStale.collectAsState()
@@ -259,7 +268,10 @@ fun CryptoCyclesApp(
                                 priceSource = priceSource,
                                 lastUpdatedTimestamp = lastUpdatedTimestamp,
                                 tickerData = futuresTickerData,
-                                fearAndGreedScore = futuresMacroSentiment.fearAndGreedValue ?: 57,
+                                fearAndGreedScore = futuresMacroSentiment.fearAndGreedValue ?: 0,
+                                whaleFlow = whaleFlow,
+                                cycleCommandState = cycleCommandState,
+                                derivativesSnapshot = derivativesSnapshot,
                                 onSearchChanged = { viewModel.setSearchQuery(it) },
                                 onCategoryChanged = {
                                     com.example.util.AppSoundManager.playTechClick()
@@ -300,8 +312,14 @@ fun CryptoCyclesApp(
                                 currency = selectedCurrency,
                                 isProUnlocked = isProUnlocked,
                                 centralizedBtcPrice = if (centralizedPriceState.btcPerpPrice > 0.0) centralizedPriceState.btcPerpPrice else centralizedPriceState.btcSpotPrice,
-                                fearAndGreedScore = futuresMacroSentiment.fearAndGreedValue ?: 55,
-                                fearAndGreedClassification = futuresMacroSentiment.fearAndGreedClassification ?: "Greed",
+                                etfFlowData = etfFlowData,
+                                cycleCommandState = cycleCommandState,
+                                stablecoinLiquidityData = stablecoinLiquidityData,
+                                forwardAuditLogs = forwardAuditLogs,
+                                liveMovingAverages = liveMovingAverages,
+                                globalRiskSnapshot = globalRiskSnapshot,
+                                fearAndGreedScore = futuresMacroSentiment.fearAndGreedValue ?: 0,
+                                fearAndGreedClassification = futuresMacroSentiment.fearAndGreedClassification ?: "—",
                                 macroSentiment = futuresMacroSentiment,
                                 isRefreshing = isRefreshing,
                                 isConnected = isLiveConnected,
@@ -327,6 +345,7 @@ fun CryptoCyclesApp(
                                 whaleAlerts = whaleAlerts,
                                 whaleLeveragePositions = whaleLeveragePositions,
                                 whaleLeverageSummary = whaleLeverageSummary,
+                                recentTrades = futuresRecentTrades,
                                 onOpenAiAssistant = { prompt -> viewModel.openAiAssistant(prompt) },
                                 onRefresh = { viewModel.manualRefresh() },
                                 viewModel = viewModel

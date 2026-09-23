@@ -352,7 +352,7 @@ fun LiquidationIntelligenceCard(
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
-                            val longText = if (longSumM > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(longSumM * 1_000_000.0) else "$1,300M"
+                            val longText = if (longSumM > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(longSumM * 1_000_000.0) else "—"
                             Text(
                                 text = longText,
                                 fontSize = 17.sp,
@@ -403,7 +403,7 @@ fun LiquidationIntelligenceCard(
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
-                            val shortText = if (shortSumM > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(shortSumM * 1_000_000.0) else "$1,068M"
+                            val shortText = if (shortSumM > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(shortSumM * 1_000_000.0) else "—"
                             Text(
                                 text = shortText,
                                 fontSize = 17.sp,

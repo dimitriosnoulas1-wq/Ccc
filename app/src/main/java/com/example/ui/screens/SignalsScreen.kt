@@ -75,7 +75,6 @@ import com.example.data.model.WhaleAlert
 import com.example.data.model.WhaleLeveragePosition
 import com.example.data.model.WhaleLeverageSummary
 import com.example.ui.components.ChartTimeframe
-import com.example.ui.components.CycleModelProofCard
 import com.example.ui.components.DataFreshnessBadge
 import com.example.ui.components.DataFreshnessStatus
 import com.example.ui.components.formatPriceAge
@@ -130,14 +129,15 @@ fun SignalsScreen(
     whaleAlerts: List<WhaleAlert> = emptyList(),
     whaleLeveragePositions: List<WhaleLeveragePosition> = emptyList(),
     whaleLeverageSummary: WhaleLeverageSummary = WhaleLeverageSummary(
-        totalLongVolumeUsd = 148_500_000.0,
-        totalShortVolumeUsd = 86_200_000.0,
-        longRatioPercent = 63.3,
-        shortRatioPercent = 36.7,
-        activeMegaPositionsCount = 18,
-        largestPositionUsd = 24_800_000.0,
+        totalLongVolumeUsd = 0.0,
+        totalShortVolumeUsd = 0.0,
+        longRatioPercent = 0.0,
+        shortRatioPercent = 0.0,
+        activeMegaPositionsCount = 0,
+        largestPositionUsd = 0.0,
         dominantSide = com.example.data.model.LeveragePositionSide.LONG
     ),
+    recentTrades: List<com.example.data.model.FuturesTrade> = emptyList(),
     isRefreshing: Boolean = false,
     isConnected: Boolean = false,
     priceSource: String = "Binance",
@@ -345,12 +345,13 @@ fun SignalsScreen(
             item {
                 LiveOrderFlowSection(
                     activeCoin = activeCoin,
-                    currency = currency
+                    currency = currency,
+                    recentTrades = recentTrades
                 )
             }
         }
 
-        // 🐋 Super Whale Mega Leverage Tracker (2x - 50x Live Positions across Hyperliquid, Binance, Bybit, GMX)
+        // Live venue open interest + liquidation tape
         item {
             WhaleLeverageTrackerSection(
                 positions = whaleLeveragePositions,
@@ -359,11 +360,6 @@ fun SignalsScreen(
                 isProUnlocked = isProUnlocked,
                 onOpenProModal = onOpenProModal
             )
-        }
-
-        // Historical Proof & Backtest Reference Card
-        item {
-            CycleModelProofCard()
         }
 
         // Sub-tabs: Top Signals, My Signals, Performance
@@ -714,9 +710,10 @@ fun SignalsScreen(
                         }
                     }
 
-                    // Model Consistency & Indicator Alignment
-                    val (p1w, p2w, p4w) = CoinLocalization.getProbabilitiesForCoin(activeCoin)
-                    val verdictRate = p4w
+                    val live24h = if (activeCoin.priceUpdatedAtMs > 0L) activeCoin.change24h else null
+                    val live24hLabel = live24h?.let {
+                        com.example.util.AppNumberFormatter.formatPercent(it, includeSign = true, decimals = 2)
+                    } ?: "—"
 
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(
@@ -724,15 +721,15 @@ fun SignalsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Model Indicator Consistency",
+                                text = if (isGreek) "Ζωντανή κίνηση 24ω" else "Live 24h move",
                                 fontSize = 11.sp,
                                 color = TextSecondary
                             )
                             Text(
-                                text = "$verdictRate% Alignment",
+                                text = live24hLabel,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isBullish) GainGreen else NeonAmber
+                                color = if (live24h == null) TextSecondary else if (isBullish) GainGreen else NeonAmber
                             )
                         }
 
@@ -743,9 +740,10 @@ fun SignalsScreen(
                                 .clip(RoundedCornerShape(3.dp))
                                 .background(CosmicVoidBg)
                         ) {
+                            val barFill = live24h?.let { (kotlin.math.abs(it) / 15.0).toFloat().coerceIn(0.04f, 1f) } ?: 0f
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth((verdictRate / 100f).coerceIn(0.5f, 0.96f))
+                                    .fillMaxWidth(barFill)
                                     .height(6.dp)
                                     .clip(RoundedCornerShape(3.dp))
                                     .background(if (isBullish) GainGreen else NeonAmber)
@@ -753,7 +751,10 @@ fun SignalsScreen(
                         }
 
                         Text(
-                            text = "Consistency reflects agreement among technical oscillators, on-chain flows & historical cycles. Not a directional probability guarantee.",
+                            text = if (isGreek)
+                                "Η μπάρα δείχνει μόνο την πραγματική μεταβολή 24ω από το live feed. Όχι πρόβλεψη."
+                            else
+                                "Bar shows the live 24h print from the market feed. Not a forecast.",
                             fontSize = 9.5.sp,
                             lineHeight = 13.sp,
                             color = TextMuted
@@ -767,31 +768,42 @@ fun SignalsScreen(
                         color = TextSecondary
                     )
 
-                    // 5 Key Driver Tags (from Screen 5)
+                    val liveDriverTags = buildList {
+                        if (activeCoin.priceUpdatedAtMs > 0L) {
+                            add(
+                                (if (activeCoin.change24h >= 0) "+ 24h" else "- 24h") to
+                                    if (activeCoin.change24h >= 0) GainGreen else NeonAmber
+                            )
+                        }
+                        if (activeCoin.volume24h > 0.0) {
+                            add("Vol" to NeonCyan)
+                        }
+                        if (activeCoin.athUsd > 0.0 && activeCoin.priceUsd > 0.0) {
+                            add("ATH" to TextMuted)
+                        }
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        listOf(
-                            "+ Trend" to GainGreen,
-                            "+ Spot Vol" to GainGreen,
-                            "+ OI" to NeonCyan,
-                            "- Funding" to NeonAmber,
-                            "- Macro" to TextMuted
-                        ).forEach { (tag, col) ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(col.copy(alpha = 0.12f))
-                                    .border(0.8.dp, col.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = tag,
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = col
-                                )
+                        if (liveDriverTags.isEmpty()) {
+                            Text(text = "—", fontSize = 9.5.sp, color = TextMuted)
+                        } else {
+                            liveDriverTags.forEach { (tag, col) ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(col.copy(alpha = 0.12f))
+                                        .border(0.8.dp, col.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = tag,
+                                        fontSize = 9.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = col
+                                    )
+                                }
                             }
                         }
                     }
@@ -813,19 +825,22 @@ fun SignalsScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = if (isGreek) "Επίπεδο Ακύρωσης:" else "Invalidation Level:",
+                                    text = if (isGreek) "Χαμηλό παραθύρου:" else "Window low:",
                                     fontSize = 10.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = NeonAmber
                                 )
                                 Text(
-                                    text = if (isGreek) "Μέθοδος: 24h Low & ATR -3.8% (Deterministic Model)" else "Model: 24h Low & ATR -3.8% (Deterministic Model)",
+                                    text = if (isGreek) "Ελάχιστο από το live sparkline. Όχι ATR / πρόβλεψη." else "Minimum of the live sparkline. Not an ATR forecast.",
                                     fontSize = 9.sp,
                                     color = TextMuted
                                 )
                             }
-                            val rawInv = activeCoin.priceUsd * 0.962
-                            val invPrice = "${com.example.util.AppNumberFormatter.formatPrice(rawInv, currency)} (-3.8%)"
+                            val sparkLow = activeCoin.sparkline.minOrNull()
+                                ?.takeIf { activeCoin.priceUpdatedAtMs > 0L && activeCoin.sparkline.size >= 2 && it > 0.0 }
+                            val invPrice = sparkLow?.let {
+                                com.example.util.AppNumberFormatter.formatPrice(it, currency)
+                            } ?: "—"
                             Text(
                                 text = invPrice,
                                 fontSize = 11.5.sp,
@@ -837,16 +852,19 @@ fun SignalsScreen(
 
                         Text(
                             text = if (isGreek)
-                                "Αναμενόμενο Σενάριο: Συνέχιση όσο η τιμή παραμένει πάνω από το επίπεδο ακύρωσης και το OI δεν υπερθερμαίνεται."
+                                "Δεν εμφανίζεται εφευρεμένο επίπεδο ακύρωσης. Μόνο ζωντανά prints."
                             else
-                                "Expected Scenario: Continuation while price remains above invalidation level and OI doesn't accelerate excessively.",
+                                "No invented invalidation level. Live prints only.",
                             fontSize = 11.sp,
                             color = TextSecondary,
                             lineHeight = 15.sp
                         )
 
                         Text(
-                            text = "Levels are generated by algorithmic historical indicators. Not a personalized trade or investment recommendation.",
+                            text = if (isGreek)
+                                "Όχι επενδυτική συμβουλή."
+                            else
+                                "Not a personalized trade or investment recommendation.",
                             fontSize = 9.sp,
                             lineHeight = 12.sp,
                             color = TextMuted
@@ -938,7 +956,10 @@ fun SignalsScreen(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = strings.weekOfFallSub,
+                            text = if (isGreek)
+                                "εβδομάδα ${daysAfterAth / 7} από ATH · $daysAfterAth ημέρες"
+                            else
+                                "week ${daysAfterAth / 7} since ATH · $daysAfterAth days",
                             fontSize = 11.sp,
                             color = TextSecondary,
                             lineHeight = 15.sp
@@ -1328,22 +1349,10 @@ fun SignalsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val (p1, p2, p4) = CoinLocalization.getProbabilitiesForCoin(activeCoin)
-                    val raw1 = activeCoin.projectedNextMove1w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+5.4%" else "-3.8%" }
-                    val raw2 = activeCoin.projectedNextMove2w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+12.8%" else "-7.4%" }
-                    val raw4 = activeCoin.projectedNextMove4w.takeWhile { it != '(' && it != ' ' }.ifBlank { if (isBullish) "+27.5%" else "-14.2%" }
-
-                    val gain1 = if (!isBullish && !raw1.startsWith("-")) "-${raw1.removePrefix("+")}" else raw1
-                    val gain2 = if (!isBullish && !raw2.startsWith("-")) "-${raw2.removePrefix("+")}" else raw2
-                    val gain4 = if (!isBullish && !raw4.startsWith("-")) "-${raw4.removePrefix("+")}" else raw4
-
-                    val win1Label = if (isGreek) "$p1% πιθαν." else "$p1% win"
-                    val win2Label = if (isGreek) "$p2% πιθαν." else "$p2% win"
-                    val win4Label = if (isGreek) "$p4% πιθαν." else "$p4% win"
-
-                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = gain1, winRate = win1Label, modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = gain2, winRate = win2Label, modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = gain4, winRate = win4Label, modifier = Modifier.weight(1f))
+                    val liveMoves = CoinLocalization.liveRealizedMoves(activeCoin)
+                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = liveMoves.first, winRate = if (isGreek) "live 24ω" else "live 24h", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = liveMoves.second, winRate = if (isGreek) "live 7ημ" else "live 7d", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = liveMoves.third, winRate = if (isGreek) "από ATH" else "from ATH", modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -1378,9 +1387,9 @@ fun SignalsScreen(
                     WhyWeSayThisPoint(
                         number = 3,
                         text = if (isGreek) {
-                            "Η τρέχουσα φάση του κύκλου αναγνωρίζεται ως ${activeCoin.analog.cyclePhaseName} με δείκτη ρίσκου στο ${signal.riskScore}/100."
+                            "Η τρέχουσα φάση είναι ${signal.cycleClockPhase} με live δείκτη κύκλου ${signal.riskScore}/100."
                         } else {
-                            "Current cycle phase is identified as ${activeCoin.analog.cyclePhaseName} with risk score at ${signal.riskScore}/100."
+                            "Current phase is ${signal.cycleClockPhase} with live cycle score ${signal.riskScore}/100."
                         }
                     )
                     WhyWeSayThisPoint(
@@ -1508,7 +1517,8 @@ fun SignalsScreen(
                 isLogScale = isLogChart,
                 onToggleLogScale = { viewModel?.setLogCharts(!isLogChart) },
                 isProUnlocked = isProUnlocked,
-                onOpenProModal = onOpenProModal
+                onOpenProModal = onOpenProModal,
+                showProjection = false
             )
         }
         }

@@ -135,7 +135,17 @@ data class CryptoCoin(
         marketCap = 0.0,
         sparkline = emptyList(),
         priceUpdatedAtMs = 0L,
-        quoteState = QuoteState.PENDING
+        quoteState = QuoteState.PENDING,
+        projectedNextMove1w = "—",
+        projectedNextMove2w = "—",
+        projectedNextMove4w = "—",
+        nextPredictedMoveNarrative = "",
+        analog = analog.copy(
+            projectedCyclePeak = 0.0,
+            projectedCycleBottom = 0.0,
+            gainPostMatchingDate2020 = 0.0,
+            gainPostMatchingDate2016 = 0.0
+        )
     )
 
     val calculatedAthDaysAgo: Int
@@ -232,16 +242,16 @@ data class CryptoCoin(
 }
 
 data class MacroCycleSignal(
-    val halvingDaysPassed: Int = 186,
-    val totalCycleDays: Int = 1460, // 4-year cycle (~1460 days)
-    val cycleClockPhase: String = "Post-Halving Markup Wave",
-    val riskScore: Int = 54, // 1 to 100
-    val dominanceBtc: Double = 57.8,
-    val fearGreedIndex: Int = 68,
-    val fearGreedSentiment: String = "Greed",
-    val buyWindowOpen: Boolean = true,
+    val halvingDaysPassed: Int = 0,
+    val totalCycleDays: Int = 1460,
+    val cycleClockPhase: String = "—",
+    val riskScore: Int = 0,
+    val dominanceBtc: Double = 0.0,
+    val fearGreedIndex: Int = 0,
+    val fearGreedSentiment: String = "—",
+    val buyWindowOpen: Boolean = false,
     val sellWindowOpen: Boolean = false,
-    val matchingHistoricalDate: String = "October 2020 Analog"
+    val matchingHistoricalDate: String = "—"
 )
 
 enum class WhaleAlertType(val displayName: String, val iconEmoji: String) {

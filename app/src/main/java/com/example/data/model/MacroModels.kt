@@ -144,29 +144,27 @@ data class AltcoinSeasonData(
 }
 
 data class FearAndGreedData(
-    val score: Int = 68,
-    val sentiment: String = "Greed",
-    val sentimentEl: String = "Απληστία",
-    val yesterdayScore: Int = 65,
-    val lastWeekScore: Int = 72,
-    val lastMonthScore: Int = 48
+    val score: Int = 0,
+    val sentiment: String = "—",
+    val sentimentEl: String = "—",
+    val yesterdayScore: Int = 0,
+    val lastWeekScore: Int = 0,
+    val lastMonthScore: Int = 0
 ) {
     fun localizedSentiment(isGreek: Boolean): String = if (isGreek) sentimentEl else sentiment
 }
 
 data class PiCycleData(
-    val currentBtcPrice: Double = 96420.0,
-    // Top Indicator (111 SMA vs 350 SMA x 2)
-    val dma111: Double = 84200.0,
-    val dma350x2: Double = 142800.0,
+    val currentBtcPrice: Double = 0.0,
+    val dma111: Double = 0.0,
+    val dma350x2: Double = 0.0,
     val isCrossed: Boolean = false,
-    val distanceToTopCrossPct: Double = 48.2,
-    // Bottom Indicator (150 EMA vs 471 SMA x 0.745)
-    val ema150: Double = 82400.0,
-    val sma471x0745: Double = 49800.0,
+    val distanceToTopCrossPct: Double = 0.0,
+    val ema150: Double = 0.0,
+    val sma471x0745: Double = 0.0,
     val isBottomCrossed: Boolean = false,
-    val distanceToBottomCrossPct: Double = 65.4,
-    // 200-Week Moving Average Generational Floor
-    val ma200w: Double = 43500.0,
-    val distanceAbove200wPct: Double = 121.6
+    val distanceToBottomCrossPct: Double = 0.0,
+    val ma200w: Double = 0.0,
+    val distanceAbove200wPct: Double = 0.0,
+    val isLive: Boolean = false
 )

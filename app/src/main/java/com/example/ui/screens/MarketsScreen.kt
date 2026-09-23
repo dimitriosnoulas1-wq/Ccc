@@ -97,7 +97,10 @@ fun MarketsScreen(
     priceSource: String = "Binance",
     lastUpdatedTimestamp: Long = 0L,
     tickerData: com.example.data.model.FuturesTickerData? = null,
-    fearAndGreedScore: Int = 57,
+    fearAndGreedScore: Int = 0,
+    whaleFlow: com.example.data.model.WhaleFlowSnapshot = com.example.data.model.WhaleFlowSnapshot(),
+    cycleCommandState: com.example.data.model.CycleCommandState = com.example.data.model.CycleCommandState(),
+    derivativesSnapshot: com.example.data.model.AggregatedDerivativesSnapshot? = null,
     onSearchChanged: (String) -> Unit,
     onCategoryChanged: (CoinCategory) -> Unit,
     onCoinClicked: (CryptoCoin) -> Unit,
@@ -284,10 +287,12 @@ fun MarketsScreen(
                 ) {
                     CyberWhaleRadarWidget(
                         modifier = Modifier.weight(1f),
+                        flow = whaleFlow,
                         onClick = { onNavigateToTab(MainTab.SIGNALS) }
                     )
                     CyberScenarioRadarWidget(
                         modifier = Modifier.weight(1f),
+                        cycle = cycleCommandState,
                         onClick = { onNavigateToTab(MainTab.MACRO) }
                     )
                 }
@@ -297,6 +302,7 @@ fun MarketsScreen(
             item {
                 CyberLivePressurePanel(
                     isProUnlocked = isProUnlocked,
+                    snapshot = derivativesSnapshot,
                     onOpenProModal = onOpenProModal,
                     onNavigateToFutures = { onNavigateToTab(MainTab.FUTURES) }
                 )
@@ -469,6 +475,7 @@ fun MarketsScreen(
 @Composable
 fun CyberWhaleRadarWidget(
     modifier: Modifier = Modifier,
+    flow: com.example.data.model.WhaleFlowSnapshot = com.example.data.model.WhaleFlowSnapshot(),
     onClick: () -> Unit
 ) {
     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -518,11 +525,14 @@ fun CyberWhaleRadarWidget(
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "+$293.4M",
+                    text = if (flow.isLive) {
+                        val sign = if (flow.netUsd >= 0) "+" else "-"
+                        sign + com.example.util.AppNumberFormatter.formatCompactCurrency(kotlin.math.abs(flow.netUsd))
+                    } else "—",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = SyneFont,
-                    color = TachyonMint
+                    color = if (flow.netUsd >= 0) TachyonMint else Color(0xFFFF5252)
                 )
 
                 Box(
@@ -532,7 +542,11 @@ fun CyberWhaleRadarWidget(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "INSTITUTIONAL ACCUMULATION",
+                        text = when {
+                            !flow.isLive -> "WAITING LIVE PRINTS"
+                            flow.netUsd >= 0 -> "NET ACCUMULATION"
+                            else -> "NET DISTRIBUTION"
+                        },
                         fontSize = 8.5.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = JetBrainsMonoFont,
@@ -542,7 +556,7 @@ fun CyberWhaleRadarWidget(
             }
 
             Text(
-                text = "Target: Coinbase Prime OTC",
+                text = if (flow.isLive) "${flow.alertCount} large prints · ${flow.sourceLabel}" else "Binance USDT-M large prints",
                 fontSize = 10.sp,
                 fontFamily = JetBrainsMonoFont,
                 color = Color(0xFF94A3B8),
@@ -556,6 +570,7 @@ fun CyberWhaleRadarWidget(
 @Composable
 fun CyberScenarioRadarWidget(
     modifier: Modifier = Modifier,
+    cycle: com.example.data.model.CycleCommandState = com.example.data.model.CycleCommandState(),
     onClick: () -> Unit
 ) {
     val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -614,7 +629,9 @@ fun CyberScenarioRadarWidget(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "0.34",
+                        text = if (cycle.compositeCycleScore > 0) {
+                            String.format(java.util.Locale.US, "%.2f", cycle.compositeCycleScore / 100.0)
+                        } else "—",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = SyneFont,
@@ -636,7 +653,7 @@ fun CyberScenarioRadarWidget(
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "LOW RISK ACCUMULATION",
+                        text = cycle.regime.actionEn.uppercase(),
                         fontSize = 8.5.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = JetBrainsMonoFont,
@@ -646,7 +663,9 @@ fun CyberScenarioRadarWidget(
             }
 
             Text(
-                text = "Macro Floor Window: ~33 Days",
+                text = if (cycle.halvingDaysElapsed > 0) {
+                    "Halving day ${cycle.halvingDaysElapsed}"
+                } else "Waiting live cycle clock",
                 fontSize = 10.sp,
                 fontFamily = JetBrainsMonoFont,
                 color = Color(0xFF94A3B8),
@@ -660,6 +679,7 @@ fun CyberScenarioRadarWidget(
 @Composable
 fun CyberLivePressurePanel(
     isProUnlocked: Boolean,
+    snapshot: com.example.data.model.AggregatedDerivativesSnapshot? = null,
     onOpenProModal: () -> Unit,
     onNavigateToFutures: () -> Unit,
     modifier: Modifier = Modifier
@@ -733,18 +753,62 @@ fun CyberLivePressurePanel(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(text = "24h Liqs", fontSize = 9.5.sp, fontFamily = SpaceGroteskFont, color = Color(0xFF94A3B8))
-                    Text(text = "$142.8M", fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = JetBrainsMonoFont, color = Color(0xFFFF5252))
-                    Text(text = "Shorts 68%", fontSize = 9.sp, fontFamily = JetBrainsMonoFont, color = Color(0xFFCBD5E1))
+                    val longLiq = snapshot?.aggregated?.longLiqUsd
+                    val shortLiq = snapshot?.aggregated?.shortLiqUsd
+                    val liqTotal = listOfNotNull(longLiq, shortLiq).sum()
+                    Text(
+                        text = if (liqTotal > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(liqTotal) else "—",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = JetBrainsMonoFont,
+                        color = Color(0xFFFF5252)
+                    )
+                    val lsr = snapshot?.aggregated?.longShortRatio
+                    val shortPct = if (lsr != null && lsr > 0.0) ((1.0 / (1.0 + lsr)) * 100.0) else null
+                    Text(
+                        text = if (shortPct != null) "Shorts ${"%.0f".format(shortPct)}%" else "Waiting venues",
+                        fontSize = 9.sp,
+                        fontFamily = JetBrainsMonoFont,
+                        color = Color(0xFFCBD5E1)
+                    )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(text = "Funding 8h", fontSize = 9.5.sp, fontFamily = SpaceGroteskFont, color = Color(0xFF94A3B8))
-                    Text(text = "+0.010%", fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = JetBrainsMonoFont, color = TachyonMint)
-                    Text(text = "Neutral", fontSize = 9.sp, fontFamily = JetBrainsMonoFont, color = Color(0xFFCBD5E1))
+                    val funding = snapshot?.aggregated?.fundingRate
+                    Text(
+                        text = if (funding != null) {
+                            val pct = funding * 100.0
+                            "${if (pct >= 0) "+" else ""}${"%.3f".format(java.util.Locale.US, pct)}%"
+                        } else "—",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = JetBrainsMonoFont,
+                        color = TachyonMint
+                    )
+                    Text(
+                        text = snapshot?.sourceLabel ?: "BINANCE / BYBIT / OKX",
+                        fontSize = 9.sp,
+                        fontFamily = JetBrainsMonoFont,
+                        color = Color(0xFFCBD5E1)
+                    )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
                     Text(text = "Open Interest", fontSize = 9.5.sp, fontFamily = SpaceGroteskFont, color = Color(0xFF94A3B8))
-                    Text(text = "$5.40B", fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = JetBrainsMonoFont, color = QuantumCyan)
-                    Text(text = "+2.4%", fontSize = 9.sp, fontFamily = JetBrainsMonoFont, color = TachyonMint)
+                    val oi = snapshot?.aggregated?.openInterestUsd
+                    Text(
+                        text = if (oi != null && oi > 0) com.example.util.AppNumberFormatter.formatCompactCurrency(oi) else "—",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = JetBrainsMonoFont,
+                        color = QuantumCyan
+                    )
+                    val oiChg = snapshot?.aggregated?.oiChange1hPct
+                    Text(
+                        text = if (oiChg != null) "${if (oiChg >= 0) "+" else ""}${"%.1f".format(java.util.Locale.US, oiChg)}%" else "live OI",
+                        fontSize = 9.sp,
+                        fontFamily = JetBrainsMonoFont,
+                        color = TachyonMint
+                    )
                 }
             }
 
@@ -767,7 +831,12 @@ fun CyberLivePressurePanel(
                             .background(NeonAmber)
                     )
                     Text(
-                        text = "SHORT SQUEEZE BIAS DETECTED",
+                        text = when {
+                            snapshot?.aggregated?.fundingRate == null -> "WAITING LIVE DERIVATIVES"
+                            (snapshot.aggregated.fundingRate ?: 0.0) > 0.0003 -> "LONG PREMIUM / HEAT"
+                            (snapshot.aggregated.fundingRate ?: 0.0) < -0.0001 -> "SHORT PREMIUM"
+                            else -> "NEUTRAL FUNDING"
+                        },
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = JetBrainsMonoFont,
@@ -836,7 +905,11 @@ fun CyberAltcoinSeasonPanel(
                     color = Color.White
                 )
                 Text(
-                    text = "Neutral Accumulation Phase",
+                    text = when {
+                        altcoinScore >= 75 -> "Altcoin Season"
+                        altcoinScore <= 25 -> "Bitcoin Season"
+                        else -> "Neutral rotation"
+                    },
                     fontSize = 11.sp,
                     fontFamily = SpaceGroteskFont,
                     color = Color(0xFFCBD5E1)

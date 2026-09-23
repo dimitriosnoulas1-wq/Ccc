@@ -84,7 +84,7 @@ fun SignalsProGatekeeper(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = strings.backtestBadgeText,
+                    text = if (isGreek) "Live whale radar · live order flow · live liquidations" else "Live whale radar · live order flow · live liquidations",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.primary
