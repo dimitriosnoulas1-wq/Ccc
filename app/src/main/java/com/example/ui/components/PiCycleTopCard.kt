@@ -371,7 +371,7 @@ fun PiCycleTopCard(
                     ) {
                         val floorFormatted = com.example.util.AppNumberFormatter.formatPercent(piData.distanceToBottomCrossPct, includeSign = true, decimals = 1)
                         Text(
-                            text = if (piData.isBottomCrossed) "BUY TRIGGER" else "$floorFormatted Above Floor",
+                            text = if (piData.isBottomCrossed) "HISTORICAL CROSS" else "$floorFormatted Above Floor",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = bottomStatusColor
@@ -588,16 +588,16 @@ fun PiCycleTopCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = if (isGreek) "🟢 Πότε ΑΓΟΡΑΖΟΥΜΕ (Pi Cycle Bottom Cross)" else "🟢 When to BUY (Pi Cycle Bottom Cross)",
+                        text = if (isGreek) "🟢 Ιστορικό Pi Cycle Bottom" else "🟢 Historical Pi Cycle Bottom",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = TachyonMint
                     )
                     Text(
                         text = if (isGreek)
-                            "• Σήμα Πυθμένα: Όταν ο 150-Day EMA πέσει κάτω από τον 471-Day SMA × 0.745.\n• Ιστορικές Επιτυχίες: Δεκέμβριος 2018 ($3.200), Μάρτιος 2020 ($4.000 Covid crash), Δεκέμβριος 2022 ($16.000 FTX crash). Σηματοδοτεί το τέλος του bear market και τη μέγιστη ευκαιρία συσσώρευσης!\n• 200W MA Floor: Όταν η τιμή πλησιάζει το 200W MA, παρέχει το ασφαλέστερο πολυετές δίχτυ προστασίας."
+                            "• Ιστορικό μοντέλο: όταν ο 150-Day EMA πέσει κάτω από τον 471-Day SMA × 0.745.\n• Παλιές ημερομηνίες: Δεκέμβριος 2018, Μάρτιος 2020, Δεκέμβριος 2022. Αυτό είναι καταγραφή, όχι εντολή αγοράς."
                         else
-                            "• Bottom Trigger: When 150-Day EMA crosses below 471-Day SMA × 0.745.\n• Historical Track Record: Dec 2018 ($3.2k), Mar 2020 ($4k Covid crash), Dec 2022 ($16k FTX crash). Marks the absolute bear market capitulation and generational entry point!\n• 200W MA Floor: Touching or approaching the 200W MA provides generational asymmetry.",
+                            "• Historical model: when the 150-day EMA crosses below the 471-day SMA × 0.745.\n• Past dates: Dec 2018, Mar 2020, Dec 2022. This is a record, not a buy order.",
                         fontSize = 11.sp,
                         lineHeight = 16.sp,
                         color = palette.textPrimary
@@ -616,16 +616,16 @@ fun PiCycleTopCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = if (isGreek) "🔴 Πότε ΠΟΥΛΑΜΕ (Pi Cycle Top Cross)" else "🔴 When to SELL (Pi Cycle Top Cross)",
+                        text = if (isGreek) "🔴 Ιστορικό Pi Cycle Top" else "🔴 Historical Pi Cycle Top",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = SoftCrimson
                     )
                     Text(
                         text = if (isGreek)
-                            "• Σήμα Κορυφής: Όταν ο 111-Day SMA διασταυρωθεί ανοδικά πάνω από τον 350-Day SMA × 2.\n• Ιστορικές Επιτυχίες: Απρίλιος 2013 ($260), Δεκέμβριος 2013 ($1.150), Δεκέμβριος 2017 ($20.000), Απρίλιος 2021 ($64.800) – εντόπισε την κορυφή εντός ±3 ημερών!\n• Στρατηγική: Όταν η απόσταση μειωθεί κάτω από 5%, συνιστάται σταδιακή ρευστοποίηση σε Stablecoins (DCA Out)."
+                            "• Ιστορικό μοντέλο: όταν ο 111-Day SMA περάσει πάνω από τον 350-Day SMA × 2.\n• Παλιές ημερομηνίες: 2013, 2017, 2021. Αυτό είναι καταγραφή, όχι εντολή πώλησης."
                         else
-                            "• Top Trigger: When 111-Day SMA crosses above 350-Day SMA × 2.\n• Historical Track Record: Apr 2013 ($260), Dec 2013 ($1,150), Dec 2017 ($20k), Apr 2021 ($64.8k) – flagged the exact cycle top within ±3 days!\n• Strategy: When the gap narrows below 5%, scale profits systematically into Stablecoins (DCA Out).",
+                            "• Historical model: when the 111-day SMA crosses above the 350-day SMA × 2.\n• Past dates: 2013, 2017, 2021. This is a record, not a sell order.",
                         fontSize = 11.sp,
                         lineHeight = 16.sp,
                         color = palette.textPrimary

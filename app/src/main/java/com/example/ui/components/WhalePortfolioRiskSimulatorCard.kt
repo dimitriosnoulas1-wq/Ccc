@@ -81,10 +81,10 @@ fun WhalePortfolioRiskSimulatorCard(
         else -> SoftEmerald // Healthy
     }
 
-    val recommendedExitDca = when {
-        calculatedRisk > 75f -> if (isGreek) "35% - 50% σε Stablecoins / Fiat (DCA Out Zone)" else "35% - 50% in Stablecoins / Fiat (DCA Out Zone)"
-        calculatedRisk > 55f -> if (isGreek) "15% - 25% σε Stablecoins (Προστασία Κερδών)" else "15% - 25% in Stables (Gradual Profit Lock)"
-        else -> if (isGreek) "Πλήρης έκθεση στον κύκλο (Συσσώρευση / Hold)" else "Full cycle exposure (Accumulate / Hold)"
+    val recommendedExitDca = if (isGreek) {
+        "Καμία εντολή εξόδου. Μόνο η ιστορική ημέρα κύκλου."
+    } else {
+        "No exit order. This is the historical cycle day only."
     }
 
     Box(
@@ -286,7 +286,7 @@ fun WhalePortfolioRiskSimulatorCard(
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Text(
-                                    text = if (isGreek) "Θεσμική Στρατηγική Εξόδου (Exit Strategy)" else "Institutional Exit Strategy Recommendation",
+                                    text = if (isGreek) "Χωρίς εντολή θέσης" else "No position instruction",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPureWhite
@@ -300,9 +300,9 @@ fun WhalePortfolioRiskSimulatorCard(
                             )
                             Text(
                                 text = if (isGreek)
-                                    "Στην ημέρα $daysSinceHalving μετά το halving, οι θεσμικοί επενδυτές εκτελούν κλιμακωτές εντολές limit σε stablecoins, προστατεύοντας κεφάλαια χωρίς να πουλάνε πανικόβλητοι στον πάτο."
+                                    "Ημέρα $daysSinceHalving μετά το halving. Εκπαιδευτικό ιστορικό παρελθόντων κύκλων. Δεν είναι πρόβλεψη και δεν είναι συμβουλή."
                                 else
-                                    "On Post-Halving Day $daysSinceHalving, institutional capital executes staggered limit orders into stablecoins, locking in generational profits prior to macro exhaustion.",
+                                    "Day $daysSinceHalving after the halving. Educational history of past cycles. Not a forecast and not advice.",
                                 fontSize = 10.5.sp,
                                 color = TextCyanSlate,
                                 lineHeight = 14.sp

@@ -20,31 +20,31 @@ enum class MarketRegime(
     val zoneNumber: Int
 ) {
     ACCUMULATION(
-        titleEn = "Zone 1: Deep Value & Accumulation",
-        titleEl = "Ζώνη 1: Επιθετική Συσσώρευση (Deep Value)",
-        actionEn = "ACCUMULATE (SPOT DCA)",
-        actionEl = "ΣΥΣΣΩΡΕΥΣΗ (SPOT DCA)",
+        titleEn = "Zone 1: Early cycle",
+        titleEl = "Ζώνη 1: Αρχή κύκλου",
+        actionEn = "HISTORY",
+        actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 1
     ),
     CYCLE_EXPANSION(
-        titleEn = "Zone 2: Steady Cycle Expansion",
-        titleEl = "Ζώνη 2: Ομαλή Επέκταση Κύκλου",
-        actionEn = "HOLD / STRATEGIC BUY",
-        actionEl = "ΔΙΑΚΡΑΤΗΣΗ / ΣΤΡΑΤΗΓΙΚΗ ΑΓΟΡΑ",
+        titleEn = "Zone 2: Mid cycle",
+        titleEl = "Ζώνη 2: Μέση κύκλου",
+        actionEn = "HISTORY",
+        actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 2
     ),
     LEVERAGE_DISTRIBUTION(
-        titleEn = "Zone 3: High Leverage & Distribution",
-        titleEl = "Ζώνη 3: Υψηλή Μόχλευση & Διανομή",
-        actionEn = "DE-LEVERAGE / CAUTION",
-        actionEl = "ΜΕΙΩΣΗ ΜΟΧΛΕΥΣΗΣ / ΠΡΟΣΟΧΗ",
+        titleEn = "Zone 3: Late cycle",
+        titleEl = "Ζώνη 3: Τέλος κύκλου",
+        actionEn = "HISTORY",
+        actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 3
     ),
     CYCLE_PEAK_EXIT(
-        titleEn = "Zone 4: Cycle Euphoria & Take Profit",
-        titleEl = "Ζώνη 4: Ευφορία & Κλιμακωτή Έξοδος",
-        actionEn = "TAKE PROFIT (SCALE OUT)",
-        actionEl = "ΚΑΤΟΧΥΡΩΣΗ ΚΕΡΔΩΝ (SCALE OUT)",
+        titleEn = "Zone 4: Prior peak window",
+        titleEl = "Ζώνη 4: Παλιά ζώνη κορυφής",
+        actionEn = "HISTORY",
+        actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 4
     )
 }

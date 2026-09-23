@@ -510,7 +510,7 @@ fun MacroScreen(
                 CollapsibleCardContainer(
                     title = if (isGreek) "🌈 Bitcoin Rainbow Price Model" else "🌈 Bitcoin Rainbow Price Model",
                     subtitle = if (isGreek) "Ζώνες Αποτίμησης & Power Law" else "Logarithmic Valuation Bands",
-                    badge = "HOLD / DCA",
+                    badge = "HISTORY",
                     badgeColor = NeonCyan,
                     isExpanded = rainbowExpanded,
                     onToggle = { rainbowExpanded = !rainbowExpanded }

@@ -272,6 +272,7 @@ fun CoinDetailSheet(
                         strings = strings,
                         selectedLanguage = selectedLanguage,
                         currency = currency,
+                        isProUnlocked = isProUnlocked,
                         onOpenAiAssistant = onOpenAiAssistant
                     )
                 }
@@ -457,19 +458,19 @@ fun WhyCoinIsMovingCard(
     }
     val spotColor = if (isGain) TachyonMint else SoftCrimson
 
-    val oiIntensity = if (absChange > 3.0) "HIGH" else "MODERATE"
-    val oiBars = if (absChange > 3.0) 4 else 3
+    val oiIntensity = "—"
+    val oiBars = 0
 
-    val fundingIntensity = if (isGain && absChange > 2.0) "ELEVATED (+0.012%)" else "NORMAL (+0.008%)"
-    val fundingBars = if (isGain && absChange > 2.0) 4 else 2
-    val fundingColor = if (isGain && absChange > 2.0) PhotonGold else QuantumCyan
+    val fundingIntensity = "—"
+    val fundingBars = 0
+    val fundingColor = TextMuted
 
-    val liqIntensity = if (absChange > 4.0) "CASCADE RISK" else "NORMAL"
-    val liqBars = if (absChange > 4.0) 5 else 2
-    val liqColor = if (absChange > 4.0) SoftCrimson else TextMuted
+    val liqIntensity = "—"
+    val liqBars = 0
+    val liqColor = TextMuted
 
-    val macroIntensity = "NEUTRAL"
-    val macroBars = 2
+    val macroIntensity = "—"
+    val macroBars = 0
 
     Box(
         modifier = modifier
@@ -564,9 +565,9 @@ fun WhyCoinIsMovingCard(
             ) {
                 Text(
                     text = if (isGreek)
-                        "Το ${coin.symbol} κινείται $trendDirection ($change24hFormatted) υποστηριζόμενο από $spotIntensity ροές spot και $oiIntensity συγκέντρωση μόχλευσης στα παράγωγα."
+                        "Το ${coin.symbol} κινήθηκε $trendDirection ($change24hFormatted) στις τελευταίες 24 ώρες. Οι άλλες γραμμές μένουν παύλα όταν δεν υπάρχει live feed."
                     else
-                        "${coin.symbol} is trending $trendDirection ($change24hFormatted) driven by $spotIntensity spot volume and $oiIntensity derivatives leverage positioning.",
+                        "${coin.symbol} moved $trendDirection ($change24hFormatted) in the last 24 hours. Other rows stay a dash when that feed is missing.",
                     fontSize = 11.sp,
                     color = TextSecondary,
                     lineHeight = 15.sp
@@ -629,6 +630,7 @@ private fun OverviewTabContent(
     strings: com.example.util.AppStrings,
     selectedLanguage: com.example.data.model.AppLanguage,
     currency: Currency,
+    isProUnlocked: Boolean,
     onOpenAiAssistant: ((String?) -> Unit)?
 ) {
     // Historical Cycle Trajectory & Price Chart.
@@ -638,7 +640,8 @@ private fun OverviewTabContent(
         coinSymbol = coin.symbol,
         currentPrice = coin.priceUsd,
         coinName = coin.name,
-        coinId = coin.id
+        coinId = coin.id,
+        isProUnlocked = isProUnlocked
     )
 
     // "Why is Coin moving?" Intelligence Card
@@ -649,42 +652,33 @@ private fun OverviewTabContent(
         }
     )
 
-    // Movement Analysis (Where it moves now & Past movements)
+    Text(
+        text = com.example.util.CycleReadingText.disclaimer(
+            selectedLanguage == com.example.data.model.AppLanguage.GREEK
+        ),
+        fontSize = 11.sp,
+        lineHeight = 15.sp,
+        color = TextMuted
+    )
+
     SectionContainer(
         title = strings.movementAnalysisHeader,
         icon = Icons.Default.Timeline
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "📍 ${strings.whereItMovesNowLabel}",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = QuantumCyan
-                )
-                Text(
-                    text = CoinLocalization.getWhereItMovesNow(coin, selectedLanguage, currency),
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                    color = TextPrimary
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = "⏳ ${strings.whereItMovedPastLabel}",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MauveAurora
-                )
-                Text(
-                    text = CoinLocalization.getWhereItMovedPast(coin, selectedLanguage),
-                    fontSize = 12.sp,
-                    lineHeight = 17.sp,
-                    color = TextSecondary
-                )
-            }
-        }
+        val live = if (coin.priceUsd > 0.0) coin.formattedPrice(currency) else "—"
+        val change = if (coin.priceUpdatedAtMs > 0L) {
+            com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
+        } else "—"
+        Text(
+            text = if (selectedLanguage == com.example.data.model.AppLanguage.GREEK) {
+                "Ζωντανή τιμή $live · 24ω $change. Χωρίς έτοιμο κείμενο όταν λείπει το δικό του ιστορικό."
+            } else {
+                "Live price $live · 24h $change. No template essay. A cycle line is drawn only when that coin has its own closes."
+            },
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            color = TextPrimary
+        )
     }
 
     // Market Stats & Token Supply
@@ -834,7 +828,11 @@ private fun AnalyticsTabContent(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = CoinLocalization.getNextPredictedMoveNarrative(coin, selectedLanguage),
+                text = if (selectedLanguage == com.example.data.model.AppLanguage.GREEK) {
+                    "Δεν υπάρχει πρόβλεψη επόμενης κίνησης. Μόνο πραγματοποιημένες live κινήσεις."
+                } else {
+                    "There is no next-move forecast. Only realized live moves."
+                },
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
                 color = TextPrimary

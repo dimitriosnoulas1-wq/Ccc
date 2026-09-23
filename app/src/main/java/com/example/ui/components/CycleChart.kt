@@ -93,7 +93,8 @@ fun HistoricalCycleChart(
     coinSymbol: String = "BTC",
     currentPrice: Double? = null,
     coinName: String = "Bitcoin",
-    coinId: String = ""
+    coinId: String = "",
+    isProUnlocked: Boolean = false
 ) {
     val strings = LocalAppStrings.current
     val isGreek = strings.language.code == "el"
@@ -108,7 +109,10 @@ fun HistoricalCycleChart(
         historyState = if (loaded == null) "error" else "ready"
     }
     val chartData = historyModel
-    var selectedMode by remember { mutableStateOf(CycleChartMode.ALL) }
+    var selectedMode by remember { mutableStateOf(if (isProUnlocked) CycleChartMode.ALL else CycleChartMode.CURRENT) }
+    androidx.compose.runtime.LaunchedEffect(isProUnlocked) {
+        if (!isProUnlocked) selectedMode = CycleChartMode.CURRENT
+    }
     var touchXNormalized by remember { mutableStateOf<Float?>(null) }
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseGlow by infiniteTransition.animateFloat(
@@ -303,6 +307,7 @@ fun HistoricalCycleChart(
                 modifier = Modifier.weight(1f),
                 onClick = { selectedMode = CycleChartMode.CURRENT }
             )
+            if (isProUnlocked) {
             ModeFilterChip(
                 label = strings.cycleChartModeAll,
                 selected = selectedMode == CycleChartMode.ALL,
@@ -310,6 +315,7 @@ fun HistoricalCycleChart(
                 modifier = Modifier.weight(0.8f),
                 onClick = { selectedMode = CycleChartMode.ALL }
             )
+            }
             if (hasProjection) {
                 ModeFilterChip(
                     label = strings.cycleChartModeProjection,
@@ -319,6 +325,7 @@ fun HistoricalCycleChart(
                     onClick = { selectedMode = CycleChartMode.PROJECTION }
                 )
             }
+            if (isProUnlocked && fractalData.points2020.isNotEmpty()) {
             ModeFilterChip(
                 label = fractalData.pastCycleLabel,
                 selected = selectedMode == CycleChartMode.CYCLE_2020,
@@ -326,7 +333,8 @@ fun HistoricalCycleChart(
                 modifier = Modifier.weight(0.9f),
                 onClick = { selectedMode = CycleChartMode.CYCLE_2020 }
             )
-            if (fractalData.points2016.isNotEmpty()) {
+            }
+            if (isProUnlocked && fractalData.points2016.isNotEmpty()) {
                 ModeFilterChip(
                     label = fractalData.earlierCycleLabel,
                     selected = selectedMode == CycleChartMode.CYCLE_2016,
@@ -516,7 +524,7 @@ fun HistoricalCycleChart(
                 }
 
                 // 4. Historical 2016-2020 Cycle (Amber Dashed Spline)
-                if (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2016) {
+                if (isProUnlocked && (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2016)) {
                     val offsets2016 = fractalData.points2016.map { mapPoint(it.day, it.normalizedValue) }
                     if (offsets2016.isNotEmpty()) {
                         val path2016 = Path()
@@ -535,7 +543,7 @@ fun HistoricalCycleChart(
                 }
 
                 // 5. Historical 2020-2024 Cycle (Purple Solid Spline)
-                if (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2020) {
+                if (isProUnlocked && (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2020)) {
                     val offsets2020 = fractalData.points2020.map { mapPoint(it.day, it.normalizedValue) }
                     if (offsets2020.isNotEmpty()) {
                         val path2020 = Path()
@@ -710,10 +718,12 @@ fun HistoricalCycleChart(
             if (hasProjection && (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.PROJECTION)) {
                 LegendItem(color = QuantumBlue, label = strings.cycleChartProjectedPath, isDashed = true)
             }
-            if (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2020) {
+            if (isProUnlocked && fractalData.points2020.isNotEmpty() &&
+                (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2020)
+            ) {
                 LegendItem(color = MauveAurora, label = fractalData.pastCycleLabel)
             }
-            if (fractalData.points2016.isNotEmpty() &&
+            if (isProUnlocked && fractalData.points2016.isNotEmpty() &&
                 (selectedMode == CycleChartMode.ALL || selectedMode == CycleChartMode.CYCLE_2016)
             ) {
                 LegendItem(color = PhotonGold, label = fractalData.earlierCycleLabel, isDashed = true)
@@ -749,6 +759,13 @@ fun HistoricalCycleChart(
                 "Cyan is this cycle, from the 2024 halving until today. Purple is 2020 and gold is 2016, on the same day-count. Those lines already happened. They are not a forecast."
             },
             fontSize = 9.5.sp,
+            lineHeight = 13.sp,
+            color = TextMuted
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = com.example.util.CycleReadingText.disclaimer(isGreek),
+            fontSize = 10.sp,
             lineHeight = 13.sp,
             color = TextMuted
         )

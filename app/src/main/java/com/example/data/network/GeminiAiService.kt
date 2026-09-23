@@ -384,8 +384,9 @@ class GeminiAiService(
             4. TIME & GENERAL QUERIES: If the user asks for the time/date, use the live device timestamp provided. If the user asks general or non-crypto questions, answer clearly, intelligently, and conversationally without forcing crypto into the conversation.
             5. Multilingual & Natural: Default to $targetLangName. If the prompt is in Greek or Greeklish (e.g., "t timh exei to xrp twra", "ti wra einai", "poso kanei to sol"), ALWAYS reply in fluent, natural Greek (Ελληνικά). If the user asks in English, German, French, Spanish, etc., adapt immediately and reply fluently in that language!
             6. Formatting: Use clean markdown with bold numbers and bullet points. Keep replies short unless the user asked for detail.
-            7. REFUSE EXECUTION ORDERS & TARGETS: You must refuse buy/sell execution orders and must not invent price targets. Explain data on screen only.
+            7. REFUSE EXECUTION ORDERS & TARGETS: You must refuse buy/sell execution orders and must not invent price targets. Explain data on screen only. Never recommend a position, entry, exit, DCA, or a climax price.
             8. GREETINGS STAY EMPTY OF ANALYSIS: If the user only says hello / hi / γεια / test / "are you there", reply with ONE clean sentence such as "I'm here. What would you like to see?" or "Είμαι εδώ. Τι θα θέλατε να δούμε;". Do not dump prices, cycle lectures, or a menu of topics.
+            9. MISSING NUMBERS: If a snapshot field is blank, N/A, or zero when a live feed is required, say that number is missing. Do not invent it.
             
             Real-Time Live Telemetry Context:
             $timeLine
@@ -513,14 +514,11 @@ class GeminiAiService(
                 isGreetingOrLiveCheck -> presenceReply(language)
 
                 isBuyingStrategy -> """
-                    **🎯 Στρατηγική Εισόδου & Διαχείρισης Ρίσκου**
+                    **Οθόνη, όχι εντολή**
                     
-                    • **Τρέχουσα Τιμή BTC:** `$btcPriceFormatted`
-                    • **Κλίμα Αγοράς (Fear & Greed):** `$fng / 100` (${snapshot.fearAndGreedSentiment})
-                    • **Βέλτιστες Πρακτικές:**
-                      - Σε φάσεις υψηλής απληστίας (Greed > 70), η μέθοδος **DCA (Dollar Cost Averaging)** ή η αναμονή για τοπικά pullbacks προσφέρει καλύτερο risk/reward.
-                      - Αποφύγετε το FOMO σε ανοδικά peaks. Ιστορικά, οι διορθώσεις 15%-25% σε bull market προσφέρουν ιδανικά σημεία επανατοποθέτησης.
-                      - Διατηρείτε πάντα καθορισμένο Stop-Loss και μην υπερμοχλεύετε θέσεις στα Futures.
+                    • **Τιμή BTC στην οθόνη:** `$btcPriceFormatted`
+                    • Διαβάζω μόνο ό,τι φαίνεται. Δεν προτείνω αγορά, πώληση ή στόχο.
+                    • ${com.example.util.CycleReadingText.DISCLAIMER_EL}
                 """.trimIndent()
 
                 isPeakOrAth -> """
@@ -618,14 +616,11 @@ class GeminiAiService(
             isGreetingOrLiveCheck -> presenceReply(language)
 
             isBuyingStrategy -> """
-                **🎯 Entry Strategy & Risk Management**
+                **On-screen reading only**
                 
-                • **Current Spot BTC:** `$btcPriceFormatted`
-                • **Market Sentiment:** `$fng / 100` (${snapshot.fearAndGreedSentiment})
-                • **Best Practices:**
-                  - During high greed readings (>70), dollar-cost averaging (DCA) and waiting for local pullbacks provide a superior risk/reward ratio.
-                  - Avoid FOMO buying at breakout tops. Pullbacks of 15%-25% in bull markets historically present the healthiest reload opportunities.
-                  - Maintain strict stop-losses and avoid over-leveraging on perpetual futures.
+                • **BTC on screen:** `$btcPriceFormatted`
+                • I only read what is on the screen. I do not recommend a buy, a sell, or a target.
+                • ${com.example.util.CycleReadingText.DISCLAIMER_EN}
             """.trimIndent()
 
             isPeakOrAth -> """

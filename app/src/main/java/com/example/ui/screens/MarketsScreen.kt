@@ -111,6 +111,7 @@ fun MarketsScreen(
     unreadAlertsCount: Int = 0,
     onNavigateToTab: (MainTab) -> Unit = {},
     onRefresh: () -> Unit,
+    onBackToCycle: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
@@ -128,6 +129,20 @@ fun MarketsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 110.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            if (onBackToCycle != null) {
+                item {
+                    Text(
+                        text = if (strings.language.code == "el") "← Κύκλος Bitcoin" else "← Bitcoin cycle",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = QuantumCyan,
+                        modifier = Modifier
+                            .clickable { onBackToCycle() }
+                            .padding(vertical = 4.dp)
+                    )
+                }
+            }
+
             // 1. TOP APP BAR
             item {
                 val avgMarketVolatility = remember(coins) {
