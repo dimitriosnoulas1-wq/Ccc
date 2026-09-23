@@ -188,8 +188,6 @@ fun LiveOrderFlowSection(
                         letterSpacing = 1.sp,
                         color = QuantumCyan
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    DemoDataLabel()
                 }
             }
 
