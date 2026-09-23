@@ -78,6 +78,7 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.util.CoinLocalization
 import com.example.util.LocalAppStrings
+import com.example.util.tr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -436,18 +437,25 @@ fun WhyCoinIsMovingCard(
     onExplain: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val isGain = coin.change24h >= 0
     val absChange = kotlin.math.abs(coin.change24h)
-    val trendDirection = if (isGain) "higher" else "lower"
-    val isGreek = LocalAppStrings.current is com.example.util.GreekAppStrings
+    val trendDirection = strings.tr(
+        en = if (isGain) "higher" else "lower",
+        el = if (isGain) "υψηλότερα" else "χαμηλότερα",
+        de = if (isGain) "höher" else "tiefer",
+        fr = if (isGain) "plus haut" else "plus bas",
+        es = if (isGain) "al alza" else "a la baja",
+        it = if (isGain) "più in alto" else "più in basso"
+    )
     val change24hFormatted = com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
 
     // Deterministic metrics derived from real data
     val spotIntensity = when {
-        absChange > 5.0 -> "VERY HIGH"
-        absChange > 2.0 -> "HIGH"
-        absChange > 0.5 -> "MODERATE"
-        else -> "LOW"
+        absChange > 5.0 -> strings.tr(en = "VERY HIGH", el = "ΠΟΛΥ ΥΨΗΛΗ", de = "SEHR HOCH", fr = "TRÈS ÉLEVÉE", es = "MUY ALTA", it = "MOLTO ALTA")
+        absChange > 2.0 -> strings.tr(en = "HIGH", el = "ΥΨΗΛΗ", de = "HOCH", fr = "ÉLEVÉE", es = "ALTA", it = "ALTA")
+        absChange > 0.5 -> strings.tr(en = "MODERATE", el = "ΜΕΤΡΙΑ", de = "MITTEL", fr = "MODÉRÉE", es = "MODERADA", it = "MODERATA")
+        else -> strings.tr(en = "LOW", el = "ΧΑΜΗΛΗ", de = "NIEDRIG", fr = "FAIBLE", es = "BAJA", it = "BASSA")
     }
     val spotBars = when {
         absChange > 5.0 -> 5
@@ -457,18 +465,27 @@ fun WhyCoinIsMovingCard(
     }
     val spotColor = if (isGain) TachyonMint else SoftCrimson
 
-    val oiIntensity = if (absChange > 3.0) "HIGH" else "MODERATE"
+    val oiIntensity = if (absChange > 3.0)
+        strings.tr(en = "HIGH", el = "ΥΨΗΛΗ", de = "HOCH", fr = "ÉLEVÉE", es = "ALTA", it = "ALTA")
+    else
+        strings.tr(en = "MODERATE", el = "ΜΕΤΡΙΑ", de = "MITTEL", fr = "MODÉRÉE", es = "MODERADA", it = "MODERATA")
     val oiBars = if (absChange > 3.0) 4 else 3
 
-    val fundingIntensity = if (isGain && absChange > 2.0) "ELEVATED (+0.012%)" else "NORMAL (+0.008%)"
+    val fundingIntensity = if (isGain && absChange > 2.0)
+        strings.tr(en = "ELEVATED", el = "ΑΥΞΗΜΕΝΟ", de = "ERHÖHT", fr = "ÉLEVÉ", es = "ELEVADO", it = "ELEVATO")
+    else
+        strings.tr(en = "NORMAL", el = "ΚΑΝΟΝΙΚΟ", de = "NORMAL", fr = "NORMAL", es = "NORMAL", it = "NORMALE")
     val fundingBars = if (isGain && absChange > 2.0) 4 else 2
     val fundingColor = if (isGain && absChange > 2.0) PhotonGold else QuantumCyan
 
-    val liqIntensity = if (absChange > 4.0) "CASCADE RISK" else "NORMAL"
+    val liqIntensity = if (absChange > 4.0)
+        strings.tr(en = "CASCADE RISK", el = "ΚΙΝΔΥΝΟΣ ΚΑΣΚΑΔΑΣ", de = "KASKADENRISIKO", fr = "RISQUE DE CASCADE", es = "RIESGO DE CASCADA", it = "RISCHIO A CASCATA")
+    else
+        strings.tr(en = "NORMAL", el = "ΚΑΝΟΝΙΚΟ", de = "NORMAL", fr = "NORMAL", es = "NORMAL", it = "NORMALE")
     val liqBars = if (absChange > 4.0) 5 else 2
     val liqColor = if (absChange > 4.0) SoftCrimson else TextMuted
 
-    val macroIntensity = "NEUTRAL"
+    val macroIntensity = strings.tr(en = "NEUTRAL", el = "ΟΥΔΕΤΕΡΟ", de = "NEUTRAL", fr = "NEUTRE", es = "NEUTRAL", it = "NEUTRALE")
     val macroBars = 2
 
     Box(
@@ -488,13 +505,13 @@ fun WhyCoinIsMovingCard(
             ) {
                 Column {
                     Text(
-                        text = if (isGreek) "Γιατί κινείται το ${coin.symbol};" else "Why is ${coin.symbol} moving?",
+                        text = String.format(java.util.Locale.getDefault(), strings.whyAssetMovingHeader, coin.symbol),
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.Black,
                         color = TextPrimary
                     )
                     Text(
-                        text = "24h Delta: $change24hFormatted • Real Market Feed",
+                        text = "${strings.delta24hLabel}: $change24hFormatted • ${strings.realMarketFeed}",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextSecondary
@@ -512,7 +529,7 @@ fun WhyCoinIsMovingCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (isGreek) "Εξήγηση >" else "Explain >",
+                        text = strings.explainAction,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = QuantumCyan
@@ -523,31 +540,31 @@ fun WhyCoinIsMovingCard(
             // 5 Driver Meters (Derived from real market metrics)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 DriverMeterRow(
-                    label = if (isGreek) "Αγορές Spot" else "Spot Flow",
+                    label = strings.driverSpotDemand,
                     intensity = spotIntensity,
                     activeBars = spotBars,
                     barColor = spotColor
                 )
                 DriverMeterRow(
-                    label = if (isGreek) "Open Interest" else "Open Interest",
+                    label = strings.driverOpenInterest,
                     intensity = oiIntensity,
                     activeBars = oiBars,
                     barColor = PhotonGold
                 )
                 DriverMeterRow(
-                    label = if (isGreek) "Επιτόκιο Funding" else "Funding Rate",
+                    label = strings.driverFundingSkew,
                     intensity = fundingIntensity,
                     activeBars = fundingBars,
                     barColor = fundingColor
                 )
                 DriverMeterRow(
-                    label = if (isGreek) "Ρευστοποιήσεις" else "Liquidations",
+                    label = strings.driverLiquidations,
                     intensity = liqIntensity,
                     activeBars = liqBars,
                     barColor = liqColor
                 )
                 DriverMeterRow(
-                    label = if (isGreek) "Μακροοικονομικά" else "Macro Context",
+                    label = strings.driverMacroSentiment,
                     intensity = macroIntensity,
                     activeBars = macroBars,
                     barColor = TextMuted
@@ -563,10 +580,14 @@ fun WhyCoinIsMovingCard(
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = if (isGreek)
-                        "Το ${coin.symbol} κινείται $trendDirection ($change24hFormatted) υποστηριζόμενο από $spotIntensity ροές spot και $oiIntensity συγκέντρωση μόχλευσης στα παράγωγα."
-                    else
-                        "${coin.symbol} is trending $trendDirection ($change24hFormatted) driven by $spotIntensity spot volume and $oiIntensity derivatives leverage positioning.",
+                    text = strings.tr(
+                        en = "${coin.symbol} is trending $trendDirection ($change24hFormatted) driven by $spotIntensity spot volume and $oiIntensity derivatives leverage positioning.",
+                        el = "Το ${coin.symbol} κινείται $trendDirection ($change24hFormatted) υποστηριζόμενο από $spotIntensity ροές spot και $oiIntensity συγκέντρωση μόχλευσης στα παράγωγα.",
+                        de = "${coin.symbol} läuft $trendDirection ($change24hFormatted), getrieben von $spotIntensity Spot-Volumen und $oiIntensity Derivate-Hebel.",
+                        fr = "${coin.symbol} évolue $trendDirection ($change24hFormatted), porté par un volume spot $spotIntensity et un levier dérivés $oiIntensity.",
+                        es = "${coin.symbol} se mueve $trendDirection ($change24hFormatted), impulsado por volumen spot $spotIntensity y apalancamiento $oiIntensity.",
+                        it = "${coin.symbol} si muove $trendDirection ($change24hFormatted), spinto da volume spot $spotIntensity e leva derivati $oiIntensity."
+                    ),
                     fontSize = 11.sp,
                     color = TextSecondary,
                     lineHeight = 15.sp
@@ -851,10 +872,7 @@ private fun AnalyticsTabContent(
                     source = if (coin.priceUpdatedAtMs > 0L) "Market price" else "Connecting..."
                 )
                 Text(
-                    text = if (selectedLanguage == com.example.data.model.AppLanguage.GREEK)
-                        "Ζωντανές κινήσεις · όχι πρόβλεψη"
-                    else
-                        "Live realized moves · not a forecast",
+                    text = strings.liveRealizedHint,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = QuantumCyan.copy(alpha = 0.85f)
@@ -862,20 +880,19 @@ private fun AnalyticsTabContent(
             }
 
             val liveMoves = CoinLocalization.liveRealizedMoves(coin)
-            val isGreekMoves = selectedLanguage == com.example.data.model.AppLanguage.GREEK
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 PredictionBadgeCard(
-                    timeframe = if (isGreekMoves) "24ω" else "24h",
+                    timeframe = strings.liveMoves24hLabel,
                     target = liveMoves.first,
                     probabilityTag = "LIVE",
                     confidence = if (coin.priceUpdatedAtMs > 0L) "live" else "—",
                     modifier = Modifier.weight(1f)
                 )
                 PredictionBadgeCard(
-                    timeframe = if (isGreekMoves) "Spark" else "Spark",
+                    timeframe = strings.liveMovesSparkLabel,
                     target = liveMoves.second,
                     probabilityTag = "LIVE",
                     confidence = if (coin.sparkline.size >= 2) "live" else "—",
@@ -891,10 +908,7 @@ private fun AnalyticsTabContent(
             }
 
             Text(
-                text = if (isGreekMoves)
-                    "Οι κάρτες δείχνουν πραγματοποιημένες live κινήσεις. Δεν υπάρχει εφευρεμένο win rate ή σενάριο."
-                else
-                    "Cards show realized live moves. No invented win-rate or scenario distribution.",
+                text = strings.liveRealizedDisclaimer,
                 fontSize = 9.5.sp,
                 lineHeight = 13.sp,
                 color = TextMuted
@@ -955,13 +969,13 @@ private fun AnalyticsTabContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MiniStat(
-                    title = if (isGreek) "14D RSI" else "14D RSI",
+                    title = strings.rsi14Label,
                     value = rsiValue,
                     sub = when {
-                        rsiNumber == null -> if (isGreek) "Αναμονή sparkline" else "Awaiting sparkline"
-                        rsiNumber >= 55 -> if (isGreek) "Ανοδικό μομέντουμ" else "Bullish momentum"
-                        rsiNumber <= 45 -> if (isGreek) "Υπερπωλημένο / πτωτικό" else "Oversold / weak"
-                        else -> if (isGreek) "Ουδέτερη συσσώρευση" else "Neutral consolidation"
+                        rsiNumber == null -> strings.awaitingSparkline
+                        rsiNumber >= 55 -> strings.bullishMomentumShort
+                        rsiNumber <= 45 -> strings.oversoldWeakShort
+                        else -> strings.neutralConsolidationShort
                     },
                     valueColor = when {
                         rsiNumber == null -> TextMuted
@@ -972,9 +986,9 @@ private fun AnalyticsTabContent(
                     modifier = Modifier.weight(1f)
                 )
                 MiniStat(
-                    title = if (isGreek) "Απόσταση από ATH" else "Distance from ATH",
+                    title = strings.distanceFromAth,
                     value = momentumMetrics.second,
-                    sub = if (isGreek) "Από live τιμή / ATH" else "From live price / ATH",
+                    sub = strings.fromLivePriceAth,
                     valueColor = QuantumCyan,
                     modifier = Modifier.weight(1f)
                 )
@@ -990,7 +1004,7 @@ private fun AnalyticsTabContent(
                     value = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0)
                         com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)
                     else "—",
-                    sub = "${coin.calculatedAthDaysAgo}d ${if (isGreek) "από το ATH" else "since ATH"}",
+                    sub = "${coin.calculatedAthDaysAgo}d ${strings.sinceAthSuffix}",
                     valueColor = if (dd < 0) SoftCrimson else TachyonMint,
                     modifier = Modifier.weight(1f)
                 )
@@ -998,9 +1012,9 @@ private fun AnalyticsTabContent(
                     com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
                 else "—"
                 MiniStat(
-                    title = if (isGreek) "24ωρη Μεταβολή" else "24h Delta",
+                    title = strings.delta24hLabel,
                     value = change24Formatted,
-                    sub = if (isGreek) "Ζωντανή Ροή Αγοράς" else "Real Market Feed",
+                    sub = strings.realMarketFeed,
                     valueColor = if (coin.priceUpdatedAtMs <= 0L) TextMuted else if (coin.change24h >= 0) TachyonMint else SoftCrimson,
                     modifier = Modifier.weight(1f)
                 )
@@ -1030,7 +1044,7 @@ private fun OnChainTabContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isGreek) "Μηχανισμός Συναίνεσης:" else "Consensus Protocol:",
+                    text = strings.consensusProtocolLabel,
                     fontSize = 12.sp,
                     color = TextSecondary
                 )
@@ -1141,14 +1155,14 @@ private fun OnChainTabContent(
                 MiniStat(
                     title = strings.activeAddressesEstimate,
                     value = onChainMetrics.first,
-                    sub = if (isGreek) "Χωρίς live feed" else "No live feed",
+                    sub = strings.noLiveFeed,
                     valueColor = QuantumCyan,
                     modifier = Modifier.weight(1f)
                 )
                 MiniStat(
                     title = strings.exchangeNetFlowLabel,
                     value = onChainMetrics.third,
-                    sub = if (isGreek) "Χωρίς live feed" else "No live feed",
+                    sub = strings.noLiveFeed,
                     valueColor = TextMuted,
                     modifier = Modifier.weight(1f)
                 )
@@ -1176,10 +1190,7 @@ private fun OnChainTabContent(
                         color = TextPrimary
                     )
                     Text(
-                        text = if (isGreek)
-                            "Δεν υπάρχει δημόσιο live feed για συγκέντρωση πορτοφολιών. Εμφανίζεται — αντί για εφευρεμένο ποσοστό."
-                        else
-                            "No public live feed for wallet concentration. Showing — instead of an invented share.",
+                        text = strings.noWalletConcentrationFeed,
                         fontSize = 10.sp,
                         lineHeight = 14.sp,
                         color = TextSecondary
@@ -1191,7 +1202,7 @@ private fun OnChainTabContent(
 
     // 4. Genesis & Founder Heritage
     SectionContainer(
-        title = if (isGreek) "Ιστορικό & Δημιουργία" else "Genesis & Heritage",
+        title = strings.genesisHeritageTitle,
         icon = Icons.Default.CheckCircle
     ) {
         Row(
