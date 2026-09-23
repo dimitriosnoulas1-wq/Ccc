@@ -7,7 +7,7 @@ import com.example.data.model.BlockchainDiagramType
 object BlockchainLearnRepository {
 
     fun getChapters(language: AppLanguage): List<BlockchainChapter> {
-        return when (language) {
+        val base = when (language) {
             AppLanguage.GREEK -> greekChapters
             AppLanguage.GERMAN -> germanChapters
             AppLanguage.FRENCH -> frenchChapters
@@ -15,6 +15,7 @@ object BlockchainLearnRepository {
             AppLanguage.ITALIAN -> italianChapters
             AppLanguage.ENGLISH -> englishChapters
         }
+        return BlockchainLearnExpansions.expand(language, base)
     }
 
     private val greekChapters = listOf(
@@ -190,53 +191,53 @@ object BlockchainLearnRepository {
         ),
         BlockchainChapter(
             id = 18,
-            title = "18. Μηχανική Ρευστοποιήσεων & Leverage",
-            content = "Στα παράγωγα κρυπτονομισμάτων (perpetual futures), η μόχλευση (leverage) επιτρέπει άνοιγμα θέσεων με κλάσμα του απαιτούμενου κεφαλαίου. Όταν η αγορά κινείται αντίθετα και το margin εξαντληθεί, ο μηχανισμός ρευστοποίησης κλείνει αυτόματα τη θέση.\n\nΟι αλυσιδωτές ρευστοποιήσεις (liquidation cascades) δημιουργούν βίαιες εκτινάξεις τιμών (long/short squeezes), όπου οι εντολές stop-loss και liquidations ενεργούν ως επιθετικές market εντολές.\n\nΗ διαχείριση κινδύνου και η κατανόηση του Liquidation Heatmap είναι κρίσιμα για την επιβίωση στο trading παραγώγων.",
+            title = "18. Μόχλευση και μηχανισμός ρευστοποίησης",
+            content = "Σε ένα perpetual συμβόλαιο η μόχλευση σημαίνει έκθεση μεγαλύτερη από τα μετρητά που έχεις δεσμεύσει. Δίνεις περιθώριο (margin). Το ανταλλακτήριο επιτρέπει μεγαλύτερο ονομαστικό μέγεθος θέσης.\n\nIsolated margin περιορίζει τη ζημιά στο περιθώριο εκείνης της θέσης. Cross margin μοιράζεται το υπόλοιπο του λογαριασμού. Αυτό είναι κανόνας της πλατφόρμας, όχι κανόνας του Bitcoin.\n\nΤο maintenance margin είναι το κατώφλι. Όταν η τιμή mark κινηθεί αντίθετα και το απομένον περιθώριο πέσει κάτω από αυτό το κατώφλι, η μηχανή κινδύνου στέλνει εντολή κλεισίματος. Δεν ψηφίζουν οι miners. Κλείνει το ανταλλακτήριο.\n\nΑν πολλές θέσεις έχουν παρόμοιο κατώφλι, τα αναγκαστικά κλεισίματα χτυπούν μαζί το βιβλίο εντολών. Αυτό λέγεται cascade: περιγραφή του matching, όχι σήμα αγοράς ή πώλησης.\n\nΟι χάρτες ρευστοποίησης είναι εκτιμήσεις από ανοιχτό ενδιαφέρον. Δεν είναι τοίχοι που «πρέπει να σπάσουν». Το CryptoCycles δεν βγάζει εντολή από αυτούς.",
             diagramType = BlockchainDiagramType.LIQUIDATION_ENGINEERING,
-            diagramCaption = "Σχήμα: Margin εξαντλείται -> Trigger Liquidation -> Βίαιο Market Sell/Buy.",
-            diagramExtraNote = null,
-            realExample = "Σε απότομη πτώση 5%, θέσεις με μόχλευση 20x ρευστοποιούνται αυτόματα, δημιουργώντας πτωτικό waterfall.",
-            commonMistake = "«Η υψηλή μόχλευση αυξάνει απλώς τα κέρδη.» Στην πραγματικότητα πολλαπλασιάζει γεωμετρικά την πιθανότητα ολικής απώλειας κεφαλαίου."
+            diagramCaption = "Σχήμα: Περιθώριο -> Κατώφλι συντήρησης -> Αναγκαστικό κλείσιμο από το ανταλλακτήριο.",
+            diagramExtraNote = "Η ρευστοποίηση είναι κανόνας πλατφόρμας, όχι consensus του chain.",
+            realExample = "Μια isolated θέση 10x κλείνει όταν η mark φτάσει το maintenance εκείνης της θέσης, ακόμη κι αν ο υπόλοιπος λογαριασμός έχει μετρητά.",
+            commonMistake = "«Με ρευστοποιεί το blockchain.» Όχι. Η μηχανή κινδύνου του ανταλλακτηρίου κλείνει τη θέση. Άλλο στρώμα από την on-chain εκκαθάριση."
         ),
         BlockchainChapter(
             id = 19,
-            title = "19. Δυναμική Funding Rates & Perpetual Swaps",
-            content = "Τα Perpetual Futures δεν έχουν ημερομηνία λήξης. Για να συγκλίνει η τιμή του συμβολαίου με την spot τιμή, χρησιμοποιείται ο μηχανισμός του Funding Rate.\n\nΌταν το funding rate είναι θετικό, οι Longs πληρώνουν τους Shorts κάθε 8 ώρες, υποδεικνύοντας υπερθέρμανση και υπερβολική αισιοδοξία. Όταν είναι αρνητικό, οι Shorts πληρώνουν τους Longs (απαισιοδοξία / short squeeze potential).\n\nΑκραίες τιμές funding rate αποτελούν συχνά αξιόπιστους δείκτες αντιστροφής τάσης στην αγορά.",
+            title = "19. Funding rate και perpetual swaps",
+            content = "Τα perpetual δεν έχουν ημερομηνία λήξης. Χωρίς δεσμό, η τιμή mark μπορεί να ξεφύγει από τον spot δείκτη.\n\nΤο funding είναι περιοδική πληρωμή ανάμεσα σε longs και shorts. Θετικό: οι longs πληρώνουν τους shorts. Αρνητικό: οι shorts πληordnen τους longs. Σε μεγάλα venues ο κύκλος είναι συχνά οκτάωρος. Αυτό είναι παράμετρος πλατφόρμας, όχι νόμος του Bitcoin.\n\nΣυνήθως η πληρωμή είναι peer-to-peer. Το ανταλλακτήριο υπολογίζει το ποσό. Δεν είναι πάντα «προμήθεια που κρατάει το μαγαζί» — μερικά venues κρατούν κομμάτι. Δες τον πίνακα της πλατφόρμας.\n\nΑκραίο funding είναι κόστος διακράτησης. Δεν είναι αξιόπιστο σήμα αντιστροφής. Αυτό το μάθημα δεν το διαβάζει ως κορυφή ή πάτο.\n\nΣτα Futures το app δείχνει live εκτύπωση funding όταν υπάρχει τροφοδοσία. Αν λείπει, γράφει παύλα. Δεν μαντεύει ποσοστό.",
             diagramType = BlockchainDiagramType.FUNDING_DYNAMICS,
-            diagramCaption = "Σχήμα: Perpetual Price > Spot -> Θετικό Funding (Longs πληρώνουν Shorts).",
-            diagramExtraNote = null,
-            realExample = "Σε bull runs το funding φτάνει συχνά το +0.05% ανά 8ωρο, καθιστώντας τις leveraged θέσεις μη βιώσιμες μακροπρόθεσμα.",
-            commonMistake = "«Το funding rate είναι προμήθεια που κρατάει το ανταλλακτήριο.» Είναι peer-to-peer πληρωμή ανάμεσα στους traders."
+            diagramCaption = "Σχήμα: Mark πάνω από τον δείκτη -> Θετικό funding -> Longs πληρώνουν Shorts.",
+            diagramExtraNote = "Το διάστημα πληρωμής το ορίζει το venue, όχι το πρωτόκολλο.",
+            realExample = "Όταν η mark κάθεται πάνω από τον δείκτη, ο τύπος συνήθως βγάζει θετικό ρυθμό ώστε οι longs να πληρώνουν τους shorts μέχρι να πλησιάσουν οι δύο τιμές.",
+            commonMistake = "«Το funding είναι πάντα προμήθεια του ανταλλακτηρίου.» Συνήθως είναι μεταφορά μεταξύ traders. Επίσης λάθος: «ακραίο funding σημαίνει ότι ήρθε η κορυφή.» Αυτό είναι πρόβλεψη, όχι μηχανισμός."
         ),
         BlockchainChapter(
             id = 20,
-            title = "20. Ροή Εντολών & Βάθος Αγοράς",
-            content = "Το Order Book (βιβλίο εντολών) αποτυπώνει την πρόθεση αγοράς (Bids) και πώλησης (Asks) σε διαφορετικά επίπεδα τιμών. Το Market Depth δείχνει πόση ρευστότητα υπάρχει πριν μετακινηθεί η τιμή.\n\nΟι institutional traders και οι market makers χρησιμοποιούν Iceberg εντολές και TWAP/VWAP αλγορίθμους για να εκτελούν μεγάλους όγκους χωρίς να μετακινούν επιθετικά την τιμή.\n\nΗ ανάλυση Liquidity Clusters (συγκεντρώσεις ρευστότητας) αποκαλύπτει πού είναι τοποθετημένες οι μαζικές εντολές των market makers.",
+            title = "20. Βιβλίο εντολών και βάθος αγοράς",
+            content = "Bids είναι εντολές αγοράς που περιμένουν. Asks είναι εντολές πώλησης που περιμένουν. Το spread είναι το κενό ανάμεσά τους.\n\nΗ market εντολή παίρνει ό,τι υπάρχει στην αντίθετη πλευρά και περπατά το βιβλίο. Η limit εντολή κάθεται μέχρι να συναντήσει αντίθετο μέγεθος.\n\nΒάθος είναι πόσο μέγεθος κάθεται κοντά στην τελευταία τιμή. Ρηχό βιβλίο σημαίνει ότι μια εντολή take αλλάζει περισσότερο την τελευταία εκτύπωση. Δεν εφευρίσκουμε ποσοστό ολίσθησης.\n\nΤο ορατό μέγεθος μπορεί να ακυρωθεί πριν εκτελεστεί. Ένας χάρτης ρευστότητας δεν είναι εγγυημένος τοίχος.\n\nΑυτό είναι μηχανική matching σε venue. Δεν είναι consensus του chain και δεν είναι whale radar.",
             diagramType = BlockchainDiagramType.QUANTUM_ORDER_FLOW,
-            diagramCaption = "Σχήμα: Orderbook Depth -> Bid/Ask Clusters -> Slippage & Execution.",
-            diagramExtraNote = null,
-            realExample = "Μια εντολή πώλησης 1.000 BTC σε ρηχό βιβλίο εντολών θα προκαλέσει slippage 3-4% αν εκτελεστεί ως market order.",
-            commonMistake = "«Οι εντολές στο orderbook είναι εγγυημένες συναλλαγές.» Πολλές εντολές είναι spoofing ή ακυρώνονται πριν εκτελεστούν."
+            diagramCaption = "Σχήμα: Bids | Spread | Asks. Η market εντολή καταναλώνει την αντίθετη πλευρά.",
+            diagramExtraNote = "Το βιβλίο ανήκει στο ανταλλακτήριο, όχι στο blockchain.",
+            realExample = "Μια market αγορά καταναλώνει τις χαμηλότερες asks με τη σειρά μέχρι να καλυφθεί το ζητούμενο μέγεθος. Αν αυτές οι asks είναι μικρές, η τελευταία εκτέλεση απέχει περισσότερο από την πρώτη ask.",
+            commonMistake = "«Ό,τι βλέπω στο βιβλίο θα εκτελεστεί σίγουρα.» Οι εντολές που κάθονται μπορούν να φύγουν πριν το match."
         ),
         BlockchainChapter(
             id = 21,
-            title = "21. Μακροοικονομικοί Κύκλοι Halving",
-            content = "Το Bitcoin Halving λαμβάνει χώρα κάθε 210.000 blocks (περίπου 4 έτη), μειώνοντας την ανταμοιβή των εξορυκτών (block reward) στο μισό (από 50 BTC το 2009 σε 3.125 BTC το 2024).\n\nΑυτό το προγραμματισμένο σοκ προσφοράς (supply shock) δημιουργεί 4ετείς μακροοικονομικούς κύκλους: Συσσώρευση (Accumulation), Παραβολική Άνοδος (Bull Run), Διανομή (Distribution) και Αρκούδα (Bear Market).\n\nΗ κατανόηση του σημείου που βρισκόμαστε στον κύκλο επιτρέπει μακροπρόθεσμο στρατηγικό σχεδιασμό κεφαλαίου.",
+            title = "21. Πρόγραμμα halving και ιστορικό έκδοσης",
+            content = "Κάθε 210.000 blocks η επιδότηση των miners στο Bitcoin πέφτει στο μισό: 50, μετά 25, 12,5, 6,25, και 3,125 μετά το 2024. Αυτό είναι έκδοση πρωτοκόλλου, όχι εντολή τιμής.\n\nΗ νέα προσφορά από την επιδότηση μικραίνει. Η ζήτηση, τα ETF, η μόχλευση και η ρευστότητα είναι χωριστά γεγονότα. Δεν ενώνονται σε έναν αυτόματο κύκλο «άνθισης».\n\nΟι προηγούμενοι κύκλοι (2012, 2016, 2020, 2024) δεν μοιράζονται μία ημέρα κορυφής. Αυτό το μάθημα δεν διδάσκει κανόνα μηνών μετά το halving.\n\nΤο γράφημα στην αρχική είναι ιστορική επικάλυψη: μέρα από το τελευταίο halving και παλιές διαδρομές. Δεν σχεδιάζει το μέλλον.\n\nΗ έκδοση εξηγεί γιατί υπάρχει μετρητής ημερών. Δεν είναι συνταγή τοποθέτησης κεφαλαίου.",
             diagramType = BlockchainDiagramType.MACRO_HALVING_CYCLES,
-            diagramCaption = "Σχήμα: Block Reward / 2 -> Supply Shock -> 4-Year Fractal Cycle.",
-            diagramExtraNote = null,
-            realExample = "Στα προηγούμενα halvings (2012, 2016, 2020), η κορύφωση της τιμής εμφανίστηκε 12-18 μήνες μετά το εκάστοτε halving.",
-            commonMistake = "«Το halving ανεβάζει ακαριαία την τιμή την ίδια ημέρα.» Η επίδραση του supply shock απαιτεί μήνες για να γίνει αισθητή."
+            diagramCaption = "Σχήμα: 50 → 25 → 12,5 → 6,25 → 3,125 BTC επιδότηση ανά block.",
+            diagramExtraNote = "Η επιδότηση αλλάζει στο halving block. Η τιμή είναι άλλη αγορά.",
+            realExample = "Μετά το halving του 2024 η επιδότηση είναι 3,125 BTC ανά block. Αυτός ο αριθμός είναι στο πρωτόκολλο. Το επόμενο υψηλό εκτύπωσης δεν είναι.",
+            commonMistake = "«Η τιμή πηδά την ώρα που αλλάζει η επιδότηση.» Στο συγκεκριμένο block αλλάζει η έκδοση. Η τιμή είναι χωριστή αγορά, όχι διακόπτης του πρωτοκόλλου."
         ),
         BlockchainChapter(
             id = 22,
-            title = "22. Θεσμική Διαχείριση Κινδύνου",
-            content = "Η επιβίωση και η κερδοφορία στις αγορές κρυπτονομισμάτων δεν καθορίζονται από τις σωστές προβλέψεις, αλλά από τη διαχείριση του μέγιστου drawdown και του ρίσκου ανά θέση.\n\nΟι θεσμικοί επενδυτές χρησιμοποιούν σταθερό κανόνα 1-2% μέγιστου ρίσκου ανά συναλλαγή, υπολογίζοντας το position size βάσει του stop-loss και όχι βάσει επιθυμητού κέρδους.\n\nΗ διαφοροποίηση, η προστασία κεφαλαίου και η αποφυγή συναισθηματικών αποφάσεων (FOMO / FUD) αποτελούν το θεμέλιο της επαγγελματικής διαχείρισης.",
+            title = "22. Πώς το ανταλλακτήριο καλύπτει ζημιές",
+            content = "Όταν μια ρευστοποίηση δεν προλάβει να κλείσει σε τιμή που καλύπτει το χρέος, το κενό είναι πρώτα πρόβλημα του ανταλλακτηρίου.\n\nΤα συνηθισμένα εργαλεία είναι ταμείο ασφάλισης / backstop, αυτόματη μείωση θέσεων (ADL) απέναντι σε αντίθετους κερδισμένους λογαριασμούς, και σε παλιότερα σχέδια κοινωνικοποίηση ζημιάς.\n\nIsolated ή cross αλλάζει ποιος πληρώνει πρώτος: μία θέση ή όλος ο λογαριασμός.\n\nΑυτοί είναι κανόνες venue. Δεν είναι συνταγή μεγέθους θέσης και δεν υπόσχονται κέρδος.\n\nΤο CryptoCycles δεν ορίζει μέγεθος θέσης, δεν βάζει stop και δεν λέει ούτε all-in ούτε σταδιακή είσοδο.",
             diagramType = BlockchainDiagramType.INSTITUTIONAL_RISK,
-            diagramCaption = "Σχήμα: Portfolio Size -> Fixed Risk % -> Dynamic Position Sizing.",
-            diagramExtraNote = null,
-            realExample = "Αν ρισκάρεις 1% ανά trade, χρειάζονται 100 συνεχόμενες αποτυχίες για να μηδενίσεις το κεφάλαιό σου.",
-            commonMistake = "«Για να βγάλω γρήγορα χρήματα πρέπει να βάζω 'all-in' σε ένα coin.» Αυτή είναι η πιο σίγουρη συνταγή ολικής καταστροφής."
+            diagramCaption = "Σχήμα: Αναγκαστικό κλείσιμο -> Ταμείο ασφάλισης -> ADL αν το ταμείο δεν φτάνει.",
+            diagramExtraNote = "Κανόνες πλατφόρμας. Όχι οδηγός χαρτοφυλακίου.",
+            realExample = "Αν το αναγκαστικό κλείσιμο γεμίσει χειρότερα από την τιμή χρεοκοπίας, μερικά venues παίρνουν το κενό από ταμείο ασφάλισης πριν μειώσουν άλλους λογαριασμούς.",
+            commonMistake = "«Οι θεσμικοί έχουν έναν επίσημο κανόνα ρίσκου ανά συναλλαγή, άρα κάνε το ίδιο.» Αυτό είναι σχολικό σχήμα, όχι πρωτόκολλο και όχι συμβουλή αυτού του app."
         )
     )
 
@@ -413,53 +414,53 @@ object BlockchainLearnRepository {
         ),
         BlockchainChapter(
             id = 18,
-            title = "18. Liquidation Engineering & Leverage",
-            content = "In perpetual futures trading, leverage enables capital-efficient exposure. However, when adverse price moves exhaust the maintenance margin, liquidation engines forcefully close positions to protect the exchange solvency.\n\nCascading liquidations trigger violent price squeezes (long/short squeezes), transforming triggered stop-losses and liquidations into aggressive market orders that vacuum remaining orderbook depth.\n\nMastering risk boundaries, liquidation heatmaps, and margin buffers is mandatory for capital preservation.",
+            title = "18. Leverage and liquidation mechanics",
+            content = "On a perpetual contract, leverage means exposure larger than the cash you posted. You lock margin. The venue lets the notional size be bigger than that cash.\n\nIsolated margin confines the loss to that position's margin. Cross margin shares the account balance. These are venue rules, not Bitcoin consensus rules.\n\nMaintenance margin is the floor. When mark price moves against you and remaining margin falls below that floor, the risk engine submits a close. Miners do not vote on it. The exchange closes it.\n\nIf many positions share a similar trigger, the forced closes hit the book together. That cascade is a description of matching, not a buy or sell call.\n\nLiquidation maps estimate where open interest might be vulnerable. They are not walls that \"must break.\" CryptoCycles does not issue an order from them.",
             diagramType = BlockchainDiagramType.LIQUIDATION_ENGINEERING,
-            diagramCaption = "Diagram: Margin depletion -> Liquidation threshold -> Market order cascade.",
-            diagramExtraNote = null,
-            realExample = "A 5% sudden drop in a volatile token triggers 20x liquidation cascades, driving flash wicks on derivatives exchanges.",
-            commonMistake = "\"High leverage creates guaranteed wealth faster.\" It exponentially scales the probability of total account wipeout (zero margin)."
+            diagramCaption = "Diagram: Posted margin -> Maintenance floor -> Venue-forced close.",
+            diagramExtraNote = "Liquidation is an exchange rule, not chain consensus.",
+            realExample = "A 10x isolated position is closed when mark reaches that position's maintenance threshold, even if the rest of the account still holds cash.",
+            commonMistake = "\"The blockchain liquidated me.\" No. The venue risk engine closed the position. On-chain settlement is a different layer."
         ),
         BlockchainChapter(
             id = 19,
-            title = "19. Funding Rate Dynamics & Perpetual Swaps",
-            content = "Unlike traditional futures contracts, perpetual swaps have no expiry date. To tether the contract mark price to spot index prices, exchanges utilize the periodic Funding Rate mechanism.\n\nWhen funding is positive, Long traders pay Short traders every 8 hours, signaling an overheated market. When funding is negative, Shorts pay Longs (bearish exhaustion / squeeze setup).\n\nExtreme funding spikes frequently serve as reliable market mean-reversion and cycle turning signals.",
+            title = "19. Funding rates and perpetual swaps",
+            content = "Perpetuals have no expiry date. Without a tether, mark can drift away from the spot index.\n\nFunding is a periodic payment between longs and shorts. Positive: longs pay shorts. Negative: shorts pay longs. On large venues the cycle is often eight hours. That interval is a venue parameter, not a Bitcoin law.\n\nThe payment is usually peer-to-peer. The exchange calculates the amount. It is not always a fee the house keeps — some venues take a cut. Read that venue's schedule.\n\nExtreme funding is a holding cost. It is not a reliable reversal signal. This lesson does not read it as a top or a bottom.\n\nOn Futures the app shows a live funding print when the feed is up. If the print is missing, it shows an em dash. It does not invent a rate.",
             diagramType = BlockchainDiagramType.FUNDING_DYNAMICS,
-            diagramCaption = "Diagram: Mark Price > Index Price -> Positive Funding (Longs pay Shorts).",
-            diagramExtraNote = null,
-            realExample = "During peak parabolic bull euphoria, funding rates can reach +0.10% per 8h, making long positions mathematically untenable over weeks.",
-            commonMistake = "\"Funding rate is a fee kept by the exchange broker.\" Funding is a peer-to-peer equilibrium payment directly between traders."
+            diagramCaption = "Diagram: Mark above the index -> Positive funding -> Longs pay shorts.",
+            diagramExtraNote = "Payment interval is set by the venue, not the protocol.",
+            realExample = "When mark sits above the index, the formula typically produces a positive rate so longs pay shorts until the two prices are closer.",
+            commonMistake = "\"Funding is always the exchange's commission.\" It is usually a transfer between traders. Also wrong: \"extreme funding means the top is in.\" That is a forecast, not a mechanic."
         ),
         BlockchainChapter(
             id = 20,
-            title = "20. Quantum Order Flow & Depth",
-            content = "An order book aggregates resting market intentions: limit buy bids and limit sell asks across granular price steps. Market Depth visualizes the aggregate resting liquidity required to move prices.\n\nInstitutional players execute large block sizes through algorithmic splitting: TWAP (Time-Weighted), VWAP (Volume-Weighted), and Iceberg orders that mask true execution size.\n\nLiquidity cluster analysis exposes institutional absorption walls and resting stop clusters.",
+            title = "20. Order book and market depth",
+            content = "Bids are resting buy orders. Asks are resting sell orders. The spread is the gap between them.\n\nA market order takes whatever is resting on the other side and walks the book. A limit order rests until opposite size meets it.\n\nDepth is how much size sits near the last print. A thin book means a take order changes that last print more. We do not invent a slippage percent.\n\nVisible size can be cancelled before it trades. A liquidity heatmap is not a guaranteed wall.\n\nThis is matching-engine mechanics on a venue. It is not chain consensus and it is not a whale radar.",
             diagramType = BlockchainDiagramType.QUANTUM_ORDER_FLOW,
-            diagramCaption = "Diagram: Orderbook depth distribution -> Liquidity walls -> Slippage dynamics.",
-            diagramExtraNote = null,
-            realExample = "Executing a $50M market sell into a thin order book with only $5M depth causes severe price slippage.",
-            commonMistake = "\"All visible limit orders represent guaranteed transactions.\" Orderbooks are dynamic and often subject to phantom spoofing and algorithmic cancellations."
+            diagramCaption = "Diagram: Bids | Spread | Asks. A market order consumes the opposite side.",
+            diagramExtraNote = "The book belongs to the venue, not the blockchain.",
+            realExample = "A market buy consumes the lowest asks in order until the requested size is filled. If those asks are small, the last fill sits farther from the first ask.",
+            commonMistake = "\"What I see on the book will definitely trade.\" Resting orders can vanish before the match."
         ),
         BlockchainChapter(
             id = 21,
-            title = "21. Macro Halving Cycles & Supply Dynamics",
-            content = "The Bitcoin Halving occurs every 210,000 blocks (~4 years), reducing the miner block subsidy by 50% (from 50 BTC in 2009 down to 3.125 BTC in 2024).\n\nThis programmatic supply shock historically drives 4-year macro market phases: Accumulation, Expansion, Parabolic Distribution, and Bear Capitulation.\n\nPositioning relative to the 4-year halving cycle provides a framework for capital allocation across macro regimes.",
+            title = "21. Halving schedule and issuance history",
+            content = "Every 210,000 blocks the Bitcoin miner subsidy halves: 50, then 25, 12.5, 6.25, and 3.125 after 2024. That is protocol issuance, not a price command.\n\nNew supply from the subsidy falls. Demand, ETFs, leverage, and cash liquidity are separate facts. They do not fuse into an automatic bloom cycle.\n\nPast cycles (2012, 2016, 2020, 2024) do not share one peak day. This lesson does not teach a months-after-halving rule.\n\nThe home chart is a historical overlay: day count since the last halving and prior paths. It does not draw the future.\n\nIssuance explains why a day counter exists. It is not a recipe for placing capital.",
             diagramType = BlockchainDiagramType.MACRO_HALVING_CYCLES,
-            diagramCaption = "Diagram: Halving event -> Daily miner issuance slashed by 50% -> Supply shock expansion.",
-            diagramExtraNote = null,
-            realExample = "In previous halving cycles (2012, 2016, 2020), macro cycle peaks materialized 12 to 18 months post-halving.",
-            commonMistake = "\"Prices pump violently the exact second the halving block is mined.\" Supply restriction requires months of continuous absorption to generate macro price effects."
+            diagramCaption = "Diagram: 50 → 25 → 12.5 → 6.25 → 3.125 BTC subsidy per block.",
+            diagramExtraNote = "The subsidy changes at the halving block. Price is a separate market.",
+            realExample = "After the 2024 halving the subsidy is 3.125 BTC per block. That number lives in the protocol. The next printed high does not.",
+            commonMistake = "\"Price jumps the hour the subsidy changes.\" Issuance changes at that block. Price is a separate market, not a protocol switch."
         ),
         BlockchainChapter(
             id = 22,
-            title = "22. Institutional Risk & Portfolio Management",
-            content = "Long-term profitability in volatile digital assets is governed not by directional prediction accuracy, but by strict drawdown control and asymmetric position sizing.\n\nProfessional portfolio managers cap risk per trade at 1-2% of total equity, calculating order size from stop distance rather than desired profit targets.\n\nCapital preservation, systematic rebalancing, and emotional detachment form the foundation of institutional longevity.",
+            title = "22. How a venue covers losing positions",
+            content = "When a liquidation cannot close at a price that covers the debt, the gap is the venue's problem first.\n\nCommon tools are an insurance or backstop fund, auto-deleveraging (ADL) against opposite profitable accounts, and on older designs a socialized loss.\n\nIsolated versus cross changes who pays first: one position or the whole account.\n\nThese are venue rules. They are not a position-size recipe and they do not promise profit.\n\nCryptoCycles does not size trades, does not place stops, and does not tell you to go all-in or to scale in.",
             diagramType = BlockchainDiagramType.INSTITUTIONAL_RISK,
-            diagramCaption = "Diagram: Total capital -> 1-2% fixed risk unit -> Invariant stop-loss sizing.",
-            diagramExtraNote = null,
-            realExample = "By risking only 1% per position, a trader can survive 20 consecutive losing trades with over 81% of capital intact.",
-            commonMistake = "\"Going 'all-in' on high conviction alts is the fastest way to succeed.\" In finance, concentration without risk limits is the mathematical certainty of ruin."
+            diagramCaption = "Diagram: Forced close -> Insurance fund -> ADL if the fund is not enough.",
+            diagramExtraNote = "Venue rules. Not a portfolio guide.",
+            realExample = "If a forced close fills worse than the bankruptcy price, some venues take the gap from an insurance fund before they deleverage other accounts.",
+            commonMistake = "\"Institutions have an official risk-per-trade rule, so copy it.\" That is a classroom sketch, not a protocol and not this app's advice."
         )
     )
 
@@ -636,53 +637,53 @@ object BlockchainLearnRepository {
         ),
         BlockchainChapter(
             id = 18,
-            title = "18. Liquidierungs-Mechanik & Hebel",
-            content = "Im Krypto-Derivatehandel erlaubt Leverage kapital-effiziente Positionen. Erreicht der Markt die Liquidationsmarke, schließt die Börsen-Engine Positionen automatisch.\n\nKaskadierende Liquidationen erzeugen Long- oder Short-Squeezes, die Liquiditätscluster im Orderbuch durchschlagen.\n\nDisziplinierte Margin-Puffer sind die Grundvoraussetzung für langfristigen Kapitalerhalt.",
+            title = "18. Hebel und Liquidationsmechanik",
+            content = "Bei einem Perpetual-Kontrakt bedeutet Hebel eine größere Exposition als das hinterlegte Bargeld. Du hinterlegst Margin. Die Börse lässt die Nominalgröße größer sein als dieses Bargeld.\n\nIsolated Margin begrenzt den Verlust auf die Margin dieser Position. Cross Margin teilt den Kontostand. Das sind Börsenregeln, nicht Bitcoin-Konsens.\n\nMaintenance Margin ist die Untergrenze. Bewegt sich der Markpreis gegen dich und die restliche Margin fällt darunter, sendet die Risiko-Engine eine Schlussorder. Miner stimmen nicht ab. Die Börse schließt.\n\nTeilen viele Positionen eine ähnliche Schwelle, treffen die Zwangsschlüsse gemeinsam das Buch. Diese Kaskade beschreibt das Matching, kein Kauf- oder Verkaufssignal.\n\nLiquidationskarten schätzen, wo Open Interest verwundbar sein könnte. Sie sind keine Wände, die «brechen müssen». CryptoCycles gibt daraus keinen Auftrag.",
             diagramType = BlockchainDiagramType.LIQUIDATION_ENGINEERING,
-            diagramCaption = "Schema: Margin-Erschöpfung -> Liquidations-Schwelle -> Marktauftrag-Kaskade.",
-            diagramExtraNote = null,
-            realExample = "Ein plötzlicher 5%-Ruck führt bei 20x Hebel zur sofortigen Zwangsliquidation.",
-            commonMistake = "«Hoher Hebel bedeutet einfach mehr Gewinn.» Er potenziert vor allem das Ausfallrisiko auf 100%."
+            diagramCaption = "Schema: Hinterlegte Margin -> Maintenance-Schwelle -> Zwangsschluss durch die Börse.",
+            diagramExtraNote = "Liquidation ist eine Plattformregel, kein Kettenkonsens.",
+            realExample = "Eine isolierte 10x-Position wird geschlossen, wenn der Mark die Maintenance-Schwelle dieser Position erreicht, auch wenn das restliche Konto noch Bargeld hält.",
+            commonMistake = "«Die Blockchain hat mich liquidiert.» Nein. Die Risiko-Engine der Börse hat geschlossen. On-Chain-Settlement ist eine andere Schicht."
         ),
         BlockchainChapter(
             id = 19,
-            title = "19. Finanzierungsraten & Perpetual Swaps",
-            content = "Perpetual Swaps besitzen kein Verfallsdatum. Die periodische Funding Rate bindet den Kontraktpreis an den Spot-Index.\n\nPositives Funding bedeutet, dass Longs an Shorts zahlen (überhitzter Markt). Negatives Funding deutet auf Baisse-Erschöpfung hin.\n\nExtreme Funding-Ausschläge dienen häufig als treffsichere Kontra-Indikatoren.",
+            title = "19. Funding-Sätze und Perpetual Swaps",
+            content = "Perpetuals haben kein Verfallsdatum. Ohne Kopplung kann der Mark vom Spot-Index abdriften.\n\nFunding ist eine periodische Zahlung zwischen Longs und Shorts. Positiv: Longs zahlen Shorts. Negativ: Shorts zahlen Longs. An großen Börsen ist der Zyklus oft acht Stunden. Das Intervall ist ein Börsenparameter, kein Bitcoin-Gesetz.\n\nDie Zahlung ist meist Peer-to-Peer. Die Börse berechnet den Betrag. Es ist nicht immer eine Gebühr, die das Haus behält — manche Börsen behalten einen Anteil. Lies den Zeitplan der Plattform.\n\nExtremes Funding ist eine Haltekosten. Es ist kein zuverlässiges Umkehrsignal. Diese Lektion liest es nicht als Hoch oder Tief.\n\nUnter Futures zeigt die App einen Live-Funding-Druck, wenn der Feed steht. Fehlt der Druck, steht ein Gedankenstrich. Es wird kein Satz erfunden.",
             diagramType = BlockchainDiagramType.FUNDING_DYNAMICS,
-            diagramCaption = "Schema: Kontraktpreis > Spotpreis -> Positives Funding (Long zahlt Short).",
-            diagramExtraNote = null,
-            realExample = "In Euphorie-Phasen erreicht das Funding +0,08% alle 8 Stunden und verteuert Haltepositionen massiv.",
-            commonMistake = "«Funding ist eine Gebühr der Börse.» Es ist eine Peer-to-Peer-Ausgleichszahlung zwischen Tradern."
+            diagramCaption = "Schema: Mark über dem Index -> Positives Funding -> Longs zahlen Shorts.",
+            diagramExtraNote = "Das Zahlungsintervall setzt die Börse, nicht das Protokoll.",
+            realExample = "Liegt der Mark über dem Index, erzeugt die Formel typischerweise einen positiven Satz, damit Longs an Shorts zahlen, bis die Preise näher zusammenrücken.",
+            commonMistake = "«Funding ist immer die Provision der Börse.» Meist ist es eine Übertragung zwischen Tradern. Ebenso falsch: «Extremes Funding bedeutet, dass das Hoch da ist.» Das ist eine Prognose, keine Mechanik."
         ),
         BlockchainChapter(
             id = 20,
-            title = "20. Orderflow & Liquiditätscluster",
-            content = "Das Orderbuch bündelt Limit-Kauf- und Verkaufsaufträge. Die Markttiefe visualisiert verfügbare Liquidität bei Kursbewegungen.\n\nInstitutionelle Akteure nutzen TWAP- und Iceberg-Algorithmen, um Großaufträge slippage-arm auszuführen.\n\nLiquiditäts-Cluster visualisieren Stop-Loss-Zentren und institutionelle Barrieren.",
+            title = "20. Orderbuch und Markttiefe",
+            content = "Bids sind ruhende Kaufaufträge. Asks sind ruhende Verkaufsaufträge. Der Spread ist die Lücke dazwischen.\n\nEine Market-Order nimmt, was auf der Gegenseite liegt, und läuft das Buch ab. Eine Limit-Order wartet, bis Gegenseite sie trifft.\n\nTiefe ist, wie viel Größe nahe dem letzten Druck liegt. Ein dünnes Buch heißt: eine Take-Order ändert diesen letzten Druck stärker. Wir erfinden kein Slippage-Prozent.\n\nSichtbare Größe kann vor dem Match storniert werden. Eine Liquiditätskarte ist keine garantierte Wand.\n\nDas ist Matching-Mechanik einer Börse. Es ist kein Kettenkonsens und kein Whale-Radar.",
             diagramType = BlockchainDiagramType.QUANTUM_ORDER_FLOW,
-            diagramCaption = "Schema: Orderbuch-Tiefe -> Bid/Ask-Cluster -> Slippage & Ausführung.",
-            diagramExtraNote = null,
-            realExample = "Große Market-Verkäufe in dünner Markttiefe führen zu massivem Slippage.",
-            commonMistake = "«Sichtbare Limit-Orders werden garantiert ausgeführt.» Oft handelt es sich um flüchtiges Spoofing."
+            diagramCaption = "Schema: Bids | Spread | Asks. Die Market-Order verbraucht die Gegenseite.",
+            diagramExtraNote = "Das Buch gehört der Börse, nicht der Blockchain.",
+            realExample = "Ein Market-Kauf verbraucht der Reihe nach die niedrigsten Asks, bis die gewünschte Größe gefüllt ist. Sind diese Asks klein, liegt der letzte Fill weiter von der ersten Ask.",
+            commonMistake = "«Was ich im Buch sehe, wird bestimmt gehandelt.» Ruhende Orders können vor dem Match verschwinden."
         ),
         BlockchainChapter(
             id = 21,
-            title = "21. Makro-Halving-Zyklen & Angebotsdynamik",
-            content = "Das Bitcoin-Halving halbiert alle 210.000 Blöcke die Miner-Belohnung (von 50 BTC 2009 auf 3,125 BTC 2024).\n\nDieser programmierte Angebotsschock treibt historisch 4-jährige Makrozyklen aus Akkumulation, Expansion und Korrektur.\n\nDie zyklische Einordnung liefert einen robusten Rahmen für strategische Allokation.",
+            title = "21. Halving-Plan und Emissionshistorie",
+            content = "Alle 210.000 Blöcke halbiert sich die Bitcoin-Miner-Subvention: 50, dann 25, 12,5, 6,25 und 3,125 nach 2024. Das ist Protokoll-Emission, kein Kursbefehl.\n\nNeues Angebot aus der Subvention sinkt. Nachfrage, ETFs, Hebel und Bargeldliquidität sind getrennte Tatsachen. Sie verschmelzen nicht zu einem automatischen Blütezyklus.\n\nVergangene Zyklen (2012, 2016, 2020, 2024) teilen keinen gemeinsamen Hoch-Tag. Diese Lektion lehrt keine Monate-nach-Halving-Regel.\n\nDas Home-Chart ist eine historische Überlagerung: Tageszähler seit dem letzten Halving und frühere Pfade. Es zeichnet die Zukunft nicht.\n\nDie Emission erklärt, warum ein Tageszähler existiert. Sie ist kein Rezept für Kapitalplatzierung.",
             diagramType = BlockchainDiagramType.MACRO_HALVING_CYCLES,
-            diagramCaption = "Schema: Halving -> Miner-Ausgabe um 50% gekürzt -> Angebotsschock.",
-            diagramExtraNote = null,
-            realExample = "In vergangenen Zyklen lag das Zyklushoch 12 bis 18 Monate nach dem Halving.",
-            commonMistake = "«Der Kurs explodiert exakt am Tag des Halvings.» Der Angebotsschock wirkt kumulativ über Monate."
+            diagramCaption = "Schema: 50 → 25 → 12,5 → 6,25 → 3,125 BTC Subvention pro Block.",
+            diagramExtraNote = "Die Subvention ändert sich am Halving-Block. Der Preis ist ein anderer Markt.",
+            realExample = "Nach dem Halving 2024 beträgt die Subvention 3,125 BTC pro Block. Diese Zahl steht im Protokoll. Das nächste gedruckte Hoch nicht.",
+            commonMistake = "«Der Kurs springt in der Stunde, in der sich die Subvention ändert.» Am Block ändert sich die Emission. Der Preis ist ein getrennter Markt, kein Protokollschalter."
         ),
         BlockchainChapter(
             id = 22,
-            title = "22. Institutionelles Risikomanagement",
-            content = "Dauerhafte Rentabilität entsteht nicht durch Prognosen, sondern durch strikte Verlustbegrenzung und Position Sizing.\n\nProfessionelle Manager riskieren maximal 1-2% Gesamtkapital pro Trade und leiten Positionsgrößen vom Stop-Loss ab.\n\nKapitalschutz und emotionslose Ausführung sichern institutionelle Langlebigkeit.",
+            title = "22. Wie eine Börse Verlustpositionen deckt",
+            content = "Kann eine Liquidation nicht zu einem Preis schließen, der die Schuld deckt, ist die Lücke zuerst das Problem der Börse.\n\nÜbliche Werkzeuge sind ein Versicherungs- oder Backstop-Fonds, Auto-Deleveraging (ADL) gegen gegnerische Gewinnkonten und in älteren Designs ein sozialisierter Verlust.\n\nIsolated versus Cross ändert, wer zuerst zahlt: eine Position oder das ganze Konto.\n\nDas sind Börsenregeln. Sie sind kein Positionsgrößen-Rezept und versprechen keinen Gewinn.\n\nCryptoCycles dimensioniert keine Trades, setzt keine Stops und sagt weder All-in noch stufenweisen Einstieg.",
             diagramType = BlockchainDiagramType.INSTITUTIONAL_RISK,
-            diagramCaption = "Schema: Gesamtkapital -> 1-2% festes Risiko -> Dynamische Positionsgröße.",
-            diagramExtraNote = null,
-            realExample = "Bei 1% Risiko pro Trade übersteht ein Portfolio 20 Fehltrades mit über 81% Restkapital.",
-            commonMistake = "«All-in auf einen Coin ist der schnellste Weg zum Erfolg.» Ohne Risikolimit führt dies mathematisch zum Totalverlust."
+            diagramCaption = "Schema: Zwangsschluss -> Versicherungsfonds -> ADL, wenn der Fonds nicht reicht.",
+            diagramExtraNote = "Börsenregeln. Kein Portfolio-Leitfaden.",
+            realExample = "Füllt ein Zwangsschluss schlechter als der Insolvenzpreis, nehmen manche Börsen die Lücke zuerst aus einem Versicherungsfonds, bevor sie andere Konten deleveragen.",
+            commonMistake = "«Institute haben eine offizielle Risiko-pro-Trade-Regel, also kopiere sie.» Das ist eine Unterrichtsskizze, kein Protokoll und kein Rat dieser App."
         )
     )
 
@@ -859,53 +860,53 @@ object BlockchainLearnRepository {
         ),
         BlockchainChapter(
             id = 18,
-            title = "18. Ingénierie des Liquidations & Levier",
-            content = "Sur les marchés dérivés, l'effet de levier optimise l'exposition en capital. Lorsque le marché atteint le seuil de liquidation, le moteur de risque ferme automatiquement la position.\n\nLes cascades de liquidation provoquent des retournements brutaux (short/long squeezes) en balayant la profondeur du carnet d'ordres.\n\nUne gestion stricte de la marge de maintien est cruciale pour éviter la faillite du compte.",
+            title = "18. Levier et mécanique de liquidation",
+            content = "Sur un contrat perpétuel, le levier signifie une exposition plus grande que l'argent déposé. Tu postes une marge. La place laisse la taille notionnelle dépasser cet argent.\n\nLa marge isolée confine la perte à la marge de cette position. La marge croisée partage le solde du compte. Ce sont des règles de place, pas le consensus Bitcoin.\n\nLa marge de maintien est le plancher. Quand le prix mark tourne contre toi et que la marge restante tombe sous ce plancher, le moteur de risque envoie une clôture. Les mineurs ne votent pas. La place clôture.\n\nSi beaucoup de positions partagent un seuil voisin, les clôtures forcées frappent le carnet ensemble. Cette cascade décrit le matching, pas un ordre d'achat ou de vente.\n\nLes cartes de liquidation estiment où l'open interest peut être vulnérable. Ce ne sont pas des murs qui « doivent casser ». CryptoCycles n'en tire aucun ordre.",
             diagramType = BlockchainDiagramType.LIQUIDATION_ENGINEERING,
-            diagramCaption = "Schéma : Épuisement de marge -> Déclencheur liquidation -> Vente/Achat forcé.",
-            diagramExtraNote = null,
-            realExample = "Une chute subite de 5% déclenche les liquidations des positions à levier 20x.",
-            commonMistake = "« Le fort levier augmente seulement les gains. » Il augmente surtout le risque de perte totale à 100%."
+            diagramCaption = "Schéma : Marge déposée -> Seuil de maintien -> Clôture forcée par la place.",
+            diagramExtraNote = "La liquidation est une règle de plateforme, pas le consensus de la chaîne.",
+            realExample = "Une position isolée en 10x se clôture quand le mark atteint le seuil de maintien de cette position, même si le reste du compte a encore de l'argent.",
+            commonMistake = "« La blockchain m'a liquidé. » Non. Le moteur de risque de la place a clôturé. Le règlement on-chain est une autre couche."
         ),
         BlockchainChapter(
             id = 19,
-            title = "19. Dynamique des Taux de Financement",
-            content = "Les contrats perpétuels n'ont pas d'échéance. Le Funding Rate équilibre le prix du contrat avec le prix au comptant (spot).\n\nUn taux positif indique que les positions Long paient les Shorts (marché euphorique). Un taux négatif signale un pessimisme extrême propice aux squeezes.\n\nLes pics de funding sont des signaux clés de retournement cyclique.",
+            title = "19. Taux de funding et swaps perpétuels",
+            content = "Les perpétuels n'ont pas d'échéance. Sans ancrage, le mark peut s'écarter de l'indice spot.\n\nLe funding est un paiement périodique entre longs et shorts. Positif : les longs paient les shorts. Négatif : les shorts paient les longs. Sur les grandes places le cycle est souvent de huit heures. Cet intervalle est un paramètre de place, pas une loi Bitcoin.\n\nLe paiement est en général pair à pair. La place calcule le montant. Ce n'est pas toujours une commission que la maison garde — certaines places prennent une part. Lis le calendrier de la plateforme.\n\nUn funding extrême est un coût de portage. Ce n'est pas un signal fiable de retournement. Cette leçon ne le lit ni comme un sommet ni comme un creux.\n\nDans Futures, l'app affiche un funding live quand le flux est là. S'il manque, elle affiche un tiret. Elle n'invente pas un taux.",
             diagramType = BlockchainDiagramType.FUNDING_DYNAMICS,
-            diagramCaption = "Schéma : Prix Perpétuel > Spot -> Financement positif (Longs paient Shorts).",
-            diagramExtraNote = null,
-            realExample = "En euphorie haussière, le taux peut atteindre +0,08% toutes les 8h, pénalisant la conservation des positions longues.",
-            commonMistake = "« Le funding est une commission prélevée par la bourse. » C'est un paiement direct entre traders."
+            diagramCaption = "Schéma : Mark au-dessus de l'indice -> Funding positif -> Longs paient shorts.",
+            diagramExtraNote = "L'intervalle de paiement est fixé par la place, pas par le protocole.",
+            realExample = "Quand le mark reste au-dessus de l'indice, la formule produit en général un taux positif pour que les longs paient les shorts jusqu'à ce que les deux prix se rapprochent.",
+            commonMistake = "« Le funding est toujours la commission de la place. » C'est en général un transfert entre traders. Autre erreur : « un funding extrême signifie que le sommet est là. » C'est une prévision, pas une mécanique."
         ),
         BlockchainChapter(
             id = 20,
-            title = "20. Flux d'Ordres & Clusters de Liquidité",
-            content = "Le carnet d'ordres compile les intentions d'achat et de vente. La profondeur montre le volume nécessaire pour faire osciller le cours.\n\nLes investisseurs institutionnels recourent aux ordres Iceberg et algorithmes TWAP/VWAP pour masquer leurs entrées.\n\nL'analyse des clusters de liquidité identifie les zones majeures d'absorption.",
+            title = "20. Carnet d'ordres et profondeur de marché",
+            content = "Les bids sont des achats au repos. Les asks sont des ventes au repos. Le spread est l'écart entre les deux.\n\nUn ordre au marché prend ce qui repose de l'autre côté et traverse le carnet. Un ordre limite attend d'être rencontré.\n\nLa profondeur est la taille posée près du dernier prix. Un carnet mince signifie qu'un ordre take déplace davantage ce dernier prix. Nous n'inventons pas un pourcentage de glissement.\n\nLa taille visible peut être annulée avant l'exécution. Une carte de liquidité n'est pas un mur garanti.\n\nC'est la mécanique de matching d'une place. Ce n'est pas le consensus de la chaîne et ce n'est pas un radar baleine.",
             diagramType = BlockchainDiagramType.QUANTUM_ORDER_FLOW,
-            diagramCaption = "Schéma : Carnet d'ordres -> Clusters de liquidité -> Glissement de prix (slippage).",
-            diagramExtraNote = null,
-            realExample = "Un ordre de vente massif au marché dans un carnet peu liquide subit un slippage sévère.",
-            commonMistake = "« Les ordres visibles sont garantis exécutés. » Le spoofing entraîne de fréquentes annulations."
+            diagramCaption = "Schéma : Bids | Spread | Asks. L'ordre au marché consomme le côté opposé.",
+            diagramExtraNote = "Le carnet appartient à la place, pas à la blockchain.",
+            realExample = "Un achat au marché consomme les asks les plus basses dans l'ordre jusqu'à remplir la taille demandée. Si ces asks sont petites, la dernière exécution s'éloigne de la première ask.",
+            commonMistake = "« Ce que je vois au carnet sera forcément échangé. » Les ordres au repos peuvent disparaître avant le match."
         ),
         BlockchainChapter(
             id = 21,
-            title = "21. Cycles Macro de Halving & Dynamique d'Offre",
-            content = "Le Halving de Bitcoin survient tous les 210 000 blocs (~4 ans), réduisant l'émission des mineurs de moitié (de 50 BTC en 2009 à 3,125 BTC en 2024).\n\nCe choc d'offre programme des cycles macro de 4 ans : Accumulation, Expansion haussière, Distribution et Marché baissier.\n\nComprendre le cycle offre un repère stratégique pour l'allocation patrimoniale.",
+            title = "21. Calendrier du halving et historique d'émission",
+            content = "Tous les 210 000 blocs, la subvention des mineurs Bitcoin est divisée par deux : 50, puis 25, 12,5, 6,25 et 3,125 après 2024. C'est l'émission du protocole, pas un ordre de prix.\n\nL'offre nouvelle issue de la subvention diminue. La demande, les ETF, le levier et la liquidité cash sont des faits séparés. Ils ne fusionnent pas en un cycle de floraison automatique.\n\nLes cycles passés (2012, 2016, 2020, 2024) ne partagent pas un même jour de sommet. Cette leçon n'enseigne aucune règle de mois après le halving.\n\nLe graphique d'accueil est une superposition historique : compteur de jours depuis le dernier halving et trajectoires passées. Il ne dessine pas le futur.\n\nL'émission explique pourquoi un compteur de jours existe. Ce n'est pas une recette de placement.",
             diagramType = BlockchainDiagramType.MACRO_HALVING_CYCLES,
-            diagramCaption = "Schéma : Émission divisée par 2 -> Choc d'offre -> Cycle macro de 4 ans.",
-            diagramExtraNote = null,
-            realExample = "Lors des cycles précédents, le sommet de marché est apparu 12 à 18 mois après le halving.",
-            commonMistake = "« Le prix explose le jour même du halving. » Le choc d'offre met des mois à se matérialiser."
+            diagramCaption = "Schéma : 50 → 25 → 12,5 → 6,25 → 3,125 BTC de subvention par bloc.",
+            diagramExtraNote = "La subvention change au bloc de halving. Le prix est un autre marché.",
+            realExample = "Après le halving de 2024, la subvention est de 3,125 BTC par bloc. Ce nombre vit dans le protocole. Le prochain plus haut imprimé, non.",
+            commonMistake = "« Le prix saute à l'heure où la subvention change. » L'émission change à ce bloc. Le prix est un marché séparé, pas un interrupteur du protocole."
         ),
         BlockchainChapter(
             id = 22,
-            title = "22. Gestion des Risques Institutionnels",
-            content = "La rentabilité pérenne dépend de la maîtrise du drawdown et du dimensionnement des positions, non de prédictions parfaites.\n\nLes gestionnaires limitent le risque à 1-2% du capital par transaction et ajustent la taille selon la distance au stop-loss.\n\nLa discipline émotionnelle et la préservation du capital garantissent la longévité.",
+            title = "22. Comment une place couvre les positions perdantes",
+            content = "Quand une liquidation ne parvient pas à clôturer à un prix qui couvre la dette, l'écart est d'abord le problème de la place.\n\nLes outils habituels sont un fonds d'assurance ou de secours, l'auto-deleverage (ADL) contre des comptes gagnants opposés, et sur d'anciens modèles une perte socialisée.\n\nIsolé versus croisé change qui paie en premier : une position ou tout le compte.\n\nCe sont des règles de place. Ce n'est pas une recette de taille de position et cela ne promet aucun profit.\n\nCryptoCycles ne dimensionne pas les trades, ne place pas de stops et ne dit ni all-in ni entrée progressive.",
             diagramType = BlockchainDiagramType.INSTITUTIONAL_RISK,
-            diagramCaption = "Schéma : Capital total -> Risque fixe 1-2% -> Dimensionnement strict de position.",
-            diagramExtraNote = null,
-            realExample = "En risquant 1% par position, un trader préserve plus de 81% de son capital après 20 pertes consécutives.",
-            commonMistake = "« Miser 'all-in' sur un actif est le raccourci vers la richesse. » C'est la garantie mathématique de ruine."
+            diagramCaption = "Schéma : Clôture forcée -> Fonds d'assurance -> ADL si le fonds ne suffit pas.",
+            diagramExtraNote = "Règles de place. Pas un guide de portefeuille.",
+            realExample = "Si une clôture forcée s'exécute plus mal que le prix de faillite, certaines places prennent l'écart sur un fonds d'assurance avant de réduire d'autres comptes.",
+            commonMistake = "« Les institutions ont une règle officielle de risque par trade, donc copie-la. » C'est un schéma de cours, pas un protocole et pas le conseil de cette app."
         )
     )
 
@@ -1082,53 +1083,53 @@ object BlockchainLearnRepository {
         ),
         BlockchainChapter(
             id = 18,
-            title = "18. Ingeniería de Liquidaciones y Apalancamiento",
-            content = "En los futuros perpetuos, el apalancamiento optimiza el capital disponible. Si el precio alcanza el margen de mantenimiento, el motor liquida la posición de forma automática.\n\nLas liquidaciones en cadena provocan 'squeezes' violentos que devoran la profundidad del libro de órdenes.\n\nEl control riguroso del margen es la regla fundamental de supervivencia financiera.",
+            title = "18. Apalancamiento y mecánica de liquidación",
+            content = "En un contrato perpetuo, el apalancamiento significa una exposición mayor que el efectivo depositado. Dejas margen. El exchange permite que el nocional sea más grande que ese efectivo.\n\nEl margen aislado limita la pérdida al margen de esa posición. El margen cruzado comparte el saldo de la cuenta. Son reglas del venue, no consenso de Bitcoin.\n\nEl margen de mantenimiento es el suelo. Cuando el precio mark se mueve en contra y el margen restante cae por debajo, el motor de riesgo envía un cierre. Los miners no votan. El exchange cierra.\n\nSi muchas posiciones comparten un umbral parecido, los cierres forzados golpean el libro juntos. Esa cascada describe el matching, no una orden de compra o venta.\n\nLos mapas de liquidación estiman dónde el interés abierto puede ser vulnerable. No son muros que «deban romperse». CryptoCycles no emite una orden a partir de ellos.",
             diagramType = BlockchainDiagramType.LIQUIDATION_ENGINEERING,
-            diagramCaption = "Esquema: Agotamiento de margen -> Umbral de liquidación -> Cascada de órdenes de mercado.",
-            diagramExtraNote = null,
-            realExample = "Una caída del 5% liquida instantáneamente posiciones apalancadas a 20x.",
-            commonMistake = "«Mayor apalancamiento equivale simplemente a más ganancias.» Aumenta exponencialmente el riesgo de pérdida total."
+            diagramCaption = "Esquema: Margen depositado -> Umbral de mantenimiento -> Cierre forzado por el exchange.",
+            diagramExtraNote = "La liquidación es una regla de plataforma, no consenso de la cadena.",
+            realExample = "Una posición aislada 10x se cierra cuando el mark alcanza el umbral de mantenimiento de esa posición, aunque el resto de la cuenta aún tenga efectivo.",
+            commonMistake = "«La blockchain me liquidó.» No. El motor de riesgo del exchange cerró la posición. La liquidación on-chain es otra capa."
         ),
         BlockchainChapter(
             id = 19,
-            title = "19. Dinámica de Tasas de Financiación",
-            content = "Los contratos perpetuos no tienen vencimiento. La tasa de financiación (Funding Rate) vincula el precio del contrato al precio spot.\n\nUna tasa positiva indica que las posiciones largas pagan a las cortas (mercado sobrecalentado). Una tasa negativa refleja pesimismo extremo.\n\nPicos extremos de financiación actúan como señales clave de cambio de tendencia.",
+            title = "19. Tasa de funding y swaps perpetuos",
+            content = "Los perpetuos no tienen vencimiento. Sin anclaje, el mark puede alejarse del índice spot.\n\nEl funding es un pago periódico entre largos y cortos. Positivo: los largos pagan a los cortos. Negativo: los cortos pagan a los largos. En venues grandes el ciclo suele ser de ocho horas. Ese intervalo es un parámetro del venue, no una ley de Bitcoin.\n\nEl pago suele ser entre pares. El exchange calcula el importe. No siempre es una comisión que se queda la casa — algunos venues retienen una parte. Lee el calendario de la plataforma.\n\nUn funding extremo es un coste de mantenimiento. No es una señal fiable de giro. Esta lección no lo lee como techo ni como suelo.\n\nEn Futures la app muestra un funding en vivo cuando hay feed. Si falta, escribe una raya. No inventa un porcentaje.",
             diagramType = BlockchainDiagramType.FUNDING_DYNAMICS,
-            diagramCaption = "Esquema: Precio Perpetuo > Spot -> Financiación positiva (Largos pagan a Cortos).",
-            diagramExtraNote = null,
-            realExample = "En fases eufóricas, la financiación de +0,08% cada 8 horas hace insostenible mantener posiciones alcistas.",
-            commonMistake = "«La financiación es una comisión que cobra el exchange.» Es una liquidación entre operadores.",
+            diagramCaption = "Esquema: Mark por encima del índice -> Funding positivo -> Largos pagan a cortos.",
+            diagramExtraNote = "El intervalo de pago lo fija el venue, no el protocolo.",
+            realExample = "Cuando el mark se queda por encima del índice, la fórmula suele producir una tasa positiva para que los largos paguen a los cortos hasta que ambos precios se acerquen.",
+            commonMistake = "«El funding es siempre la comisión del exchange.» Suele ser una transferencia entre operadores. También es un error: «un funding extremo significa que llegó el techo.» Eso es una previsión, no una mecánica."
         ),
         BlockchainChapter(
             id = 20,
-            title = "20. Flujo de Órdenes y Grupos de Liquidez",
-            content = "El libro de órdenes reúne órdenes límite de compra y venta. La profundidad muestra el volumen requerido para desplazar el precio.\n\nInversores institucionales recurren a órdenes Iceberg y algoritmos TWAP/VWAP para evitar el deslizamiento de precios (slippage).\n\nLos grupos de liquidez señalan acumulaciones de stops y barreras de absorción.",
+            title = "20. Libro de órdenes y profundidad de mercado",
+            content = "Las bids son compras en espera. Las asks son ventas en espera. El spread es el hueco entre ambas.\n\nUna orden a mercado toma lo que hay en el lado contrario y recorre el libro. Una orden límite espera a que el otro lado la cruce.\n\nLa profundidad es cuánto tamaño descansa cerca del último precio. Un libro fino significa que una orden take mueve más ese último precio. No inventamos un porcentaje de deslizamiento.\n\nEl tamaño visible puede cancelarse antes de ejecutarse. Un mapa de liquidez no es un muro garantizado.\n\nEsto es mecánica de matching en un venue. No es consenso de la cadena ni un radar de ballenas.",
             diagramType = BlockchainDiagramType.QUANTUM_ORDER_FLOW,
-            diagramCaption = "Esquema: Libro de órdenes -> Grupos de liquidez -> Deslizamiento de precio.",
-            diagramExtraNote = null,
-            realExample = "Vender a mercado sin profundidad suficiente genera un deslizamiento de precio severo.",
-            commonMistake = "«Todas las órdenes visibles se ejecutarán.» Muchas órdenes son canceladas mediante spoofing."
+            diagramCaption = "Esquema: Bids | Spread | Asks. La orden a mercado consume el lado contrario.",
+            diagramExtraNote = "El libro pertenece al exchange, no a la blockchain.",
+            realExample = "Una compra a mercado consume las asks más bajas en orden hasta cubrir el tamaño pedido. Si esas asks son pequeñas, la última ejecución queda más lejos de la primera ask.",
+            commonMistake = "«Lo que veo en el libro se ejecutará seguro.» Las órdenes en espera pueden desaparecer antes del cruce."
         ),
         BlockchainChapter(
             id = 21,
-            title = "21. Ciclos Macro de Halving y Dinámica de Oferta",
-            content = "El Halving de Bitcoin se produce cada 210.000 bloques (~4 años), reduciendo la emisión minera al 50% (de 50 BTC en 2009 a 3,125 BTC en 2024).\n\nEste choque de oferta genera ciclos de 4 años: Acumulación, Expansión alcista, Distribución y Mercado bajista.\n\nComprender el ciclo macro orienta la asignación patrimonial estratégica.",
+            title = "21. Calendario del halving e historial de emisión",
+            content = "Cada 210.000 bloques la subvención de los mineros de Bitcoin se divide por dos: 50, luego 25, 12,5, 6,25 y 3,125 después de 2024. Eso es emisión del protocolo, no una orden de precio.\n\nLa oferta nueva de la subvención baja. La demanda, los ETF, el apalancamiento y la liquidez en efectivo son hechos aparte. No se funden en un ciclo automático de floración.\n\nLos ciclos pasados (2012, 2016, 2020, 2024) no comparten un mismo día de máximo. Esta lección no enseña una regla de meses después del halving.\n\nEl gráfico de inicio es una superposición histórica: contador de días desde el último halving y trayectorias anteriores. No dibuja el futuro.\n\nLa emisión explica por qué existe un contador de días. No es una receta para colocar capital.",
             diagramType = BlockchainDiagramType.MACRO_HALVING_CYCLES,
-            diagramCaption = "Esquema: Emisión reducida al 50% -> Choque de oferta -> Ciclo de 4 años.",
-            diagramExtraNote = null,
-            realExample = "En ciclos anteriores, el máximo del mercado se registró de 12 a 18 meses tras el halving.",
-            commonMistake = "«El precio se dispara en el mismo bloque del halving.» El choque de oferta requiere meses de absorción."
+            diagramCaption = "Esquema: 50 → 25 → 12,5 → 6,25 → 3,125 BTC de subvención por bloque.",
+            diagramExtraNote = "La subvención cambia en el bloque del halving. El precio es otro mercado.",
+            realExample = "Tras el halving de 2024 la subvención es 3,125 BTC por bloque. Ese número vive en el protocolo. El próximo máximo impreso, no.",
+            commonMistake = "«El precio salta a la hora en que cambia la subvención.» En ese bloque cambia la emisión. El precio es un mercado aparte, no un interruptor del protocolo."
         ),
         BlockchainChapter(
             id = 22,
-            title = "22. Gestión de Riesgos Institucionales",
-            content = "La rentabilidad sostenible depende del control del drawdown y del tamaño de posición, no de pronósticos infallibles.\n\nLos gestores limitan el riesgo por operación al 1-2% del capital y calibran el tamaño según la distancia al stop-loss.\n\nLa disciplina emocional y la preservación del capital garantizan la longevidad.",
+            title = "22. Cómo un exchange cubre posiciones perdedoras",
+            content = "Cuando una liquidación no logra cerrar a un precio que cubra la deuda, el hueco es primero problema del exchange.\n\nLas herramientas habituales son un fondo de seguro o respaldo, el auto-deleverage (ADL) contra cuentas ganadoras contrarias, y en diseños antiguos una pérdida socializada.\n\nAislado frente a cruzado cambia quién paga primero: una posición o toda la cuenta.\n\nEstas son reglas del venue. No son una receta de tamaño de posición y no prometen beneficio.\n\nCryptoCycles no dimensiona operaciones, no coloca stops y no dice ni all-in ni entrada por tramos.",
             diagramType = BlockchainDiagramType.INSTITUTIONAL_RISK,
-            diagramCaption = "Esquema: Capital total -> Riesgo fijo 1-2% -> Tamaño de posición estructurado.",
-            diagramExtraNote = null,
-            realExample = "Arriesgando solo el 1% por operación, el inversor conserva más del 81% de su cartera tras 20 pérdidas seguidas.",
-            commonMistake = "«Ir 'all-in' en un activo es el atajo a la riqueza.» Es la certeza matemática de ruina financiera."
+            diagramCaption = "Esquema: Cierre forzado -> Fondo de seguro -> ADL si el fondo no alcanza.",
+            diagramExtraNote = "Reglas del venue. No es una guía de cartera.",
+            realExample = "Si un cierre forzado se ejecuta peor que el precio de quiebra, algunos venues toman el hueco de un fondo de seguro antes de reducir otras cuentas.",
+            commonMistake = "«Las instituciones tienen una regla oficial de riesgo por operación, así que cópiala.» Es un esquema de aula, no un protocolo y no el consejo de esta app."
         )
     )
 
@@ -1305,53 +1306,53 @@ object BlockchainLearnRepository {
         ),
         BlockchainChapter(
             id = 18,
-            title = "18. Ingegneria delle Liquidazioni e Leva",
-            content = "Nei contratti derivati perp, la leva finanziaria ottimizza l'efficienza del capitale. Quando la perdita latente esaurisce il margine di mantenimento, il motore di rischio chiude forzatamente la posizione.\n\nLe liquidazioni a catena scatenano violenti 'squeeze' che prosciugano la liquidità dell'order book.\n\nIl controllo inflessibile della leva è il pilastro primario per conservare il patrimonio.",
+            title = "18. Leva e meccanica delle liquidazioni",
+            content = "Su un contratto perpetual, la leva significa un'esposizione più grande del contante depositato. Metti margine. Il venue lascia che il nozionale sia più grande di quel contante.\n\nIl margine isolato confina la perdita al margine di quella posizione. Il margine cross condivide il saldo del conto. Sono regole del venue, non consenso Bitcoin.\n\nIl margine di mantenimento è il pavimento. Quando il prezzo mark si muove contro di te e il margine restante scende sotto quel pavimento, il motore di rischio invia una chiusura. I miner non votano. L'exchange chiude.\n\nSe molte posizioni condividono una soglia simile, le chiusure forzate colpiscono il book insieme. Questa cascata descrive il matching, non un ordine di acquisto o vendita.\n\nLe mappe di liquidazione stimano dove l'open interest può essere vulnerabile. Non sono muri che «devono rompersi». CryptoCycles non emette un ordine da esse.",
             diagramType = BlockchainDiagramType.LIQUIDATION_ENGINEERING,
-            diagramCaption = "Schema: Esaurimento margine -> Trigger liquidazione -> Cascata di ordini a mercato.",
-            diagramExtraNote = null,
-            realExample = "Una repentina flessione del 5% azzera all'istante le posizioni con leva 20x.",
-            commonMistake = "«Una leva elevata aumenta solo i profitti.» In realtà accresce in modo esponenziale il rischio di azzeramento conto."
+            diagramCaption = "Schema: Margine depositato -> Soglia di mantenimento -> Chiusura forzata dal venue.",
+            diagramExtraNote = "La liquidazione è una regola di piattaforma, non il consenso della chain.",
+            realExample = "Una posizione isolata 10x si chiude quando il mark raggiunge la soglia di mantenimento di quella posizione, anche se il resto del conto ha ancora contante.",
+            commonMistake = "«La blockchain mi ha liquidato.» No. Il motore di rischio del venue ha chiuso. Il settlement on-chain è un altro strato."
         ),
         BlockchainChapter(
             id = 19,
-            title = "19. Dinamica dei Tassi di Finanziamento",
-            content = "I contratti perpetual non hanno scadenza prefissata. Il meccanismo periodico del Funding Rate riallinea il prezzo del contratto con l'indice spot di mercato.\n\nTassi positivi implicano che le posizioni Long pagano le Short (fase euforica). Tassi negativi indicano pessimismo con potenziale di rimbalzo.\n\nPicchi anomali di funding segnalano frequentemente punti d'inversione macro.",
+            title = "19. Tassi di funding e swap perpetual",
+            content = "I perpetual non hanno scadenza. Senza un ancoraggio, il mark può allontanarsi dall'indice spot.\n\nIl funding è un pagamento periodico tra long e short. Positivo: i long pagano gli short. Negativo: gli short pagano i long. Sui venue grandi il ciclo è spesso di otto ore. Quell'intervallo è un parametro del venue, non una legge di Bitcoin.\n\nIl pagamento è di solito peer-to-peer. L'exchange calcola l'importo. Non è sempre una commissione che tiene la casa — alcuni venue trattengono una quota. Leggi il calendario della piattaforma.\n\nUn funding estremo è un costo di detenzione. Non è un segnale affidabile di inversione. Questa lezione non lo legge come un top o un bottom.\n\nSu Futures l'app mostra una stampa funding live quando il feed c'è. Se manca, scrive un trattino. Non inventa un tasso.",
             diagramType = BlockchainDiagramType.FUNDING_DYNAMICS,
-            diagramCaption = "Schema: Prezzo Perpetual > Spot -> Funding positivo (Long pagano Short).",
-            diagramExtraNote = null,
-            realExample = "Durante l'euforia di mercato, un funding del +0,08% ogni 8 ore rende gravosa la conservazione di posizioni rialziste.",
-            commonMistake = "«Il funding è una commissione trattenuta dall'exchange.» Si tratta di un pagamento tra trader."
+            diagramCaption = "Schema: Mark sopra l'indice -> Funding positivo -> Long pagano short.",
+            diagramExtraNote = "L'intervallo di pagamento lo fissa il venue, non il protocollo.",
+            realExample = "Quando il mark resta sopra l'indice, la formula produce di solito un tasso positivo così i long pagano gli short finché i due prezzi si avvicinano.",
+            commonMistake = "«Il funding è sempre la commissione dell'exchange.» Di solito è un trasferimento tra trader. Altro errore: «un funding estremo significa che è arrivato il top.» È una previsione, non una meccanica."
         ),
         BlockchainChapter(
             id = 20,
-            title = "20. Flusso degli Ordini e Cluster di Liquidità",
-            content = "L'order book ordina le proposte d'acquisto (Bid) e di vendita (Ask). La profondità quantifica la liquidità necessaria per muovere il prezzo.\n\nI desk istituzionali utilizzano ordini Iceberg e algoritmi TWAP/VWAP per dissimulare il loro volume reale.\n\nL'analisi dei cluster di liquidità rivela barriere di assorbimento e zone di stop.",
+            title = "20. Order book e profondità di mercato",
+            content = "Le bid sono acquisti in attesa. Le ask sono vendite in attesa. Lo spread è lo spazio tra le due.\n\nUn ordine a mercato prende ciò che riposa sul lato opposto e cammina il book. Un ordine limit aspetta di essere incontrato.\n\nLa profondità è quanta size siede vicino all'ultimo prezzo. Un book sottile significa che un ordine take sposta di più quell'ultimo prezzo. Non inventiamo una percentuale di slippage.\n\nLa size visibile può essere cancellata prima del match. Una mappa di liquidità non è un muro garantito.\n\nQuesta è meccanica di matching su un venue. Non è consenso della chain e non è un whale radar.",
             diagramType = BlockchainDiagramType.QUANTUM_ORDER_FLOW,
-            diagramCaption = "Schema: Profondità order book -> Cluster di liquidità -> Dinamica dello slippage.",
-            diagramExtraNote = null,
-            realExample = "Un ordine a mercato massiccio su un book sottile genera uno slippage rovinoso.",
-            commonMistake = "«Tutti gli ordini a book saranno eseguiti.» Spesso le proposte visibili sono spoofing ritirato prima del fill."
+            diagramCaption = "Schema: Bid | Spread | Ask. L'ordine a mercato consuma il lato opposto.",
+            diagramExtraNote = "Il book appartiene al venue, non alla blockchain.",
+            realExample = "Un acquisto a mercato consuma le ask più basse in ordine finché la size richiesta è riempita. Se quelle ask sono piccole, l'ultimo fill sta più lontano dalla prima ask.",
+            commonMistake = "«Quello che vedo sul book verrà sicuramente scambiato.» Gli ordini a riposo possono sparire prima del match."
         ),
         BlockchainChapter(
             id = 21,
-            title = "21. Cicli Macro di Halving e Dinamica dell'Offerta",
-            content = "L'Halving di Bitcoin si verifica ogni 210.000 blocchi (~4 anni), dimezzando il sussidio ai miner (da 50 BTC nel 2009 a 3,125 BTC nel 2024).\n\nQuesto shock programmato dell'offerta ha storicamente generato cicli quadriennali: Accumulazione, Espansione, Distribuzione e Bear Market.\n\nInquadrare il ciclo offre una guida strategica per la gestione del capitale.",
+            title = "21. Calendario dell'halving e storia dell'emissione",
+            content = "Ogni 210.000 blocchi il sussidio dei miner Bitcoin si dimezza: 50, poi 25, 12,5, 6,25 e 3,125 dopo il 2024. È emissione del protocollo, non un ordine di prezzo.\n\nLa nuova offerta dal sussidio scende. Domanda, ETF, leva e liquidità cash sono fatti separati. Non si fondono in un ciclo automatico di fioritura.\n\nI cicli passati (2012, 2016, 2020, 2024) non condividono un giorno di vertice. Questa lezione non insegna una regola di mesi dopo l'halving.\n\nIl grafico home è una sovrapposizione storica: conteggio giorni dall'ultimo halving e percorsi precedenti. Non disegna il futuro.\n\nL'emissione spiega perché esiste un contatore di giorni. Non è una ricetta per collocare capitale.",
             diagramType = BlockchainDiagramType.MACRO_HALVING_CYCLES,
-            diagramCaption = "Schema: Blocco Halving -> Emissione miner dimezzata del 50% -> Shock dell'offerta.",
-            diagramExtraNote = null,
-            realExample = "Nei cicli precedenti, il vertice massimo è stato raggiunto tra i 12 e i 18 mesi successivi all'halving.",
-            commonMistake = "«Il prezzo esplode nel secondo esatto dell'halving.» La contrazione dell'offerta richiede mesi di assorbimento continuo."
+            diagramCaption = "Schema: 50 → 25 → 12,5 → 6,25 → 3,125 BTC di sussidio per blocco.",
+            diagramExtraNote = "Il sussidio cambia al blocco dell'halving. Il prezzo è un altro mercato.",
+            realExample = "Dopo l'halving del 2024 il sussidio è 3,125 BTC per blocco. Quel numero vive nel protocollo. Il prossimo massimo stampato no.",
+            commonMistake = "«Il prezzo salta nell'ora in cui cambia il sussidio.» A quel blocco cambia l'emissione. Il prezzo è un mercato separato, non un interruttore del protocollo."
         ),
         BlockchainChapter(
             id = 22,
-            title = "22. Gestione del Rischio Istituzionale",
-            content = "La profittabilità costante non dipende da previsioni infallibili, ma dal controllo scrupoloso del drawdown e dal dimensionamento prudente delle posizioni.\n\nI professionisti limitano il rischio all'1-2% del capitale per trade, dimensionando l'esposizione sulla distanza dello stop-loss.\n\nLa salvaguardia del capitale e il distacco emotivo rappresentano la vera chiave del successo nel lungo termine.",
+            title = "22. Come un venue copre le posizioni in perdita",
+            content = "Quando una liquidazione non riesce a chiudere a un prezzo che copre il debito, il buco è prima un problema del venue.\n\nGli strumenti comuni sono un fondo assicurativo o di riserva, l'auto-deleverage (ADL) contro conti profittevoli opposti, e su progetti più vecchi una perdita socializzata.\n\nIsolato versus cross cambia chi paga per primo: una posizione o l'intero conto.\n\nQueste sono regole del venue. Non sono una ricetta di size e non promettono profitto.\n\nCryptoCycles non dimensiona i trade, non mette stop e non dice né all-in né ingresso a scaglioni.",
             diagramType = BlockchainDiagramType.INSTITUTIONAL_RISK,
-            diagramCaption = "Schema: Capitale totale -> Rischio fisso 1-2% -> Dimensionamento rigoroso dello stop.",
-            diagramExtraNote = null,
-            realExample = "Rischiando solo l'1% per trade, si può superare una sequenza di 20 perdite preservando oltre l'81% del conto.",
-            commonMistake = "«Puntare 'all-in' su un token è il metodo più rapido per arricchirsi.» È la via più celere verso la rovina economica."
+            diagramCaption = "Schema: Chiusura forzata -> Fondo assicurativo -> ADL se il fondo non basta.",
+            diagramExtraNote = "Regole del venue. Non una guida di portafoglio.",
+            realExample = "Se una chiusura forzata viene eseguita peggio del prezzo di bancarotta, alcuni venue prendono il buco da un fondo assicurativo prima di ridurre altri conti.",
+            commonMistake = "«Le istituzioni hanno una regola ufficiale di rischio per trade, quindi copiala.» È uno schema da aula, non un protocollo e non il consiglio di questa app."
         )
     )
 }
