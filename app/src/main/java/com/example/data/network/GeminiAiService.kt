@@ -26,10 +26,12 @@ class GeminiAiService(
 ) {
     companion object {
         private const val TAG = "GeminiAiService"
-        // Cheapest working text models first (paid $/1M tokens: 3.1-lite $0.25/$1.50, 3.5-lite $0.30/$2.50, 3.6-flash $0.75/$3.75).
+        // Cheapest models that currently serve this key first.
+        // 3.1-flash-lite is slightly cheaper ($0.25/$1.50) but returns 503 high-demand;
+        // 3.5-flash-lite ($0.30/$2.50) is the cheapest reliable option vs 3.6-flash ($0.75/$3.75).
         internal val MODELS = listOf(
-            "gemini-3.1-flash-lite",
             "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite",
             "gemini-3.6-flash"
         )
         private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"

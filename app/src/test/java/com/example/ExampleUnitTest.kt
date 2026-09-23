@@ -46,7 +46,7 @@ class ExampleUnitTest {
   @Test
   fun prefersCheapestGeminiModelsFirst() {
     assertEquals(
-      listOf("gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash"),
+      listOf("gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash"),
       GeminiAiService.MODELS
     )
   }
