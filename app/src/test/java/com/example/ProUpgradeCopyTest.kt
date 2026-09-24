@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.billing.BillingManager
 import com.example.util.AppStrings
 import com.example.util.FrenchAppStrings
 import com.example.util.GermanAppStrings
@@ -50,24 +51,61 @@ class ProUpgradeCopyTest {
                 strings.macroGateDesc,
                 strings.proAnalyticsDesc,
                 strings.proTapeDesc,
-                strings.historicalAnalogProUnlockText
+                strings.historicalAnalogProUnlockText,
+                strings.proMembershipPrice,
+                strings.proPriceTrialLine,
+                strings.planMonthlyPrice,
+                strings.planAnnualPrice,
+                strings.planAnnualBadge,
+                strings.startFreeTrialSub,
+                strings.continueYearlyBtn,
+                strings.continueYearlySub
             ).joinToString("\n")
             assertFalse(pitch.contains("Masterclass", ignoreCase = true))
             assertFalse(pitch.contains("4.79"))
             assertFalse(pitch.contains("19.99"))
+            assertFalse(pitch.contains("29.99"))
+            assertFalse(pitch.contains("29,99"))
+            assertFalse(pitch.contains("3.99"))
+            assertFalse(pitch.contains("3,99"))
+            assertFalse(pitch.contains("34.99"))
+            assertFalse(pitch.contains("34,99"))
+            assertFalse(pitch.contains("40%"))
             assertFalse(pitch.contains("predictive peak", ignoreCase = true))
             assertFalse(pitch.contains("Apex target", ignoreCase = true))
             assertFalse(pitch.contains("institutional-grade", ignoreCase = true))
             assertFalse(pitch.contains("Chapters 18-22", ignoreCase = true))
-            assertTrue(strings.proPriceTrialLine.contains("3.99") || strings.proPriceTrialLine.contains("3,99"))
+            assertFalse(pitch.contains("whale", ignoreCase = true))
+            assertTrue(
+                strings.proPriceTrialLine.contains("2.99") || strings.proPriceTrialLine.contains("2,99")
+            )
+            assertTrue(
+                strings.planAnnualPrice.contains("24.99") || strings.planAnnualPrice.contains("24,99")
+            )
+            assertTrue(
+                strings.proModalSubtitle.contains("stay free", ignoreCase = true) ||
+                    strings.proModalSubtitle.contains("μένουν δωρεάν") ||
+                    strings.proModalSubtitle.contains("restent gratuits") ||
+                    strings.proModalSubtitle.contains("bleiben frei") ||
+                    strings.proModalSubtitle.contains("siguen gratis") ||
+                    strings.proModalSubtitle.contains("restano gratis")
+            )
         }
+    }
+
+    @Test
+    fun billingDefaultsMatchTheHonestPrice() {
+        assertTrue(BillingManager.DEFAULT_MONTHLY_PRICE.contains("2.99"))
+        assertTrue(BillingManager.DEFAULT_YEARLY_PRICE.contains("24.99"))
     }
 
     @Test
     fun englishFreePitchNamesTheLiveTape() {
         val en = AppStrings()
-        assertTrue(en.proBenefit4.contains("tape reading", ignoreCase = true))
+        assertTrue(en.proBenefit4.contains("tape", ignoreCase = true))
         assertTrue(en.proBenefit4.contains("not a forecast", ignoreCase = true))
+        assertTrue(en.proBenefit6.contains("lessons", ignoreCase = true))
         assertTrue(en.proModalSubtitle.contains("Not a forecast"))
+        assertTrue(en.proModalSubtitle.contains("stay free"))
     }
 }

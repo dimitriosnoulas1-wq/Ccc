@@ -144,6 +144,7 @@ fun SignalsScreen(
     lastUpdatedTimestamp: Long = 0L,
     onOpenAiAssistant: (String?) -> Unit = {},
     onRefresh: () -> Unit = {},
+    onOpenFutures: () -> Unit = {},
     viewModel: CryptoViewModel? = null,
     modifier: Modifier = Modifier
 ) {
@@ -193,7 +194,7 @@ fun SignalsScreen(
 
     if (activeCoin == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "Loading Signals...", color = TextMuted)
+            Text(text = if (isGreek) "Αναμονή ζωντανών νομισμάτων..." else "Waiting for live coins...", color = TextMuted)
         }
         return
     }
@@ -213,6 +214,20 @@ fun SignalsScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 110.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            Text(
+                text = if (isGreek)
+                    "Ζωντανή ταινία τιμής, 24ω και perpetuals. Πατήστε για το βιβλίο USDT-M."
+                else
+                    "Live price tape, 24h, and perpetuals. Tap to open the USDT-M book.",
+                fontSize = 12.sp,
+                color = TextSecondary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenFutures() }
+                    .padding(vertical = 4.dp)
+            )
+        }
         // App Top Bar: Logo + CryptoCycles + Refresh + Pro button
         item {
             Row(
@@ -258,7 +273,7 @@ fun SignalsScreen(
                 ) {
                     QuantumReticleBadge(
                         tag = "0x04",
-                        label = "SIGNALS",
+                        label = strings.navSignals.uppercase(),
                         color = QuantumCyan
                     )
 
