@@ -16,13 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Currency
 import com.example.ui.components.BitcoinRainbowChart
 import com.example.ui.components.RainbowModelEngine
+import com.example.ui.theme.LocalAppColors
 import com.example.util.CycleDayLessons
 import com.example.util.CycleFractalData
+import com.example.util.CycleSameDayNote
 import com.example.util.RainbowCalculator
 
 @Composable
@@ -35,14 +38,29 @@ fun CycleRainbowHome(
     onOpenProModal: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val palette = LocalAppColors.current
     val day = reading?.currentDay
     val markers = remember(reading) {
         buildCycleMarkers(reading)
     }
+    val sameDay = remember(reading, priceUsd, priceIsLive, greek) {
+        CycleSameDayNote.paragraphs(
+            day = day,
+            priceUsd = priceUsd,
+            priceIsLive = priceIsLive,
+            close2012 = reading?.close2012,
+            close2016 = reading?.close2016,
+            close2020 = reading?.close2020,
+            multiple2012 = reading?.multiple2012,
+            multiple2016 = reading?.multiple2016,
+            multiple2020 = reading?.multiple2020,
+            greek = greek
+        )
+    }
     val lessons = if (day == null) emptyList() else CycleDayLessons.paragraphs(day, greek)
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         BitcoinRainbowChart(
             btcPriceUsd = if (priceIsLive) priceUsd else 0.0,
@@ -63,20 +81,36 @@ fun CycleRainbowHome(
         }
         Text(
             text = if (greek) {
-                "Η κουκκίδα στο τέλος της μαύρης γραμμής είναι η σημερινή τιμή. Οι χρωματιστές είναι η ίδια ημέρα κύκλου το 2012, το 2016 και το 2020."
+                "Από τη μαύρη γραμμή πέφτει μια διαγώνια γραμμή σε σημείο: εκεί ήμασταν την ίδια ημέρα κύκλου. Η μαύρη κουκκίδα στο τέλος της τιμής είναι σήμερα, ζωντανά."
             } else {
-                "The dot at the end of the black line is today’s price. The colored dots are the same cycle day in 2012, 2016 and 2020."
+                "A diagonal stem drops from the black line to a point: that is the same cycle day. The black dot at the end of the price is today, live."
             },
             fontSize = 12.sp,
-            color = Color(0xFF64748B),
+            color = palette.textMuted,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
+        Text(
+            text = if (greek) "Πού ήμασταν την ίδια ημέρα" else "Where we were on this same day",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = palette.textPrimary,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
+        sameDay.forEach { paragraph ->
+            Text(
+                text = paragraph,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                color = palette.textPrimary,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
         lessons.forEach { paragraph ->
             Text(
                 text = paragraph,
                 fontSize = 15.sp,
                 lineHeight = 22.sp,
-                color = Color(0xFF14161A),
+                color = palette.textSecondary,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
@@ -88,14 +122,15 @@ private fun buildCycleMarkers(
 ): List<RainbowModelEngine.CycleMarker> {
     val day = reading?.currentDay ?: return emptyList()
     val markers = mutableListOf<RainbowModelEngine.CycleMarker>()
-    marker(1354116278000L, day, reading.close2012, Color(0xFF7C5CFF))?.let { markers += it }
-    marker(1468082773000L, day, reading.close2016, Color(0xFF0891B2))?.let { markers += it }
-    marker(1589217823000L, day, reading.close2020, Color(0xFFEA580C))?.let { markers += it }
+    marker(1354116278000L, day, reading.close2012, Color(0xFF7C5CFF), "2012")?.let { markers += it }
+    marker(1468082773000L, day, reading.close2016, Color(0xFF0891B2), "2016")?.let { markers += it }
+    marker(1589217823000L, day, reading.close2020, Color(0xFFEA580C), "2020")?.let { markers += it }
     return markers
 }
 
 @Composable
 private fun MarkerKey(color: Color, label: String) {
+    val palette = LocalAppColors.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -106,17 +141,24 @@ private fun MarkerKey(color: Color, label: String) {
                 .clip(CircleShape)
                 .background(color)
         )
-        Text(text = label, fontSize = 12.sp, color = Color(0xFF14161A))
+        Text(text = label, fontSize = 12.sp, color = palette.textPrimary)
     }
 }
 
-private fun marker(halvingMs: Long, day: Int, close: Double?, color: Color): RainbowModelEngine.CycleMarker? {
+private fun marker(
+    halvingMs: Long,
+    day: Int,
+    close: Double?,
+    color: Color,
+    label: String
+): RainbowModelEngine.CycleMarker? {
     if (close == null || close <= 0.0) return null
     val whenMs = halvingMs + day * 86_400_000L
     if (whenMs > System.currentTimeMillis()) return null
     return RainbowModelEngine.CycleMarker(
         x = RainbowCalculator.getCurrentFractionalYear(whenMs),
         y = close,
-        color = color
+        color = color,
+        label = label
     )
 }
