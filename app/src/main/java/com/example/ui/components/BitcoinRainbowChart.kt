@@ -74,7 +74,8 @@ fun BitcoinRainbowChart(
     isProUnlocked: Boolean,
     onOpenProModal: () -> Unit,
     modifier: Modifier = Modifier,
-    btcSparkline: List<Double> = emptyList()
+    btcSparkline: List<Double> = emptyList(),
+    cycleMarkers: List<RainbowModelEngine.CycleMarker> = emptyList()
 ) {
     val strings = LocalAppStrings.current
     val isGreek = strings.language.code == "el"
@@ -173,7 +174,8 @@ fun BitcoinRainbowChart(
                         RainbowModelEngine.drawRainbowChart(
                             drawScope = this,
                             priceSeries = priceSeries,
-                            touchX = touchXPosition
+                            touchX = touchXPosition,
+                            cycleMarkers = cycleMarkers
                         )
                     }
 
@@ -338,6 +340,12 @@ object RainbowModelEngine {
         val y: Double
     )
 
+    data class CycleMarker(
+        val x: Double,
+        val y: Double,
+        val color: Color
+    )
+
     val BANDS = listOf(
         BandDef("Maximum Bubble Territory", Color(0xFFC00000)),
         BandDef("FOMO intensifies", Color(0xFFE8622A)),
@@ -397,7 +405,9 @@ object RainbowModelEngine {
         2021 to listOf(33100.0, 45200.0, 58800.0, 57700.0, 37300.0, 35000.0, 41500.0, 47100.0, 43800.0, 61300.0, 57000.0, 46300.0),
         2022 to listOf(38500.0, 43200.0, 45500.0, 37600.0, 31800.0, 19800.0, 23300.0, 20000.0, 19400.0, 20500.0, 17150.0, 16500.0),
         2023 to listOf(23100.0, 23150.0, 28450.0, 29250.0, 27100.0, 30450.0, 29230.0, 25940.0, 26970.0, 34500.0, 37700.0, 42250.0),
-        2024 to listOf(42580.0, 61100.0, 71300.0, 60600.0, 67500.0, 62800.0, 64600.0, 58000.0, 63300.0, 70300.0, 96400.0, 93400.0)
+        2024 to listOf(42580.0, 61100.0, 71300.0, 60600.0, 67500.0, 62800.0, 64600.0, 58000.0, 63300.0, 70300.0, 96400.0, 93400.0),
+        2025 to listOf(102400.0, 84300.0, 82500.0, 94200.0, 104600.0, 107100.0, 115800.0, 108200.0, 114000.0, 109500.0, 90400.0, 87500.0),
+        2026 to listOf(84000.0, 68000.0, 66000.0, 76000.0, 74000.0, 65000.0, 66000.0, 64000.0)
     )
 
     fun buildPriceSeries(liveBtcPrice: Double): List<PricePoint> {
@@ -457,7 +467,8 @@ object RainbowModelEngine {
     fun drawRainbowChart(
         drawScope: DrawScope,
         priceSeries: List<PricePoint>,
-        touchX: Float?
+        touchX: Float?,
+        cycleMarkers: List<CycleMarker> = emptyList()
     ) = with(drawScope) {
         val paddingLeft = 12f
         val paddingRight = 58f
@@ -690,6 +701,16 @@ object RainbowModelEngine {
                     center = Offset(lastPx, lastPy)
                 )
             }
+        }
+
+        cycleMarkers.forEach { marker ->
+            if (marker.y <= 0.0 || marker.x !in X_MIN..X_MAX) return@forEach
+            val px = getX(marker.x)
+            val py = getY(marker.y)
+            val center = Offset(px, py)
+            drawCircle(color = Color.White, radius = 7.dp.toPx(), center = center)
+            drawCircle(color = marker.color, radius = 5.dp.toPx(), center = center)
+            drawCircle(color = Color.White, radius = 2.dp.toPx(), center = center)
         }
 
         // 6. Touch Crosshair
