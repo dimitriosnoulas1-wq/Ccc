@@ -87,7 +87,7 @@ fun SettingsScreen(
     selectedLanguage: AppLanguage,
     isProUnlocked: Boolean,
     monthlyPrice: String = "€2.99",
-    yearlyPrice: String = "€29.99",
+    yearlyPrice: String = "€24.99",
     whaleSettings: WhaleAlertSettings = WhaleAlertSettings(),
     btcPrice: Double = 0.0,
     onCurrencyChanged: (Currency) -> Unit,

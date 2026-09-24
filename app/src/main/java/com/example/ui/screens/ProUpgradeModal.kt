@@ -75,7 +75,7 @@ import com.example.util.LocalAppStrings
 fun ProUpgradeModal(
     isProUnlocked: Boolean,
     monthlyPrice: String = "€2.99",
-    yearlyPrice: String = "€29.99",
+    yearlyPrice: String = "€24.99",
     onDismiss: () -> Unit,
     onPurchaseMonthly: () -> Unit,
     onPurchaseYearly: () -> Unit,
@@ -378,6 +378,9 @@ fun ProUpgradeModal(
                             .replace("3,99 €", monthlyPrice)
                     } else {
                         strings.continueYearlySub
+                            .replace("€24.99", yearlyPrice)
+                            .replace("24,99 €", yearlyPrice)
+                            .replace("24.99 €", yearlyPrice)
                             .replace("€29.99", yearlyPrice)
                             .replace("29,99 €", yearlyPrice)
                             .replace("29.99 €", yearlyPrice)

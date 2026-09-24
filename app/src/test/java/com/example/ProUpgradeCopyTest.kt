@@ -64,6 +64,8 @@ class ProUpgradeCopyTest {
             assertFalse(pitch.contains("Masterclass", ignoreCase = true))
             assertFalse(pitch.contains("4.79"))
             assertFalse(pitch.contains("19.99"))
+            assertFalse(pitch.contains("29.99"))
+            assertFalse(pitch.contains("29,99"))
             assertFalse(pitch.contains("3.99"))
             assertFalse(pitch.contains("3,99"))
             assertFalse(pitch.contains("34.99"))
@@ -78,7 +80,7 @@ class ProUpgradeCopyTest {
                 strings.proPriceTrialLine.contains("2.99") || strings.proPriceTrialLine.contains("2,99")
             )
             assertTrue(
-                strings.planAnnualPrice.contains("29.99") || strings.planAnnualPrice.contains("29,99")
+                strings.planAnnualPrice.contains("24.99") || strings.planAnnualPrice.contains("24,99")
             )
             assertTrue(
                 strings.proModalSubtitle.contains("stay free", ignoreCase = true) ||
@@ -94,7 +96,7 @@ class ProUpgradeCopyTest {
     @Test
     fun billingDefaultsMatchTheHonestPrice() {
         assertTrue(BillingManager.DEFAULT_MONTHLY_PRICE.contains("2.99"))
-        assertTrue(BillingManager.DEFAULT_YEARLY_PRICE.contains("29.99"))
+        assertTrue(BillingManager.DEFAULT_YEARLY_PRICE.contains("24.99"))
     }
 
     @Test
