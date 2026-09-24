@@ -36,6 +36,7 @@ object HistoricalMarketRepository {
     private const val TTL_MS = 10 * 60 * 1000L
 
     private const val DAY_MS = 86_400_000L
+    private const val HALVING_2012 = 1354116278000L
     private const val HALVING_2016 = 1468082773000L
     private const val HALVING_2020 = 1589217823000L
     private const val ANCHOR_MS = 14 * DAY_MS
@@ -243,6 +244,7 @@ object HistoricalMarketRepository {
             .toInt()
             .coerceAtLeast(1)
         val now = nowMs.coerceAtMost(HalvingCycleUtils.HALVING_5TH_TIMESTAMP)
+        val cycle2012 = cycleDrafts(sorted, HALVING_2012, HALVING_2016, axisDays)
         val cycle2016 = cycleDrafts(sorted, HALVING_2016, HALVING_2020, axisDays)
         val cycle2020 = cycleDrafts(sorted, HALVING_2020, HalvingCycleUtils.HALVING_4TH_TIMESTAMP, axisDays)
         val cycleNow = cycleDrafts(sorted, HalvingCycleUtils.HALVING_4TH_TIMESTAMP, now, axisDays)
@@ -283,6 +285,7 @@ object HistoricalMarketRepository {
             windowLabel = "Day $currentDay / $axisDays",
             axisDays = axisDays,
             multipleNow = multipleAt(cycleNow, currentDay),
+            multiple2012 = multipleAt(cycle2012, currentDay),
             multiple2016 = multipleAt(cycle2016, currentDay),
             multiple2020 = multipleAt(cycle2020, currentDay)
         )
