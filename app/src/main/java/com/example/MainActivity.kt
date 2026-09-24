@@ -187,7 +187,15 @@ fun CryptoCyclesApp(
     // Futures Terminal States used outside the Futures tab (slow streams only)
     val futuresTickerData by viewModel.futuresTickerData.collectAsState()
     val futuresMacroSentiment by viewModel.futuresMacroSentiment.collectAsState()
+    val marketIntelligenceReport by viewModel.futuresMarketIntelligenceReport.collectAsState()
     val centralizedPriceState by viewModel.centralizedPriceState.collectAsState()
+
+    LaunchedEffect(selectedCoin?.id) {
+        val symbol = selectedCoin?.symbol?.uppercase()?.trim().orEmpty()
+        if (symbol.isNotEmpty()) {
+            viewModel.selectFuturesSymbol("${symbol}USDT")
+        }
+    }
 
     // AI Analyst State
     val aiMessages by viewModel.aiMessages.collectAsState()
@@ -448,7 +456,9 @@ fun CryptoCyclesApp(
                         onDismiss = { viewModel.selectCoin(null) },
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
                         onOpenProModal = { viewModel.openProModal() },
-                        onOpenAiAssistant = { query -> viewModel.openAiAssistant(query) }
+                        onOpenAiAssistant = { query -> viewModel.openAiAssistant(query) },
+                        movementReport = marketIntelligenceReport,
+                        etfFlowData = etfFlowData
                     )
                 }
 

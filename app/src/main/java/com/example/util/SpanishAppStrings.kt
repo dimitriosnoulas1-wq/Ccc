@@ -176,8 +176,8 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val timeframe1M: String = "1M"
     override val timeframe1Y: String = "1A"
     override val timeframeCycle: String = "Ciclo Macro"
-    override val signalBullish: String = "EXPANSIÓN ALCISTA (BULLISH)"
-    override val signalBearish: String = "CORRECCIÓN BAJISTA (BEARISH)"
+    override val signalBullish: String = "24h ALZA"
+    override val signalBearish: String = "24h BAJA"
     override val signalAccumulation: String = "RUPTURA DE ACUMULACIÓN"
     override val signalConfidence: String = "Frecuencia de referencia histórica"
     override val signalLiveFeed: String = "Feed en Vivo CoinGecko • Ticks 1s"
@@ -339,11 +339,11 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val widgetDaysSinceAthLabel: String = "Días Desde ATH"
 
     // Whale Radar & Live Order Flow
-    override val whaleRadarTitle: String = "RADAR DE BALLENAS & GRANDES MOVIMIENTOS ON-CHAIN (PRO)"
-    override val whaleRadarSub: String = "Telemetría en tiempo real rastreando flujos institucionales en carteras y exchanges (+$10M+)"
+    override val whaleRadarTitle: String = "GRANDES PRINTS BINANCE USDT-M (PRO)"
+    override val whaleRadarSub: String = "Prints de futuros Binance USDT-M desde $100k. No son transferencias on-chain."
     override val whaleNotificationsTitle: String = "Notificaciones Push Alerta de Ballenas"
     override val whaleNotificationsDesc: String = "Recibe alertas instantáneas ante compras masivas de ballenas o ventas en exchanges."
-    override val whaleNotificationsProLockedDesc: String = "Función PRO exclusiva. Alertas push en directo para transferencias de $10M+."
+    override val whaleNotificationsProLockedDesc: String = "Pro: aviso cuando un print Binance USDT-M supera el filtro. No son transferencias on-chain."
     override val whaleThresholdTitle: String = "Tamaño Mínimo de Alerta Ballena"
     override val whaleFilterAll: String = "Todas las Ballenas"
     override val whaleFilterInflow: String = "🚨 Entradas / Ventas"
@@ -578,7 +578,7 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val aiPromptPrefixWhales: String = "¿Qué indican las alertas recientes de ballenas sobre acumulación o distribución institucional?"
     override val aiPromptPrefixAltseason: String = "Evalúa si las condiciones del mercado, el dominio de BTC y el sentimiento favorecen una Altseason ahora."
     override val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
-    override val derivativesRiskGuardrail: String = "Protocolo de Derivados: Operar con responsabilidad. Nunca arriesgar más del 1-2% del capital por posición."
+    override val derivativesRiskGuardrail: String = "Esta pantalla lee la cinta de perpetuos. No es un escritorio de trading y no dimensiona posiciones."
 
     // Market Intelligence Explainer Modal ("What is this & How it works")
     override val marketIntelligenceExplainerTitle: String = "Capa de Market Intelligence: Cómo Funciona"

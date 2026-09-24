@@ -193,4 +193,110 @@ class LiveScreensHonestyTest {
         assertFalse(AppStrings().piCycleBottomStatusAlertText.contains("Floor Buy"))
         assertFalse(AppStrings().fearGreedAccumulationTip.contains("optimal"))
     }
+
+    @Test
+    fun whyCardDashesWhenTapeIsMissingOrMismatched() {
+        val empty = com.example.data.model.CoinMovementDriverMapper.rows(
+            symbol = "BTC",
+            change24h = 2.4,
+            hasLiveChange24h = false,
+            report = com.example.data.model.MarketIntelligenceReport()
+        )
+        assertTrue(empty.all { it.intensity == "—" && it.bars == 0 })
+
+        val waiting = MarketIntelligenceEngine.analyze(
+            symbol = "BTCUSDT",
+            ticker = null,
+            bookTicker = null,
+            markFunding = null,
+            openInterest = null,
+            recentTrades = emptyList(),
+            recentLiquidations = emptyList(),
+            macroSentiment = MacroMarketSentiment()
+        )
+        val waitingRows = com.example.data.model.CoinMovementDriverMapper.rows(
+            symbol = "BTC",
+            change24h = 1.2,
+            hasLiveChange24h = true,
+            report = waiting
+        )
+        assertEquals("24h change", waitingRows.first { it.key == "spot" }.labelEn)
+        assertTrue(waitingRows.first { it.key == "spot" }.isLive)
+        assertEquals("—", waitingRows.first { it.key == "oi" }.intensity)
+        assertEquals("—", waitingRows.first { it.key == "funding" }.intensity)
+        assertEquals("—", waitingRows.first { it.key == "liq" }.intensity)
+        assertEquals(0, waitingRows.first { it.key == "oi" }.bars)
+
+        val liveFunding = MarketIntelligenceEngine.analyze(
+            symbol = "BTCUSDT",
+            ticker = null,
+            bookTicker = null,
+            markFunding = FuturesMarkFunding(
+                symbol = "BTCUSDT",
+                markPrice = 90_000.0,
+                indexPrice = 90_000.0,
+                basis = 0.0,
+                basisPercent = 0.0,
+                fundingRate = 0.00012,
+                nextFundingTimeMs = 0L,
+                approxApr = 0.0,
+                eventTimeMs = 1L,
+                receivedTimeMs = 1L,
+                fromExchange = true
+            ),
+            openInterest = com.example.data.model.FuturesOpenInterest(
+                symbol = "BTCUSDT",
+                openInterest = 12_000.0,
+                openInterestUsd = 1_200_000_000.0,
+                lastRefreshTimeMs = 1L,
+                isAvailable = true
+            ),
+            recentTrades = emptyList(),
+            recentLiquidations = emptyList(),
+            macroSentiment = MacroMarketSentiment(fearAndGreedValue = 62, fearAndGreedClassification = "Greed")
+        )
+        val liveRows = com.example.data.model.CoinMovementDriverMapper.rows(
+            symbol = "BTC",
+            change24h = 3.1,
+            hasLiveChange24h = true,
+            report = liveFunding,
+            etf = BitcoinEtfFlowData(oneDayNetFlowMillionUsd = 180.0, isLive = true)
+        )
+        assertEquals("0.0120%", liveRows.first { it.key == "funding" }.intensity)
+        assertTrue(liveRows.first { it.key == "oi" }.intensity.contains("B"))
+        assertEquals("62", liveRows.first { it.key == "macro" }.intensity)
+        assertEquals("+180.0M", liveRows.first { it.key == "etf" }.intensity)
+
+        val ethOnBtcTape = com.example.data.model.CoinMovementDriverMapper.rows(
+            symbol = "ETH",
+            change24h = 1.0,
+            hasLiveChange24h = true,
+            report = liveFunding,
+            etf = BitcoinEtfFlowData(oneDayNetFlowMillionUsd = 180.0, isLive = true)
+        )
+        assertEquals("—", ethOnBtcTape.first { it.key == "funding" }.intensity)
+        assertTrue(ethOnBtcTape.none { it.key == "etf" })
+    }
+
+    @Test
+    fun leftoverChromeIsNotATradeCallOrOnChainLie() {
+        val packs = listOf(
+            AppStrings(),
+            GreekAppStrings(),
+            com.example.util.FrenchAppStrings(),
+            com.example.util.GermanAppStrings(),
+            com.example.util.SpanishAppStrings(),
+            com.example.util.ItalianAppStrings()
+        )
+        packs.forEach { strings ->
+            assertFalse(strings.signalBullish.contains("BULLISH", ignoreCase = true))
+            assertFalse(strings.signalBearish.contains("BEARISH", ignoreCase = true))
+            assertFalse(strings.whaleRadarTitle.contains("ON-CHAIN", ignoreCase = true))
+            assertFalse(strings.whaleRadarSub.contains("10M"))
+            assertFalse(strings.derivativesRiskGuardrail.contains("1-2%"))
+            assertFalse(strings.derivativesRiskGuardrail.contains("1-2"))
+            assertTrue(strings.whaleRadarTitle.contains("USDT-M"))
+            assertTrue(strings.derivativesRiskGuardrail.contains("tape") || strings.derivativesRiskGuardrail.contains("ταινία") || strings.derivativesRiskGuardrail.contains("nastro") || strings.derivativesRiskGuardrail.contains("cinta") || strings.derivativesRiskGuardrail.contains("Tape") || strings.derivativesRiskGuardrail.contains("bande"))
+        }
+    }
 }

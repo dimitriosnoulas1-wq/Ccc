@@ -204,8 +204,8 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val timeframe1M: String = "1Μ"
     override val timeframe1Y: String = "1ΕΤ"
     override val timeframeCycle: String = "Κύκλος Macro"
-    override val signalBullish: String = "ΑΝΟΔΙΚΗ ΕΚΤΟΝΩΣΗ (BULLISH)"
-    override val signalBearish: String = "ΚΑΘΟΔΙΚΗ ΔΙΟΡΘΩΣΗ (BEARISH)"
+    override val signalBullish: String = "24ω ΑΝΟΔΟΣ"
+    override val signalBearish: String = "24ω ΠΤΩΣΗ"
     override val signalAccumulation: String = "ΔΙΑΣΠΑΣΗ ΣΥΣΣΩΡΕΥΣΗΣ"
     override val signalConfidence: String = "Συχνότητα ιστορικής αναφοράς"
     override val signalLiveFeed: String = "Live Ροή CoinGecko • Ticks 1s"
@@ -367,11 +367,11 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val widgetDaysSinceAthLabel: String = "Ημέρες από ATH"
 
     // Whale Radar & Live Order Flow
-    override val whaleRadarTitle: String = "ΡΑΝΤΑΡ ΦΑΛΑΙΝΩΝ & ΜΕΓΑΛΕΣ ΚΙΝΗΣΕΙΣ ON-CHAIN (PRO)"
-    override val whaleRadarSub: String = "Τηλεμετρία πραγματικού χρόνου για θεσμικές ροές πορτοφολιών και ανταλλακτηρίων (άνω των $10M+)"
+    override val whaleRadarTitle: String = "ΜΕΓΑΛΑ PRINTS BINANCE USDT-M (PRO)"
+    override val whaleRadarSub: String = "Prints Binance USDT-M από $100k. Όχι μεταφορές on-chain πορτοφολιών."
     override val whaleNotificationsTitle: String = "Ειδοποιήσεις Push Ραντάρ Φαλαινών"
     override val whaleNotificationsDesc: String = "Λάβετε άμεσες ειδοποιήσεις push όταν πραγματοποιούνται τεράστιες αγορές ή καταθέσεις σε ανταλλακτήρια."
-    override val whaleNotificationsProLockedDesc: String = "Αποκλειστική λειτουργία PRO. Ειδοποιήσεις push σε πραγματικό χρόνο για μεταφορές $10M+."
+    override val whaleNotificationsProLockedDesc: String = "Pro: ειδοποίηση όταν ένα print Binance USDT-M περνά το φίλτρο μεγέθους. Όχι μεταφορές on-chain."
     override val whaleThresholdTitle: String = "Ελάχιστο Μέγεθος Ειδοποίησης Φαλαινών"
     override val whaleFilterAll: String = "Όλες οι Φάλαινες"
     override val whaleFilterInflow: String = "🚨 Εισροές / Dumps"
@@ -722,5 +722,5 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val liquidationWarningText: String = "Εντοπίστηκαν πυκνά pools ρευστοποιήσεων. Αυξημένος κίνδυνος μεταβλητότητας εάν σπάσει η στήριξη."
     override val exchangeBinance: String = "Binance"
     override val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
-    override val derivativesRiskGuardrail: String = "Πρωτόκολλο Παραγώγων: Συναλλαγές με υπευθυνότητα. Ποτέ πάνω από 1-2% ρίσκο ανά θέση."
+    override val derivativesRiskGuardrail: String = "Αυτή η οθόνη διαβάζει την ταινία των perpetuals. Δεν είναι γραφείο συναλλαγών και δεν ορίζει μέγεθος θέσης."
 }

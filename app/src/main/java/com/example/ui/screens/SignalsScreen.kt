@@ -334,7 +334,7 @@ fun SignalsScreen(
                 )
             }
         } else {
-            // PRO UNLOCKED -> COMPACT LIVE ON-CHAIN WHALE RADAR
+            // PRO UNLOCKED -> Binance USDT-M large prints
             item {
                 WhaleRadarSection(
                     alerts = whaleAlerts
@@ -564,7 +564,10 @@ fun SignalsScreen(
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = "Pro Signal Detected (High Confidence) · Unlock Pro to Reveal",
+                                text = if (isGreek)
+                                    "Pro: ιστορικό κύκλου και ζωντανή ταινία · ξεκλείδωμα"
+                                else
+                                    "Pro: cycle history and live tape · unlock to open",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = NeonAmber
@@ -586,16 +589,16 @@ fun SignalsScreen(
                             )
                         }
                         Text(
-                            text = "${activeCoin.name} (${activeCoin.symbol}) Signal Pro Locked",
+                            text = "${activeCoin.name} (${activeCoin.symbol}) · Pro",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
                         Text(
                             text = if (isGreek)
-                                "Τα σήματα, οι προβλέψεις και τα τεχνικά δεδομένα για το ${activeCoin.name} (${activeCoin.symbol}) είναι διαθέσιμα αποκλειστικά σε Pro μέλη."
+                                "Το ιστορικό κύκλου, το ημερήσιο log και η ζωντανή ταινία για το ${activeCoin.name} (${activeCoin.symbol}) είναι στο Pro. Χωρίς εφευρεμένο σήμα."
                             else
-                                "Signals, AI price projections, and quantitative indicators for ${activeCoin.name} (${activeCoin.symbol}) are exclusive to Pro members.",
+                                "Cycle history, daily log, and live tape for ${activeCoin.name} (${activeCoin.symbol}) are on Pro. No invented signal.",
                             fontSize = 12.sp,
                             color = TextSecondary,
                             textAlign = TextAlign.Center
@@ -673,11 +676,19 @@ fun SignalsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f, fill = false)) {
                             Text(
-                                text = if (isBullish) strings.signalBullish else strings.signalBearish,
+                                text = when {
+                                    !activeCoin.isLivePrice -> "—"
+                                    isBullish -> strings.signalBullish
+                                    else -> strings.signalBearish
+                                },
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = (-0.5).sp,
-                                color = if (isBullish) GainGreen else DrawdownRed,
+                                color = when {
+                                    !activeCoin.isLivePrice -> TextMuted
+                                    isBullish -> GainGreen
+                                    else -> DrawdownRed
+                                },
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )

@@ -93,10 +93,11 @@ fun LiveOrderFlowSection(
             )
         }
     }
+    val hasTape = recentTrades.isNotEmpty()
     val buyDominance = remember(recentTrades) {
         val buys = recentTrades.filter { !it.isSell }.sumOf { it.valueUsd }
         val total = recentTrades.sumOf { it.valueUsd }
-        if (total > 0.0) ((buys / total) * 100.0).toFloat() else 50f
+        if (total > 0.0) ((buys / total) * 100.0).toFloat() else null
     }
 
     Box(
@@ -142,19 +143,28 @@ fun LiveOrderFlowSection(
                 color = TextCyanSlate
             )
 
-            // Order Flow Dual Plasma Waveform
             val totalVolumeUsd = remember(orderHistory.size) { orderHistory.sumOf { it.valueUsd } }
-            val avgTradeSize = remember(orderHistory.size) { if (orderHistory.isNotEmpty()) totalVolumeUsd / orderHistory.size else 50000.0 }
-            val volumeSpikeFactor = (avgTradeSize / 60000.0).toFloat().coerceIn(0.8f, 2.5f)
+            val avgTradeSize = remember(orderHistory.size) {
+                if (orderHistory.isNotEmpty()) totalVolumeUsd / orderHistory.size else null
+            }
+            val volumeSpikeFactor = ((avgTradeSize ?: 0.0) / 60000.0).toFloat().coerceIn(0.8f, 2.5f)
             val tradeVelocity = 2.5f
 
-            QuantumOrderFlowWave(
-                buyRatio = buyDominance,
-                sellRatio = 100f - buyDominance,
-                volumeSpikeFactor = volumeSpikeFactor,
-                tradeVelocity = tradeVelocity,
-                height = 76.dp
-            )
+            if (hasTape && buyDominance != null) {
+                QuantumOrderFlowWave(
+                    buyRatio = buyDominance,
+                    sellRatio = 100f - buyDominance,
+                    volumeSpikeFactor = volumeSpikeFactor,
+                    tradeVelocity = tradeVelocity,
+                    height = 76.dp
+                )
+            } else {
+                Text(
+                    text = "—",
+                    fontSize = 11.sp,
+                    color = TextCyanSlate
+                )
+            }
 
             // Real-Time Buy vs Sell Dominance Pressure Gauge
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -171,7 +181,11 @@ fun LiveOrderFlowSection(
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        val buyDomFormatted = com.example.util.AppNumberFormatter.formatPercent(buyDominance.toDouble(), includeSign = false, decimals = 1)
+                        val buyDomFormatted = if (buyDominance != null) {
+                            com.example.util.AppNumberFormatter.formatPercent(buyDominance.toDouble(), includeSign = false, decimals = 1)
+                        } else {
+                            "—"
+                        }
                         Text(
                             text = "${strings.buyDominanceLabel}: $buyDomFormatted",
                             fontSize = 11.sp,
@@ -181,7 +195,11 @@ fun LiveOrderFlowSection(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        val sellDomFormatted = com.example.util.AppNumberFormatter.formatPercent((100f - buyDominance).toDouble(), includeSign = false, decimals = 1)
+                        val sellDomFormatted = if (buyDominance != null) {
+                            com.example.util.AppNumberFormatter.formatPercent((100f - buyDominance).toDouble(), includeSign = false, decimals = 1)
+                        } else {
+                            "—"
+                        }
                         Text(
                             text = "${strings.sellDominanceLabel}: $sellDomFormatted",
                             fontSize = 11.sp,
@@ -208,7 +226,7 @@ fun LiveOrderFlowSection(
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(buyDominance / 100f)
+                            .fillMaxWidth(if (buyDominance != null) buyDominance / 100f else 0f)
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(

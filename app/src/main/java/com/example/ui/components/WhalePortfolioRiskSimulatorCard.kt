@@ -35,7 +35,6 @@ import com.example.ui.theme.PhotonGoldBright
 import com.example.ui.theme.QuantumBlue
 import com.example.ui.theme.QuantumCyan
 import com.example.ui.theme.QuantumCyanBright
-import com.example.ui.theme.SoftCrimson
 import com.example.ui.theme.SoftEmerald
 import com.example.ui.theme.TextCyanSlate
 import com.example.ui.theme.TextPureWhite
@@ -73,13 +72,7 @@ fun WhalePortfolioRiskSimulatorCard(
     val normAlts = if (totalWeight > 0) altShare / totalWeight else 0.15f
     val normStables = if (totalWeight > 0) stableShare / totalWeight else 0.10f
 
-    val calculatedRisk = ((normBtc * 58f) + (normEth * 66f) + (normAlts * 80f) + (normStables * 0f)).coerceIn(10f, 95f)
-
-    val riskColor = when {
-        calculatedRisk > 75f -> SoftCrimson // High risk / Overheat
-        calculatedRisk > 55f -> PhotonGold // Moderate heat
-        else -> SoftEmerald // Healthy
-    }
+    val mixLine = "BTC ${(normBtc * 100).toInt()}% · ETH ${(normEth * 100).toInt()}% · Alts ${(normAlts * 100).toInt()}% · Stables ${(normStables * 100).toInt()}%"
 
     val recommendedExitDca = if (isGreek) {
         "Καμία εντολή εξόδου. Μόνο η ιστορική ημέρα κύκλου."
@@ -135,7 +128,7 @@ fun WhalePortfolioRiskSimulatorCard(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = if (isGreek) "Whale Exit & Risk Simulator" else "Whale Exit & Risk Simulator",
+                                text = if (isGreek) "Σκίτσο κατανομής ημέρας κύκλου" else "Cycle-day mix sketch",
                                 fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPureWhite
@@ -148,7 +141,7 @@ fun WhalePortfolioRiskSimulatorCard(
                                     .padding(horizontal = 5.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "COLD PRIVACY",
+                                    text = "SKETCH",
                                     fontSize = 8.5.sp,
                                     fontWeight = FontWeight.Black,
                                     fontFamily = FontFamily.Monospace,
@@ -157,7 +150,7 @@ fun WhalePortfolioRiskSimulatorCard(
                             }
                         }
                         Text(
-                            text = if (isGreek) "Ανώνυμη ανάλυση κινδύνου κεφαλαίου & έξοδος κορυφής" else "Zero-KYC capital preservation & exit bands scanner",
+                            text = if (isGreek) "Μείγμα κατανομής πάνω στην ιστορική ημέρα κύκλου. Όχι σκορ ρίσκου." else "Allocation mix on the historical cycle day. Not a risk score.",
                             fontSize = 11.sp,
                             color = TextCyanSlate
                         )
@@ -185,29 +178,17 @@ fun WhalePortfolioRiskSimulatorCard(
             ) {
                 Column {
                     Text(
-                        text = if (isGreek) "Εκτιμώμενο Ρίσκο Κύκλου" else "Estimated Cycle Risk",
+                        text = if (isGreek) "Μείγμα (όχι σκορ)" else "Mix (not a score)",
                         fontSize = 9.5.sp,
                         color = TextCyanSlate
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "${calculatedRisk.toInt()}/100",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Black,
-                            fontFamily = FontFamily.Monospace,
-                            color = riskColor
-                        )
-                        Text(
-                            text = when {
-                                calculatedRisk > 75f -> if (isGreek) "ΥΨΗΛΟ ΡΙΣΚΟ" else "HIGH HEAT"
-                                calculatedRisk > 55f -> if (isGreek) "ΜΕΤΡΙΟ ΡΙΣΚΟ" else "MODERATE"
-                                else -> if (isGreek) "ΑΣΦΑΛΗΣ ΖΩΝΗ" else "SAFE"
-                            },
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = riskColor
-                        )
-                    }
+                    Text(
+                        text = mixLine,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        color = QuantumCyanBright
+                    )
                 }
 
                 Column(horizontalAlignment = Alignment.End) {
@@ -296,7 +277,7 @@ fun WhalePortfolioRiskSimulatorCard(
                                 text = recommendedExitDca,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = riskColor
+                                color = QuantumCyanBright
                             )
                             Text(
                                 text = if (isGreek)
@@ -319,7 +300,7 @@ fun WhalePortfolioRiskSimulatorCard(
                             Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isGreek) "Ξεκλείδωμα Whale Model Analytics (Pro)" else "Unlock Full Whale Model Analytics (Pro)",
+                                text = if (isGreek) "Ξεκλείδωμα ιστορικού κύκλου (Pro)" else "Unlock cycle history (Pro)",
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Black,
                                 fontSize = 12.sp
