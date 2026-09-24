@@ -36,8 +36,8 @@ class BillingManager(
         const val PRODUCT_PRO_MONTHLY = "pro_monthly"
         const val PRODUCT_PRO_YEARLY = "pro_yearly"
 
-        const val DEFAULT_MONTHLY_PRICE = "€3.99"
-        const val DEFAULT_YEARLY_PRICE = "€34.99"
+        const val DEFAULT_MONTHLY_PRICE = "€2.99"
+        const val DEFAULT_YEARLY_PRICE = "€29.99"
     }
 
     private val prefs: SharedPreferences =

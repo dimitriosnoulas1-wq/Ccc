@@ -74,8 +74,8 @@ import com.example.util.LocalAppStrings
 @Composable
 fun ProUpgradeModal(
     isProUnlocked: Boolean,
-    monthlyPrice: String = "€3.99",
-    yearlyPrice: String = "€34.99",
+    monthlyPrice: String = "€2.99",
+    yearlyPrice: String = "€29.99",
     onDismiss: () -> Unit,
     onPurchaseMonthly: () -> Unit,
     onPurchaseYearly: () -> Unit,
@@ -371,15 +371,18 @@ fun ProUpgradeModal(
                 Text(
                     text = if (selectedPlan == BillingManager.PRODUCT_PRO_MONTHLY) {
                         strings.startFreeTrialSub
+                            .replace("€2.99", monthlyPrice)
+                            .replace("2,99 €", monthlyPrice)
+                            .replace("2.99 €", monthlyPrice)
                             .replace("€3.99", monthlyPrice)
                             .replace("3,99 €", monthlyPrice)
-                            .replace("3.99 €", monthlyPrice)
                     } else {
                         strings.continueYearlySub
+                            .replace("€29.99", yearlyPrice)
+                            .replace("29,99 €", yearlyPrice)
+                            .replace("29.99 €", yearlyPrice)
                             .replace("€34.99", yearlyPrice)
                             .replace("34,99 €", yearlyPrice)
-                            .replace("34.99 €", yearlyPrice)
-                            .replace("€3.99", yearlyPrice)
                     },
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
