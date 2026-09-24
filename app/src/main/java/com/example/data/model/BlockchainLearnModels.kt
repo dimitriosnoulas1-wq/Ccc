@@ -34,5 +34,5 @@ data class BlockchainChapter(
     val diagramExtraNote: String? = null,
     val realExample: String,
     val commonMistake: String,
-    val isProOnly: Boolean = id >= 18
+    val isProOnly: Boolean = id in 18..22
 )
