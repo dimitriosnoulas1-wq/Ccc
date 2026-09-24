@@ -4,9 +4,10 @@ import com.example.data.model.AppLanguage
 
 class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     // Navigation & Core
-    override val navMarkets: String = "Mercados"
+    override val navMarkets: String = "Ciclo"
+    override val navCoins: String = "Monedas"
     override val navFutures: String = "Futuros"
-    override val navSignals: String = "Señales"
+    override val navSignals: String = "Cinta"
     override val navSettings: String = "Ajustes"
     override val navMacro: String = "Macro"
     override val appTitle: String = "CryptoCycles"

@@ -169,7 +169,6 @@ fun CryptoCyclesApp(
     val forwardAuditLogs by viewModel.forwardAuditLogs.collectAsState()
     val dailyCycleLogs by viewModel.dailyCycleLogs.collectAsState()
     val btcCycleReading by viewModel.btcCycleReading.collectAsState()
-    val showCoinsCatalog by viewModel.showCoinsCatalog.collectAsState()
     val cycleDayAlertEnabled by viewModel.cycleDayAlertEnabled.collectAsState()
     val liveMovingAverages by viewModel.liveMovingAverages.collectAsState()
     val globalRiskSnapshot by viewModel.globalRiskSnapshot.collectAsState()
@@ -275,7 +274,7 @@ fun CryptoCyclesApp(
                             .padding(paddingValues)
                     ) {
                         when (selectedTab) {
-                            MainTab.MARKETS -> if (showCoinsCatalog) MarketsScreen(
+                            MainTab.COINS -> MarketsScreen(
                                 coins = coins,
                                 featuredHeroCoin = featuredHeroCoin,
                                 searchQuery = searchQuery,
@@ -315,12 +314,18 @@ fun CryptoCyclesApp(
                                     viewModel.setTab(targetTab)
                                 },
                                 onRefresh = { viewModel.manualRefresh() },
-                                onBackToCycle = { viewModel.hideCoinsCatalog() }
-                            ) else CycleHomePage(
+                                onBackToCycle = { viewModel.setTab(MainTab.MARKETS) },
+                                listMode = true
+                            )
+
+                            MainTab.MARKETS -> CycleHomePage(
                                 reading = btcCycleReading,
                                 latestPriceUsd = if (centralizedPriceState.btcSpotPrice > 0.0) {
                                     centralizedPriceState.btcSpotPrice
                                 } else centralizedPriceState.btcPerpPrice,
+                                btcChange24h = allCoins.firstOrNull { it.symbol.equals("BTC", true) }?.change24h,
+                                btcPriceIsLive = allCoins.firstOrNull { it.symbol.equals("BTC", true) }?.isLivePrice == true,
+                                fearAndGreedScore = futuresMacroSentiment.fearAndGreedValue,
                                 etfFlowData = etfFlowData,
                                 stablecoinLiquidityData = stablecoinLiquidityData,
                                 dailyLogs = dailyCycleLogs,
@@ -336,11 +341,12 @@ fun CryptoCyclesApp(
                                     }
                                 },
                                 onOpenChart = { viewModel.openCycleChart() },
-                                onOpenCoins = { viewModel.showCoinsCatalog() },
+                                onOpenCoins = { viewModel.setTab(MainTab.COINS) },
                                 onSearchCoins = { query -> viewModel.openCoinsCatalog(query) },
                                 onOpenProModal = { viewModel.openProModal() },
                                 onRefresh = { viewModel.manualRefresh() },
-                                onAlertHistoryClick = { viewModel.openAlertHistory() }
+                                onAlertHistoryClick = { viewModel.openAlertHistory() },
+                                onOpenFearGreed = { viewModel.setTab(MainTab.MACRO) }
                             )
 
                             MainTab.FUTURES -> FuturesTerminalRoute(
@@ -395,6 +401,7 @@ fun CryptoCyclesApp(
                                 recentTrades = futuresRecentTrades,
                                 onOpenAiAssistant = { prompt -> viewModel.openAiAssistant(prompt) },
                                 onRefresh = { viewModel.manualRefresh() },
+                                onOpenFutures = { viewModel.setTab(MainTab.FUTURES) },
                                 viewModel = viewModel
                             )
 
@@ -560,31 +567,21 @@ fun CustomBottomNavBar(
         ) {
             BottomNavItem(
                 label = strings.navMarkets,
-                activeIcon = Icons.Filled.GridView,
-                inactiveIcon = Icons.Outlined.GridView,
-                isSelected = selectedTab == MainTab.MARKETS,
+                activeIcon = Icons.Filled.ShowChart,
+                inactiveIcon = Icons.Outlined.ShowChart,
+                isSelected = selectedTab == MainTab.MARKETS || selectedTab == MainTab.MACRO,
                 onClick = { onSelectTab(MainTab.MARKETS) },
                 testTag = "nav_markets",
                 modifier = Modifier.weight(1f)
             )
 
             BottomNavItem(
-                label = strings.navFutures,
-                activeIcon = Icons.Filled.QueryStats,
-                inactiveIcon = Icons.Outlined.QueryStats,
-                isSelected = selectedTab == MainTab.FUTURES,
-                onClick = { onSelectTab(MainTab.FUTURES) },
-                testTag = "nav_futures",
-                modifier = Modifier.weight(1f)
-            )
-
-            BottomNavItem(
-                label = strings.navMacro,
-                activeIcon = Icons.Filled.Insights,
-                inactiveIcon = Icons.Outlined.Insights,
-                isSelected = selectedTab == MainTab.MACRO,
-                onClick = { onSelectTab(MainTab.MACRO) },
-                testTag = "nav_macro",
+                label = strings.navCoins,
+                activeIcon = Icons.Filled.GridView,
+                inactiveIcon = Icons.Outlined.GridView,
+                isSelected = selectedTab == MainTab.COINS,
+                onClick = { onSelectTab(MainTab.COINS) },
+                testTag = "nav_coins",
                 modifier = Modifier.weight(1f)
             )
 
@@ -592,7 +589,7 @@ fun CustomBottomNavBar(
                 label = strings.navSignals,
                 activeIcon = Icons.Filled.Sensors,
                 inactiveIcon = Icons.Outlined.Sensors,
-                isSelected = selectedTab == MainTab.SIGNALS,
+                isSelected = selectedTab == MainTab.SIGNALS || selectedTab == MainTab.FUTURES,
                 onClick = { onSelectTab(MainTab.SIGNALS) },
                 testTag = "nav_signals",
                 modifier = Modifier.weight(1f)

@@ -4,10 +4,11 @@ import com.example.data.model.AppLanguage
 
 class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     // Navigation & Core
-    override val navMarkets: String = "Αγορές"
+    override val navMarkets: String = "Κύκλος"
+    override val navCoins: String = "Νομίσματα"
     override val navFutures: String = "Futures"
     override val navMacro: String = "Macro"
-    override val navSignals: String = "Σήματα"
+    override val navSignals: String = "Ταινία"
     override val navLearn: String = "Learn"
     override val navSettings: String = "Ρυθμίσεις"
     override val appTitle: String = "CryptoCycles"
