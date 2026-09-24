@@ -217,7 +217,9 @@ fun CycleHomePage(
                 reading = reading,
                 priceUsd = latestPriceUsd,
                 priceIsLive = btcPriceIsLive,
-                greek = greek
+                isProUnlocked = isProUnlocked,
+                greek = greek,
+                onOpenProModal = onOpenProModal
             )
         }
         item {
