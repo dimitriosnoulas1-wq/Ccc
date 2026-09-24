@@ -9,13 +9,21 @@ class CycleDayLessonsTest {
 
     @Test
     fun nearDay887SpeaksAsPastCycleHistory() {
-        val lessons = CycleDayLessons.nearest(887)
-        val lines = lessons.joinToString("\n") { CycleDayLessons.line(it, 887, greek = false) }
+        val lines = CycleDayLessons.paragraphs(887, greek = false).joinToString("\n")
+        assertTrue(lines.contains("Day 887"))
         assertTrue(lines.contains("2016"))
-        assertTrue(lines.contains("days after") || lines.contains("days before") || lines.contains("this day-count"))
+        assertTrue(lines.contains("Tomorrow the count moves"))
         assertFalse(lines.contains("will", ignoreCase = true))
         assertFalse(lines.contains("buy", ignoreCase = true))
         assertFalse(lines.contains("sell", ignoreCase = true))
         assertFalse(lines.contains("target", ignoreCase = true))
+    }
+
+    @Test
+    fun ftxWeekNamesSolAsHistory() {
+        val ftx = CycleDayLessons.nearest(900).first { it.textEn.contains("FTX") }
+        val lines = CycleDayLessons.paragraphs(ftx.day, greek = false).joinToString("\n")
+        assertTrue(lines.contains("SOL"))
+        assertFalse(lines.contains("will", ignoreCase = true))
     }
 }

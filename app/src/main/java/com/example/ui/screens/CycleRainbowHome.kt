@@ -42,7 +42,7 @@ fun CycleRainbowHome(
     val dots = remember(reading, priceUsd, priceIsLive, yearNow) {
         buildDots(reading, priceUsd, priceIsLive, yearNow)
     }
-    val lessons = if (day == null) emptyList() else CycleDayLessons.nearest(day)
+        val lessons = if (day == null) emptyList() else CycleDayLessons.paragraphs(day, greek)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -126,11 +126,11 @@ fun CycleRainbowHome(
                 color = Color(0xFF64748B)
             )
         }
-        lessons.forEach { lesson ->
+        lessons.forEach { paragraph ->
             Text(
-                text = CycleDayLessons.line(lesson, day ?: 0, greek),
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
+                text = paragraph,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
                 color = Color(0xFF14161A)
             )
         }
