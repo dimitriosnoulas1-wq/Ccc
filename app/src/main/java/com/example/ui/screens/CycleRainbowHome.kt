@@ -70,6 +70,7 @@ fun CycleRainbowHome(
             color = Color(0xFF64748B)
         )
         Canvas(modifier = Modifier.fillMaxWidth().height(240.dp)) {
+            if (size.width <= 1f || size.height <= 1f) return@Canvas
             val left = 8f
             val right = size.width - 8f
             val top = 12f
@@ -85,13 +86,15 @@ fun CycleRainbowHome(
                 bandLows += RainbowCalculator.calculateBandPrice(days, RainbowBand.FIRE_SALE)
                 bandHighs += RainbowCalculator.calculateBandPrice(days, RainbowBand.MAXIMUM_BUBBLE)
             }
-            val prices = bandLows + bandHighs + dots.map { it.price }
-            val yMin = prices.minOrNull()?.coerceAtLeast(1.0) ?: 1.0
-            val yMax = prices.maxOrNull()?.coerceAtLeast(yMin * 1.1) ?: 10.0
+            val prices = (bandLows + bandHighs + dots.map { it.price }).filter { it.isFinite() && it > 0.0 }
+            val yMin = (prices.minOrNull() ?: 1.0).coerceIn(0.01, 1e12)
+            val yMax = (prices.maxOrNull() ?: (yMin * 10.0)).coerceAtLeast(yMin * 1.1)
+            val logSpan = (ln(yMax) - ln(yMin)).takeIf { it.isFinite() && it > 1e-6 } ?: return@Canvas
             fun xOf(year: Double) = left + ((year - x0) / (x1 - x0)).toFloat() * (right - left)
             fun yOf(price: Double): Float {
-                val t = (ln(price) - ln(yMin)) / (ln(yMax) - ln(yMin))
-                return bottom - t.toFloat() * (bottom - top)
+                val safe = price.takeIf { it.isFinite() && it > 0.0 } ?: yMin
+                val t = ((ln(safe) - ln(yMin)) / logSpan).toFloat().coerceIn(0f, 1f)
+                return bottom - t * (bottom - top)
             }
             val bands = RainbowBand.entries.sortedBy { it.id }
             for (bandIndex in 0 until bands.lastIndex) {

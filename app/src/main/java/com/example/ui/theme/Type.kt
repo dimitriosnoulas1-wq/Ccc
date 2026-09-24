@@ -12,26 +12,18 @@ import com.example.R
 // 4D QUANTUM TERMINAL 2126 TYPOGRAPHY SYSTEM
 // ============================================================================
 
+// Each file is a single Regular face. Asking the loader for Bold/Medium
+// from that same file crashes some emulators on the first screen.
 val SpaceGroteskFont = FontFamily(
-    Font(R.font.space_grotesk, FontWeight.Normal),
-    Font(R.font.space_grotesk, FontWeight.Medium),
-    Font(R.font.space_grotesk, FontWeight.SemiBold),
-    Font(R.font.space_grotesk, FontWeight.Bold)
+    Font(R.font.space_grotesk, FontWeight.Normal)
 )
 
 val JetBrainsMonoFont = FontFamily(
-    Font(R.font.jetbrains_mono, FontWeight.Normal),
-    Font(R.font.jetbrains_mono, FontWeight.Medium),
-    Font(R.font.jetbrains_mono, FontWeight.SemiBold),
-    Font(R.font.jetbrains_mono, FontWeight.Bold)
+    Font(R.font.jetbrains_mono, FontWeight.Normal)
 )
 
 val SyneFont = FontFamily(
-    Font(R.font.syne, FontWeight.Normal),
-    Font(R.font.syne, FontWeight.Medium),
-    Font(R.font.syne, FontWeight.SemiBold),
-    Font(R.font.syne, FontWeight.Bold),
-    Font(R.font.syne, FontWeight.ExtraBold)
+    Font(R.font.syne, FontWeight.Normal)
 )
 
 val Typography = Typography(
