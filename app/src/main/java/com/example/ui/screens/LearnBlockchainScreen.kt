@@ -70,6 +70,7 @@ import com.example.data.model.AppLanguage
 import com.example.data.model.BlockchainChapter
 import com.example.data.repository.BlockchainLearnRepository
 import com.example.ui.components.ChapterDiagram
+import com.example.ui.components.NeonGothicCitadelBackground
 import com.example.ui.theme.CopperAccent
 import com.example.ui.theme.CosmicVoidBg
 import com.example.ui.theme.CosmicVoidSurface
@@ -90,22 +91,23 @@ import com.example.ui.components.QuantumReticleBadge
 import com.example.util.AppSoundManager
 import kotlinx.coroutines.launch
 
-// Terminal palette (Void black & Etched glass HUD)
-private val LearnBg = CosmicVoidBg
-private val LearnCardBg = CosmicVoidSurface
-private val LearnCardBorder = CosmicBorder
-private val LearnExampleBg = CosmicVoidSurfaceElevated
-private val LearnExampleBorder = CosmicBorder
-private val LearnMistakeBg = CosmicVoidSurface
-private val LearnMistakeBorder = SoftCrimson.copy(alpha = 0.40f)
+// Ergonomic Anti-Fatigue Reading Palette (Calibrated for Eye Comfort & Focus)
+// Deep warm obsidian eliminates harsh OLED halation; warm pearl text ensures comfortable prolonged reading
+private val LearnBg = Color(0xFF0D1117)
+private val LearnCardBg = Color(0xFF161B22)
+private val LearnCardBorder = Color(0xFF28303C)
+private val LearnExampleBg = Color(0xFF131A24)
+private val LearnExampleBorder = Color(0xFF22364F)
+private val LearnMistakeBg = Color(0xFF1C151A)
+private val LearnMistakeBorder = Color(0xFF45222A)
 
-private val CyanAccent = QuantumCyan
-private val CrimsonAccent = SoftCrimson
-private val AmberPrimary = PhotonGold
-private val AmberGlow = PhotonGold
-private val MintAccent = TachyonMint
+private val CyanAccent = Color(0xFF38BDF8)
+private val CrimsonAccent = Color(0xFFF87171)
+private val AmberPrimary = Color(0xFFF59E0B)
+private val AmberGlow = Color(0xFFFBBF24)
+private val MintAccent = Color(0xFF34D399)
 
-private val TextPrimaryHighContrast = Color(0xFFF1F5F9)
+private val TextPrimaryHighContrast = Color(0xFFECEEF2)
 private val TextSecondaryComfort = Color(0xFFCBD5E1)
 private val TextMutedComfort = Color(0xFF8DA0B8)
 
@@ -136,8 +138,13 @@ fun LearnBlockchainScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(LearnBg)
     ) {
+        // Neon Gothic Citadel Wallpaper (Only in Learn: Gothic Spires, Moon, Water Reflections & Neon Light Beams)
+        NeonGothicCitadelBackground(
+            modifier = Modifier.fillMaxSize(),
+            dimRatio = 0.55f
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -346,8 +353,8 @@ private fun LearnTopHeader(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF140D2E))
-                    .border(1.dp, QuantumCyan.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                    .background(LearnCardBg)
+                    .border(1.dp, CyanAccent.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Row(
@@ -358,14 +365,14 @@ private fun LearnTopHeader(
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
-                            .background(QuantumCyan)
+                            .background(CyanAccent)
                     )
                     Text(
                         text = "${currentIndex + 1}/$totalChapters",
                         fontSize = 12.sp,
                         fontFamily = JetBrainsMonoFont,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = TextPrimaryHighContrast
                     )
                 }
             }
@@ -388,10 +395,10 @@ private fun LearnTopHeader(
                             .clip(RoundedCornerShape(2.dp))
                             .background(
                                 when {
-                                    isCurrent -> QuantumCyan
-                                    isActive -> QuantumCyan.copy(alpha = 0.75f)
-                                    isLocked -> MauveAurora.copy(alpha = 0.3f)
-                                    else -> Color(0xFF2A2050)
+                                    isCurrent -> CyanAccent
+                                    isActive -> CyanAccent.copy(alpha = 0.75f)
+                                    isLocked -> AmberPrimary.copy(alpha = 0.35f)
+                                    else -> LearnCardBorder
                                 }
                             )
                     )
@@ -403,8 +410,8 @@ private fun LearnTopHeader(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF140D2E))
-                .border(1.dp, QuantumCyan.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                .background(LearnCardBg)
+                .border(1.dp, CyanAccent.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
                 .clickable {
                     AppSoundManager.playTechClick()
                     onOpenChapterPicker()
@@ -417,7 +424,7 @@ private fun LearnTopHeader(
             Icon(
                 imageVector = Icons.Filled.AutoStories,
                 contentDescription = "Index",
-                tint = QuantumCyan,
+                tint = CyanAccent,
                 modifier = Modifier.size(15.dp)
             )
             Text(
@@ -425,7 +432,7 @@ private fun LearnTopHeader(
                 fontSize = 11.5.sp,
                 fontFamily = SpaceGroteskFont,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = TextPrimaryHighContrast
             )
         }
     }
@@ -495,8 +502,8 @@ private fun ChapterHeaderTitle(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .background(TachyonMint.copy(alpha = 0.15f))
-                        .border(1.dp, TachyonMint.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                        .background(MintAccent.copy(alpha = 0.15f))
+                        .border(1.dp, MintAccent.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
@@ -504,15 +511,15 @@ private fun ChapterHeaderTitle(
                         fontSize = 10.sp,
                         fontFamily = JetBrainsMonoFont,
                         fontWeight = FontWeight.Bold,
-                        color = TachyonMint
+                        color = MintAccent
                     )
                 }
             } else {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
-                        .background(CopperAccent.copy(alpha = 0.15f))
-                        .border(1.dp, CopperAccent.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                        .background(AmberPrimary.copy(alpha = 0.15f))
+                        .border(1.dp, AmberPrimary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
@@ -520,7 +527,7 @@ private fun ChapterHeaderTitle(
                         fontSize = 10.sp,
                         fontFamily = JetBrainsMonoFont,
                         fontWeight = FontWeight.Bold,
-                        color = CopperAccent
+                        color = AmberPrimary
                     )
                 }
             }
@@ -528,11 +535,11 @@ private fun ChapterHeaderTitle(
 
         Text(
             text = chapter.title,
-            fontSize = 23.sp,
+            fontSize = 22.sp,
             fontFamily = SpaceGroteskFont,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
-            lineHeight = 30.sp
+            color = TextPrimaryHighContrast,
+            lineHeight = 29.sp
         )
     }
 }
@@ -548,9 +555,10 @@ private fun ParagraphsSection(content: String) {
         paragraphs.forEach { paragraph ->
             Text(
                 text = paragraph.trim(),
-                fontSize = 17.sp,
+                fontSize = 16.5.sp,
                 color = TextPrimaryHighContrast,
-                lineHeight = 27.sp
+                lineHeight = 27.5.sp,
+                letterSpacing = 0.2.sp
             )
         }
     }
@@ -574,8 +582,8 @@ private fun ExampleCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF0D0A1D))
-            .border(1.dp, QuantumCyan.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+            .background(LearnExampleBg)
+            .border(1.dp, LearnExampleBorder, RoundedCornerShape(12.dp))
             .height(IntrinsicSize.Min)
     ) {
         // Soft Cyan vertical accent bar on the left edge
@@ -617,7 +625,7 @@ private fun ExampleCard(
 
             Text(
                 text = example,
-                fontSize = 15.5.sp,
+                fontSize = 15.sp,
                 color = TextSecondaryComfort,
                 lineHeight = 24.sp
             )
@@ -643,8 +651,8 @@ private fun CommonMistakeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF0D0A1D))
-            .border(1.dp, SoftCrimson.copy(alpha = 0.40f), RoundedCornerShape(12.dp))
+            .background(LearnMistakeBg)
+            .border(1.dp, LearnMistakeBorder, RoundedCornerShape(12.dp))
             .height(IntrinsicSize.Min)
     ) {
         // Soft Crimson vertical accent bar on the left edge
@@ -686,7 +694,7 @@ private fun CommonMistakeCard(
 
             Text(
                 text = mistake,
-                fontSize = 15.5.sp,
+                fontSize = 15.sp,
                 color = TextSecondaryComfort,
                 lineHeight = 24.sp
             )
@@ -1099,14 +1107,14 @@ private fun ChapterPickerSheetContent(
                         .clip(RoundedCornerShape(10.dp))
                         .background(
                             when {
-                                isSelected -> CopperAccent.copy(alpha = 0.14f)
+                                isSelected -> AmberPrimary.copy(alpha = 0.14f)
                                 isLocked -> LearnBg.copy(alpha = 0.7f)
-                                else -> LearnBg
+                                else -> LearnCardBg
                             }
                         )
                         .border(
                             1.dp,
-                            if (isSelected) CopperAccent else LearnCardBorder,
+                            if (isSelected) AmberPrimary else LearnCardBorder,
                             RoundedCornerShape(10.dp)
                         )
                         .clickable { onSelectChapter(index) }
@@ -1125,7 +1133,7 @@ private fun ChapterPickerSheetContent(
                                 .clip(CircleShape)
                                 .background(
                                     when {
-                                        isSelected -> CopperAccent
+                                        isSelected -> AmberPrimary
                                         isLocked -> LearnCardBorder.copy(alpha = 0.6f)
                                         else -> LearnCardBorder
                                     }
@@ -1145,7 +1153,7 @@ private fun ChapterPickerSheetContent(
                             fontSize = 13.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = when {
-                                isSelected -> CopperAccent
+                                isSelected -> AmberPrimary
                                 isLocked -> TextSecondaryComfort.copy(alpha = 0.8f)
                                 else -> TextPrimaryHighContrast
                             },
@@ -1161,15 +1169,15 @@ private fun ChapterPickerSheetContent(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(CopperAccent.copy(alpha = 0.15f))
-                                    .border(1.dp, CopperAccent.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                                    .background(MintAccent.copy(alpha = 0.15f))
+                                    .border(1.dp, MintAccent.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
                                     .padding(horizontal = 5.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = freeBadge,
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = CopperAccent
+                                    color = MintAccent
                                 )
                             }
                         } else if (isLocked) {
@@ -1184,14 +1192,14 @@ private fun ChapterPickerSheetContent(
                                 Icon(
                                     imageVector = Icons.Filled.Lock,
                                     contentDescription = "Pro",
-                                    tint = CopperAccent,
+                                    tint = AmberPrimary,
                                     modifier = Modifier.size(11.dp)
                                 )
                                 Text(
                                     text = "PRO",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = CopperAccent
+                                    color = AmberPrimary
                                 )
                             }
                         }
@@ -1200,7 +1208,7 @@ private fun ChapterPickerSheetContent(
                             Icon(
                                 imageVector = Icons.Filled.CheckCircle,
                                 contentDescription = "Current",
-                                tint = CopperAccent,
+                                tint = AmberPrimary,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -1212,3 +1220,4 @@ private fun ChapterPickerSheetContent(
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+

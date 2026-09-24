@@ -42,6 +42,9 @@ import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Insights
 import androidx.compose.material.icons.outlined.Sensors
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.remember
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -59,14 +62,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.ui.theme.NeonAmber
+import com.example.ui.theme.QuantumCyan
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -203,12 +206,21 @@ fun DashboardTopAppBar(
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Column {
+                    val neonGradient = remember {
+                        Brush.horizontalGradient(
+                            listOf(
+                                NeonAmber,
+                                Color(0xFF00F5FF),
+                                NeonAmber
+                            )
+                        )
+                    }
                     Text(
                         text = "CryptoCycles",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.3).sp,
-                        color = palette.textPrimary,
+                        style = androidx.compose.ui.text.TextStyle(brush = neonGradient),
                         maxLines = 1,
                         softWrap = false
                     )
@@ -217,7 +229,7 @@ fun DashboardTopAppBar(
                         text = strings.institutionalTerminal,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = palette.textSecondary,
+                        style = androidx.compose.ui.text.TextStyle(brush = neonGradient),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )

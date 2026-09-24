@@ -59,18 +59,18 @@ import com.example.ui.theme.MauveAurora
 import com.example.ui.theme.PhotonGold
 import com.example.ui.theme.SoftCrimson
 
-// Holographic Terminal palette for diagrams
-private val DiagramSurface = CosmicVoidSurface
-private val DiagramSurfaceElevated = CosmicVoidSurfaceElevated
-private val DiagramBorder = CosmicBorder
-private val DiagramTextPrimary = Color(0xFFF1F5F9)
-private val DiagramTextMuted = Color(0xFF8DA0B8)
+// Ergonomic diagram palette (Warm slate & gentle accents, low glare)
+private val DiagramSurface = Color(0xFF141820)
+private val DiagramSurfaceElevated = Color(0xFF1B222D)
+private val DiagramBorder = Color(0xFF283242)
+private val DiagramTextPrimary = Color(0xFFECEEF2)
+private val DiagramTextMuted = Color(0xFF94A3B8)
 
-private val HologramCyan = QuantumCyan
-private val HologramAmber = PhotonGold
-private val HologramCrimson = SoftCrimson
-private val HologramMint = TachyonMint
-private val HologramMauve = MauveAurora
+private val HologramCyan = Color(0xFF38BDF8)
+private val HologramAmber = Color(0xFFF59E0B)
+private val HologramCrimson = Color(0xFFF87171)
+private val HologramMint = Color(0xFF34D399)
+private val HologramMauve = Color(0xFFA78BFA)
 
 @Composable
 fun ChapterDiagram(
@@ -82,10 +82,10 @@ fun ChapterDiagram(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .background(CosmicVoidSurface)
+            .background(DiagramSurface)
             .border(
                 1.2.dp,
-                CosmicBorder,
+                DiagramBorder,
                 RoundedCornerShape(18.dp)
             )
             .padding(horizontal = 14.dp, vertical = 18.dp),

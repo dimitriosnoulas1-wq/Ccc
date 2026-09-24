@@ -50,9 +50,11 @@ import com.example.ui.components.DefiLlamaStablecoinsCard
 import com.example.ui.components.SearchBarField
 import com.example.ui.theme.JetBrainsMonoFont
 import com.example.ui.theme.LocalAppColors
+import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.QuantumCyan
 import com.example.ui.theme.SpaceGroteskFont
 import com.example.ui.theme.TachyonMint
+import androidx.compose.ui.graphics.Brush
 import com.example.util.CycleFractalData
 import com.example.util.CycleReadingText
 import com.example.util.LocalAppStrings
@@ -119,13 +121,22 @@ fun CycleHomePage(
             )
         }
         item {
+            val neonGradient = remember {
+                Brush.horizontalGradient(
+                    listOf(
+                        NeonAmber,
+                        Color(0xFF00F5FF),
+                        NeonAmber
+                    )
+                )
+            }
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                 Text(
                     text = if (greek) "ΚΥΚΛΟΣ BITCOIN" else "BITCOIN CYCLE",
                     fontFamily = SpaceGroteskFont,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = palette.textPrimary
+                    style = androidx.compose.ui.text.TextStyle(brush = neonGradient)
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -205,13 +216,33 @@ private fun CycleReadingCard(
     val palette = LocalAppColors.current
     val day = reading?.currentDay
     val axis = reading?.axisDays
+
+    val neonGoldBorder = remember {
+        Brush.horizontalGradient(
+            listOf(
+                NeonAmber,
+                Color(0xFF00F5FF),
+                NeonAmber
+            )
+        )
+    }
+
+    val cardBackground = remember {
+        Brush.linearGradient(
+            listOf(
+                Color(0xFF0A2428).copy(alpha = 0.92f),
+                Color(0xFF05050F).copy(alpha = 0.95f)
+            )
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF0D0A1D))
-            .border(1.dp, QuantumCyan.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+            .background(cardBackground)
+            .border(1.2.dp, neonGoldBorder, RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -306,13 +337,33 @@ private fun DailyCycleLogCard(
 ) {
     val palette = LocalAppColors.current
     var openKey by remember { mutableStateOf<String?>(null) }
+
+    val neonGoldBorder = remember {
+        Brush.horizontalGradient(
+            listOf(
+                NeonAmber,
+                Color(0xFF00F5FF),
+                NeonAmber
+            )
+        )
+    }
+
+    val cardBackground = remember {
+        Brush.linearGradient(
+            listOf(
+                Color(0xFF0A2428).copy(alpha = 0.92f),
+                Color(0xFF05050F).copy(alpha = 0.95f)
+            )
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF0D0A1D))
-            .border(1.dp, palette.border.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+            .background(cardBackground)
+            .border(1.2.dp, neonGoldBorder, RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {

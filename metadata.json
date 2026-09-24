@@ -1,6 +1,6 @@
 {
-  "name": "Remix CryptoCycles 11",
-  "description": "",
+  "name": "Crypto Cycles",
+  "description": "Real-time crypto market telemetry, cycle analysis, and futures terminal",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
