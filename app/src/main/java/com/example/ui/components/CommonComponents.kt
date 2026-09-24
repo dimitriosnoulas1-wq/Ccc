@@ -638,26 +638,24 @@ fun CryptoCoinRow(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                val dd = coin.drawdownPercent
-                val ddText = "${com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)} ATH"
-                val strings = LocalAppStrings.current
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = ddText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = if (dd < 0) palette.lossColor else palette.gainColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = " · ${coin.calculatedAthDaysAgo} ${strings.daysHigh}",
-                        fontSize = 11.sp,
-                        color = palette.textSecondary.copy(alpha = 0.8f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                val capText = if (coin.isLivePrice && coin.marketCap > 0.0) {
+                    coin.formattedMarketCap(currency)
+                } else {
+                    "—"
                 }
+                val volText = if (coin.isLivePrice && coin.volume24h > 0.0) {
+                    coin.formattedVolume(currency)
+                } else {
+                    "—"
+                }
+                Text(
+                    text = "$capText · $volText",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = palette.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
 
@@ -797,7 +795,7 @@ fun CryptoCoinRow(
             val changeFormatted = if (coin.isLivePrice) {
                 com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 1)
             } else {
-                "live feed"
+                "—"
             }
             Text(
                 text = changeFormatted,

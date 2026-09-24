@@ -67,11 +67,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 enum class MainTab {
     MARKETS,
-    FUTURES,
-    MACRO,
+    COINS,
     SIGNALS,
     LEARN,
-    SETTINGS
+    SETTINGS,
+    FUTURES,
+    MACRO
 }
 
 class CryptoViewModel @JvmOverloads constructor(
@@ -691,7 +692,7 @@ class CryptoViewModel @JvmOverloads constructor(
 
     fun setTab(tab: MainTab) {
         _selectedTab.value = tab
-        if (tab != MainTab.MARKETS) {
+        if (tab != MainTab.COINS) {
             _showCoinsCatalog.value = false
         }
     }
@@ -703,6 +704,7 @@ class CryptoViewModel @JvmOverloads constructor(
     fun openCoinsCatalog(query: String = "") {
         _searchQuery.value = query
         _showCoinsCatalog.value = true
+        _selectedTab.value = MainTab.COINS
     }
 
     fun hideCoinsCatalog() {
