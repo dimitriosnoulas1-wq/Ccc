@@ -64,6 +64,7 @@ import java.util.Locale
 fun CycleHomePage(
     reading: CycleFractalData?,
     latestPriceUsd: Double,
+    derivatives: com.example.data.model.AggregatedDerivativesSnapshot? = null,
     btcChange24h: Double? = null,
     btcPriceIsLive: Boolean = false,
     fearAndGreedScore: Int? = null,
@@ -176,8 +177,11 @@ fun CycleHomePage(
             )
         }
         item {
-            CycleReadingCard(
+            WhereWeAreCard(
                 reading = reading,
+                priceUsd = latestPriceUsd,
+                priceIsLive = btcPriceIsLive,
+                derivatives = derivatives,
                 isProUnlocked = isProUnlocked,
                 greek = greek,
                 onOpenChart = onOpenChart,

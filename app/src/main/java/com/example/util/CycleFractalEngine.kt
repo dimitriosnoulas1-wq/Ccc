@@ -30,6 +30,7 @@ data class CycleFractalData(
     val windowLabel: String = "",
     val axisDays: Int = 800,
     val multipleNow: Double? = null,
+    val multiple2012: Double? = null,
     val multiple2016: Double? = null,
     val multiple2020: Double? = null
 )

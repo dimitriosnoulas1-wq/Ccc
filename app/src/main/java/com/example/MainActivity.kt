@@ -320,6 +320,7 @@ fun CryptoCyclesApp(
 
                             MainTab.MARKETS -> CycleHomePage(
                                 reading = btcCycleReading,
+                                derivatives = derivativesSnapshot,
                                 latestPriceUsd = if (centralizedPriceState.btcSpotPrice > 0.0) {
                                     centralizedPriceState.btcSpotPrice
                                 } else centralizedPriceState.btcPerpPrice,
