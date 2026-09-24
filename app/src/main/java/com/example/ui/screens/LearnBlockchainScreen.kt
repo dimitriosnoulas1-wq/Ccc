@@ -719,12 +719,12 @@ private fun LockedChapterGatekeeper(
     }
 
     val lockDesc = when (language) {
-        AppLanguage.GREEK -> "Τα κεφάλαια 1–17 είναι δωρεάν: κανόνες του δικτύου, όχι σήματα αγοράς. Το Pro ανοίγει άλλα πέντε μαθήματα — μόχλευση και ρευστοποίηση, funding, βιβλίο εντολών, ιστορικό halving, και πώς ένα ανταλλακτήριο καλύπτει ζημιές. Χωρίς whale radar και χωρίς εντολή αγοράς ή πώλησης."
+        AppLanguage.GREEK -> "Πέντε δωρεάν μαθήματα εξηγούν αυτό το app (ημέρα κύκλου, cap, Fear & Greed, ροή ETF, παύλα). Τα κεφάλαια 1–17 είναι δωρεάν: κανόνες του δικτύου, όχι σήματα αγοράς. Το Pro ανοίγει άλλα πέντε μαθήματα — μόχλευση και ρευστοποίηση, funding, βιβλίο εντολών, ιστορικό halving, και πώς ένα ανταλλακτήριο καλύπτει ζημιές. Χωρίς whale radar και χωρίς εντολή αγοράς ή πώλησης."
         AppLanguage.GERMAN -> "Kapitel 1–17 sind kostenlos: Netzwerkregeln, keine Handelssignale. Pro öffnet fünf weitere Lektionen — Hebel und Liquidation, Funding, Orderbuch, Halving-Historie und wie eine Börse Verluste abdeckt. Kein Whale-Radar und kein Kauf- oder Verkaufsaufruf."
         AppLanguage.FRENCH -> "Les chapitres 1–17 sont gratuits : règles du réseau, pas de signaux de trading. Pro ouvre cinq leçons de plus — levier et liquidation, funding, carnet d'ordres, historique du halving, et comment une place couvre les pertes. Pas de radar baleine, pas d'ordre d'achat ou de vente."
         AppLanguage.SPANISH -> "Los capítulos 1–17 son gratis: reglas de la red, no señales de compra. Pro abre cinco lecciones más — apalancamiento y liquidación, funding, libro de órdenes, historial del halving y cómo un exchange cubre pérdidas. Sin radar de ballenas y sin orden de compra o venta."
         AppLanguage.ITALIAN -> "I capitoli 1–17 sono gratuiti: regole della rete, non segnali di trading. Pro apre altre cinque lezioni — leva e liquidazione, funding, order book, storia dell'halving e come un exchange copre le perdite. Nessun whale radar e nessun ordine di acquisto o vendita."
-        AppLanguage.ENGLISH -> "Chapters 1–17 are free: network rules, not trade calls. Pro opens five more lessons — leverage and liquidation, funding, the order book, halving history, and how a venue covers losses. No whale radar and no buy or sell order."
+        AppLanguage.ENGLISH -> "Five free lessons explain this app (cycle day, cap, Fear & Greed, ETF flow, a dash). Chapters 1–17 are free network rules, not trade calls. Pro opens five more lessons — leverage and liquidation, funding, the order book, halving history, and how a venue covers losses. No whale radar and no buy or sell order."
     }
 
     val unlockBtnText = when (language) {
@@ -1038,12 +1038,12 @@ private fun ChapterPickerSheetContent(
     }
 
     val sheetSub = when (language) {
-        AppLanguage.GREEK -> "22 κεφάλαια · 1–17 δωρεάν · 18–22 Pro"
-        AppLanguage.GERMAN -> "22 Kapitel · 1–17 gratis · 18–22 Pro"
-        AppLanguage.FRENCH -> "22 chapitres · 1–17 gratuits · 18–22 Pro"
-        AppLanguage.SPANISH -> "22 capítulos · 1–17 gratis · 18–22 Pro"
-        AppLanguage.ITALIAN -> "22 capitoli · 1–17 gratuiti · 18–22 Pro"
-        AppLanguage.ENGLISH -> "22 chapters · 1–17 free · 18–22 Pro"
+        AppLanguage.GREEK -> "5 πώς διαβάζεται · 22 κεφάλαια · 1–17 δωρεάν · 18–22 Pro"
+        AppLanguage.GERMAN -> "5 Lesen · 22 Kapitel · 1–17 gratis · 18–22 Pro"
+        AppLanguage.FRENCH -> "5 lire · 22 chapitres · 1–17 gratuits · 18–22 Pro"
+        AppLanguage.SPANISH -> "5 cómo leer · 22 capítulos · 1–17 gratis · 18–22 Pro"
+        AppLanguage.ITALIAN -> "5 come si legge · 22 capitoli · 1–17 gratuiti · 18–22 Pro"
+        AppLanguage.ENGLISH -> "5 how to read · 22 chapters · 1–17 free · 18–22 Pro"
     }
 
     val freeBadge = when (language) {

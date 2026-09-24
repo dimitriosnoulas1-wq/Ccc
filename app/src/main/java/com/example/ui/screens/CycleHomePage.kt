@@ -64,6 +64,9 @@ import java.util.Locale
 fun CycleHomePage(
     reading: CycleFractalData?,
     latestPriceUsd: Double,
+    btcChange24h: Double? = null,
+    btcPriceIsLive: Boolean = false,
+    fearAndGreedScore: Int? = null,
     etfFlowData: BitcoinEtfFlowData,
     stablecoinLiquidityData: StablecoinLiquidityData,
     dailyLogs: List<DailyCycleLogEntry>,
@@ -78,6 +81,7 @@ fun CycleHomePage(
     onOpenProModal: () -> Unit,
     onRefresh: () -> Unit,
     onAlertHistoryClick: () -> Unit,
+    onOpenFearGreed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = LocalAppStrings.current
@@ -161,6 +165,17 @@ fun CycleHomePage(
             }
         }
         item {
+            HolderFactsStrip(
+                priceUsd = latestPriceUsd,
+                change24h = btcChange24h,
+                priceIsLive = btcPriceIsLive,
+                fearAndGreedScore = fearAndGreedScore,
+                etfFlowData = etfFlowData,
+                greek = greek,
+                onFearGreedClick = onOpenFearGreed
+            )
+        }
+        item {
             CycleReadingCard(
                 reading = reading,
                 isProUnlocked = isProUnlocked,
@@ -202,6 +217,85 @@ fun CycleHomePage(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun HolderFactsStrip(
+    priceUsd: Double,
+    change24h: Double?,
+    priceIsLive: Boolean,
+    fearAndGreedScore: Int?,
+    etfFlowData: BitcoinEtfFlowData,
+    greek: Boolean,
+    onFearGreedClick: () -> Unit
+) {
+    val palette = LocalAppColors.current
+    val priceText = if (priceIsLive && priceUsd > 0.0) {
+        com.example.util.AppNumberFormatter.formatPrice(priceUsd, com.example.data.model.Currency.USD)
+    } else {
+        "—"
+    }
+    val changeText = if (priceIsLive && change24h != null) {
+        com.example.util.AppNumberFormatter.formatPercent(change24h, includeSign = true, decimals = 2)
+    } else {
+        "—"
+    }
+    val fgText = fearAndGreedScore?.takeIf { it > 0 }?.toString() ?: "—"
+    val etfText = if (etfFlowData.isLive) {
+        val flow = etfFlowData.oneDayNetFlowMillionUsd
+        (if (flow >= 0.0) "+" else "") + "%.1f".format(java.util.Locale.US, flow) + "M"
+    } else {
+        "—"
+    }
+    val changeColor = when {
+        !priceIsLive || change24h == null -> palette.textMuted
+        change24h >= 0.0 -> TachyonMint
+        else -> palette.lossColor
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(palette.surface)
+            .border(1.dp, palette.border, RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        HolderFact(if (greek) "BTC" else "BTC", priceText, palette.textPrimary)
+        HolderFact("24ω", changeText, changeColor)
+        Column(
+            modifier = Modifier.clickable(onClick = onFearGreedClick),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "F&G", fontSize = 10.sp, color = palette.textMuted)
+            Text(
+                text = fgText,
+                fontFamily = JetBrainsMonoFont,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = palette.textPrimary
+            )
+        }
+        HolderFact(if (greek) "ETF 1ημ." else "ETF 1d", etfText, palette.textPrimary)
+    }
+}
+
+@Composable
+private fun HolderFact(label: String, value: String, valueColor: androidx.compose.ui.graphics.Color) {
+    val palette = LocalAppColors.current
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = label, fontSize = 10.sp, color = palette.textMuted)
+        Text(
+            text = value,
+            fontFamily = JetBrainsMonoFont,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = valueColor,
+            maxLines = 1
+        )
     }
 }
 

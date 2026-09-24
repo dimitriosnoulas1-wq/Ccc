@@ -8,10 +8,11 @@ open class AppStrings(
     open val language: AppLanguage = AppLanguage.ENGLISH
 ) {
     // Navigation & Core
-    open val navMarkets: String = "Markets"
+    open val navMarkets: String = "Cycle"
+    open val navCoins: String = "Coins"
     open val navFutures: String = "Futures"
     open val navMacro: String = "Macro"
-    open val navSignals: String = "Signals"
+    open val navSignals: String = "Tape"
     open val navLearn: String = "Learn"
     open val navSettings: String = "Settings"
     open val appTitle: String = "CryptoCycles"

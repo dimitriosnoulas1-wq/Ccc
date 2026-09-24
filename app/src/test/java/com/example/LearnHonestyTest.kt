@@ -15,9 +15,16 @@ class LearnHonestyTest {
     fun twentyTwoChaptersAndProGateMatchesReality() {
         languages.forEach { language ->
             val chapters = BlockchainLearnRepository.getChapters(language)
-            assertEquals(language.name, 22, chapters.size)
-            chapters.forEachIndexed { index, chapter ->
-                assertEquals(index + 1, chapter.id)
+            val intro = chapters.filter { it.id in 101..105 }
+            val core = chapters.filter { it.id in 1..22 }
+            assertEquals(language.name, 5, intro.size)
+            assertEquals(language.name, 22, core.size)
+            assertEquals(language.name, 27, chapters.size)
+            intro.forEach { chapter ->
+                assertFalse("intro ${chapter.id} ${language.name} should be free", chapter.isProOnly)
+                assertTrue(chapter.title.contains("read", ignoreCase = true) || chapter.title.contains("διαβάζ", ignoreCase = true) || chapter.title.contains("Lesen") || chapter.title.contains("Lire") || chapter.title.contains("Cómo") || chapter.title.contains("legge"))
+            }
+            core.forEach { chapter ->
                 if (chapter.id <= 17) {
                     assertFalse("chapter ${chapter.id} ${language.name} should be free", chapter.isProOnly)
                 } else {
@@ -104,19 +111,19 @@ class LearnHonestyTest {
     @Test
     fun englishAndGreekProTitlesNameTheMechanic() {
         val en = BlockchainLearnRepository.getChapters(AppLanguage.ENGLISH)
-        assertTrue(en[17].title.contains("liquidation", ignoreCase = true))
-        assertTrue(en[18].title.contains("Funding", ignoreCase = true))
-        assertTrue(en[19].title.contains("Order book", ignoreCase = true))
-        assertFalse(en[19].title.contains("Quantum", ignoreCase = true))
-        assertTrue(en[20].title.contains("Halving", ignoreCase = true))
-        assertTrue(en[20].title.contains("issuance", ignoreCase = true))
-        assertTrue(en[21].title.contains("venue", ignoreCase = true))
+        assertTrue(en.first { it.id == 18 }.title.contains("liquidation", ignoreCase = true))
+        assertTrue(en.first { it.id == 19 }.title.contains("Funding", ignoreCase = true))
+        assertTrue(en.first { it.id == 20 }.title.contains("Order book", ignoreCase = true))
+        assertFalse(en.first { it.id == 20 }.title.contains("Quantum", ignoreCase = true))
+        assertTrue(en.first { it.id == 21 }.title.contains("Halving", ignoreCase = true))
+        assertTrue(en.first { it.id == 21 }.title.contains("issuance", ignoreCase = true))
+        assertTrue(en.first { it.id == 22 }.title.contains("venue", ignoreCase = true))
 
         val el = BlockchainLearnRepository.getChapters(AppLanguage.GREEK)
-        assertTrue(el[17].title.contains("ρευστοποίησης", ignoreCase = true))
-        assertTrue(el[18].title.contains("Funding", ignoreCase = true))
-        assertTrue(el[19].title.contains("Βιβλίο", ignoreCase = true))
-        assertTrue(el[20].title.contains("halving", ignoreCase = true))
-        assertTrue(el[21].title.contains("ανταλλακτήριο", ignoreCase = true))
+        assertTrue(el.first { it.id == 18 }.title.contains("ρευστοποίησης", ignoreCase = true))
+        assertTrue(el.first { it.id == 19 }.title.contains("Funding", ignoreCase = true))
+        assertTrue(el.first { it.id == 20 }.title.contains("Βιβλίο", ignoreCase = true))
+        assertTrue(el.first { it.id == 21 }.title.contains("halving", ignoreCase = true))
+        assertTrue(el.first { it.id == 22 }.title.contains("ανταλλακτήριο", ignoreCase = true))
     }
 }

@@ -112,8 +112,10 @@ fun MarketsScreen(
     onNavigateToTab: (MainTab) -> Unit = {},
     onRefresh: () -> Unit,
     onBackToCycle: (() -> Unit)? = null,
+    listMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val catalogMode = listMode || onBackToCycle != null
     val strings = LocalAppStrings.current
     val palette = LocalAppColors.current
 
@@ -129,7 +131,8 @@ fun MarketsScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 110.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (onBackToCycle != null) {
+            if (catalogMode) {
+                if (onBackToCycle != null) {
                 item {
                     Text(
                         text = if (strings.language.code == "el") "← Κύκλος Bitcoin" else "← Bitcoin cycle",
@@ -140,6 +143,7 @@ fun MarketsScreen(
                             .clickable { onBackToCycle() }
                             .padding(vertical = 4.dp)
                     )
+                }
                 }
                 item {
                     SearchBarField(
@@ -155,7 +159,7 @@ fun MarketsScreen(
                 }
             }
 
-            if (onBackToCycle == null) {
+            if (!catalogMode) {
             // 1. TOP APP BAR
             item {
                 val avgMarketVolatility = remember(coins) {
@@ -389,7 +393,7 @@ fun MarketsScreen(
             }
             }
 
-            if (onBackToCycle == null) {
+            if (!catalogMode) {
                 item {
                     SearchBarField(
                         query = searchQuery,
@@ -458,7 +462,7 @@ fun MarketsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
                         Text(
-                            text = "CHART",
+                            text = if (catalogMode) "CAP · VOL" else "CHART",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,

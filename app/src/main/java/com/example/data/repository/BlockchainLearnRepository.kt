@@ -15,7 +15,8 @@ object BlockchainLearnRepository {
             AppLanguage.ITALIAN -> italianChapters
             AppLanguage.ENGLISH -> englishChapters
         }
-        return BlockchainLearnExpansions.expand(language, base)
+        return HowToReadCryptoCyclesLessons.chapters(language) +
+            BlockchainLearnExpansions.expand(language, base)
     }
 
     private val greekChapters = listOf(

@@ -297,6 +297,9 @@ class LiveScreensHonestyTest {
             assertFalse(strings.derivativesRiskGuardrail.contains("1-2"))
             assertTrue(strings.whaleRadarTitle.contains("USDT-M"))
             assertTrue(strings.derivativesRiskGuardrail.contains("tape") || strings.derivativesRiskGuardrail.contains("ταινία") || strings.derivativesRiskGuardrail.contains("nastro") || strings.derivativesRiskGuardrail.contains("cinta") || strings.derivativesRiskGuardrail.contains("Tape") || strings.derivativesRiskGuardrail.contains("bande"))
+            assertFalse(strings.navSignals.equals("Signals", ignoreCase = true))
+            assertFalse(strings.navSignals.equals("Σήματα", ignoreCase = true))
+            assertTrue(strings.navCoins.isNotBlank())
         }
     }
 }
