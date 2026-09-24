@@ -343,7 +343,8 @@ object RainbowModelEngine {
     data class CycleMarker(
         val x: Double,
         val y: Double,
-        val color: Color
+        val color: Color,
+        val label: String = ""
     )
 
     val BANDS = listOf(
@@ -703,14 +704,41 @@ object RainbowModelEngine {
             }
         }
 
-        cycleMarkers.forEach { marker ->
-            if (marker.y <= 0.0 || marker.x !in X_MIN..X_MAX) return@forEach
-            val px = getX(marker.x)
-            val py = getY(marker.y)
-            val center = Offset(px, py)
-            drawCircle(color = Color.White, radius = 7.dp.toPx(), center = center)
-            drawCircle(color = marker.color, radius = 5.dp.toPx(), center = center)
-            drawCircle(color = Color.White, radius = 2.dp.toPx(), center = center)
+        cycleMarkers.forEachIndexed { index, marker ->
+            if (marker.y <= 0.0 || marker.x !in X_MIN..X_MAX) return@forEachIndexed
+            val origin = priceSeries.minByOrNull { kotlin.math.abs(it.x - marker.x) }
+                ?.takeIf { kotlin.math.abs(it.x - marker.x) < 0.6 }
+            val startX = getX(origin?.x ?: marker.x)
+            val startY = getY(origin?.y ?: marker.y)
+            val stem = 26.dp.toPx() + index * 4.dp.toPx()
+            val end = Offset(
+                x = (startX + stem).coerceAtMost(paddingLeft + plotWidth - 8.dp.toPx()),
+                y = (startY + stem * 0.72f).coerceAtMost(floorY - 10.dp.toPx())
+            )
+            val start = Offset(startX, startY)
+            drawLine(
+                color = Color.Black,
+                start = start,
+                end = end,
+                strokeWidth = 1.2.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+            drawCircle(color = Color.Black, radius = 3.2.dp.toPx(), center = end)
+            drawCircle(color = marker.color, radius = 2.4.dp.toPx(), center = end)
+            if (marker.label.isNotBlank()) {
+                val labelPaint = Paint().apply {
+                    color = android.graphics.Color.parseColor("#14161A")
+                    textSize = 10.sp.toPx()
+                    isAntiAlias = true
+                    typeface = android.graphics.Typeface.DEFAULT_BOLD
+                }
+                drawContext.canvas.nativeCanvas.drawText(
+                    marker.label,
+                    end.x + 6.dp.toPx(),
+                    end.y + 4.dp.toPx(),
+                    labelPaint
+                )
+            }
         }
 
         // 6. Touch Crosshair
