@@ -89,7 +89,9 @@ fun CoinDetailSheet(
     onDismiss: () -> Unit,
     onFavoriteToggle: (String) -> Unit,
     onOpenProModal: () -> Unit,
-    onOpenAiAssistant: ((String?) -> Unit)? = null
+    onOpenAiAssistant: ((String?) -> Unit)? = null,
+    movementReport: com.example.data.model.MarketIntelligenceReport? = null,
+    etfFlowData: com.example.data.model.BitcoinEtfFlowData? = null
 ) {
     if (coin == null) return
 
@@ -273,7 +275,9 @@ fun CoinDetailSheet(
                         selectedLanguage = selectedLanguage,
                         currency = currency,
                         isProUnlocked = isProUnlocked,
-                        onOpenAiAssistant = onOpenAiAssistant
+                        onOpenAiAssistant = onOpenAiAssistant,
+                        movementReport = movementReport,
+                        etfFlowData = etfFlowData
                     )
                 }
                 1 -> {
@@ -435,42 +439,44 @@ private fun MiniStat(
 fun WhyCoinIsMovingCard(
     coin: CryptoCoin,
     onExplain: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    movementReport: com.example.data.model.MarketIntelligenceReport? = null,
+    etfFlowData: com.example.data.model.BitcoinEtfFlowData? = null
 ) {
     val isGain = coin.change24h >= 0
-    val absChange = kotlin.math.abs(coin.change24h)
     val trendDirection = if (isGain) "higher" else "lower"
     val isGreek = LocalAppStrings.current is com.example.util.GreekAppStrings
-    val change24hFormatted = com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
-
-    // Deterministic metrics derived from real data
-    val spotIntensity = when {
-        absChange > 5.0 -> "VERY HIGH"
-        absChange > 2.0 -> "HIGH"
-        absChange > 0.5 -> "MODERATE"
-        else -> "LOW"
+    val change24hFormatted = if (coin.isLivePrice) {
+        com.example.util.AppNumberFormatter.formatPercent(coin.change24h, includeSign = true, decimals = 2)
+    } else {
+        "—"
     }
-    val spotBars = when {
-        absChange > 5.0 -> 5
-        absChange > 2.0 -> 4
-        absChange > 0.5 -> 3
-        else -> 1
+    val rows = remember(coin.symbol, coin.change24h, coin.isLivePrice, movementReport, etfFlowData) {
+        com.example.data.model.CoinMovementDriverMapper.rows(
+            symbol = coin.symbol,
+            change24h = coin.change24h,
+            hasLiveChange24h = coin.isLivePrice,
+            report = movementReport,
+            etf = etfFlowData
+        )
     }
-    val spotColor = if (isGain) TachyonMint else SoftCrimson
-
-    val oiIntensity = "—"
-    val oiBars = 0
-
-    val fundingIntensity = "—"
-    val fundingBars = 0
-    val fundingColor = TextMuted
-
-    val liqIntensity = "—"
-    val liqBars = 0
-    val liqColor = TextMuted
-
-    val macroIntensity = "—"
-    val macroBars = 0
+    val matchedReport = movementReport?.takeIf {
+        com.example.data.model.CoinMovementDriverMapper.reportMatchesCoin(it.symbol, coin.symbol)
+    }
+    val insight = when {
+        isGreek && matchedReport != null &&
+            matchedReport.interpretationGr.isNotBlank() &&
+            !matchedReport.interpretationGr.contains("Αναμονή") ->
+            "${matchedReport.interpretationGr} Binance USDT-M. Οι γραμμές μένουν παύλα όταν λείπει το feed."
+        !isGreek && matchedReport != null &&
+            matchedReport.interpretationEn.isNotBlank() &&
+            !matchedReport.interpretationEn.contains("Waiting") ->
+            "${matchedReport.interpretationEn} Binance USDT-M. Rows stay a dash when that feed is missing."
+        isGreek ->
+            "Το ${coin.symbol} κινήθηκε $trendDirection ($change24hFormatted) στις τελευταίες 24 ώρες. Οι άλλες γραμμές μένουν παύλα όταν δεν υπάρχει live feed."
+        else ->
+            "${coin.symbol} moved $trendDirection ($change24hFormatted) in the last 24 hours. Other rows stay a dash when that feed is missing."
+    }
 
     Box(
         modifier = modifier
@@ -495,7 +501,10 @@ fun WhyCoinIsMovingCard(
                         color = TextPrimary
                     )
                     Text(
-                        text = "24h Delta: $change24hFormatted • Real Market Feed",
+                        text = if (isGreek)
+                            "24ω: $change24hFormatted · Binance USDT-M όταν υπάρχει"
+                        else
+                            "24h Delta: $change24hFormatted · Binance USDT-M when listed",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextSecondary
@@ -521,38 +530,24 @@ fun WhyCoinIsMovingCard(
                 }
             }
 
-            // 5 Driver Meters (Derived from real market metrics)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DriverMeterRow(
-                    label = if (isGreek) "Αγορές Spot" else "Spot Flow",
-                    intensity = spotIntensity,
-                    activeBars = spotBars,
-                    barColor = spotColor
-                )
-                DriverMeterRow(
-                    label = if (isGreek) "Open Interest" else "Open Interest",
-                    intensity = oiIntensity,
-                    activeBars = oiBars,
-                    barColor = PhotonGold
-                )
-                DriverMeterRow(
-                    label = if (isGreek) "Επιτόκιο Funding" else "Funding Rate",
-                    intensity = fundingIntensity,
-                    activeBars = fundingBars,
-                    barColor = fundingColor
-                )
-                DriverMeterRow(
-                    label = if (isGreek) "Ρευστοποιήσεις" else "Liquidations",
-                    intensity = liqIntensity,
-                    activeBars = liqBars,
-                    barColor = liqColor
-                )
-                DriverMeterRow(
-                    label = if (isGreek) "Μακροοικονομικά" else "Macro Context",
-                    intensity = macroIntensity,
-                    activeBars = macroBars,
-                    barColor = TextMuted
-                )
+                rows.forEach { row ->
+                    val barColor = when {
+                        !row.isLive -> TextMuted
+                        row.key == "spot" -> if (isGain) TachyonMint else SoftCrimson
+                        row.key == "oi" -> PhotonGold
+                        row.key == "funding" -> if ((matchedReport?.fundingRate ?: 0.0) < 0.0) TachyonMint else SoftCrimson
+                        row.key == "liq" -> SoftCrimson
+                        row.key == "etf" -> if ((etfFlowData?.oneDayNetFlowMillionUsd ?: 0.0) >= 0.0) TachyonMint else SoftCrimson
+                        else -> QuantumCyan
+                    }
+                    DriverMeterRow(
+                        label = if (isGreek) row.labelEl else row.labelEn,
+                        intensity = row.intensity,
+                        activeBars = row.bars,
+                        barColor = barColor
+                    )
+                }
             }
 
             // Bottom Insight Callout Pill
@@ -564,10 +559,7 @@ fun WhyCoinIsMovingCard(
                     .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = if (isGreek)
-                        "Το ${coin.symbol} κινήθηκε $trendDirection ($change24hFormatted) στις τελευταίες 24 ώρες. Οι άλλες γραμμές μένουν παύλα όταν δεν υπάρχει live feed."
-                    else
-                        "${coin.symbol} moved $trendDirection ($change24hFormatted) in the last 24 hours. Other rows stay a dash when that feed is missing.",
+                    text = insight,
                     fontSize = 11.sp,
                     color = TextSecondary,
                     lineHeight = 15.sp
@@ -631,7 +623,9 @@ private fun OverviewTabContent(
     selectedLanguage: com.example.data.model.AppLanguage,
     currency: Currency,
     isProUnlocked: Boolean,
-    onOpenAiAssistant: ((String?) -> Unit)?
+    onOpenAiAssistant: ((String?) -> Unit)?,
+    movementReport: com.example.data.model.MarketIntelligenceReport? = null,
+    etfFlowData: com.example.data.model.BitcoinEtfFlowData? = null
 ) {
     // Historical Cycle Trajectory & Price Chart.
     // Zoom lives inside HistoricalCycleChart so every coin shares one selector.
@@ -649,7 +643,9 @@ private fun OverviewTabContent(
         coin = coin,
         onExplain = {
             onOpenAiAssistant?.invoke("Why is ${coin.name} (${coin.symbol}) moving?")
-        }
+        },
+        movementReport = movementReport,
+        etfFlowData = etfFlowData
     )
 
     Text(

@@ -208,8 +208,8 @@ open class AppStrings(
     open val timeframe1M: String = "1M"
     open val timeframe1Y: String = "1Y"
     open val timeframeCycle: String = "Macro Cycle"
-    open val signalBullish: String = "BULLISH EXPANSION"
-    open val signalBearish: String = "BEARISH CORRECTION"
+    open val signalBullish: String = "24h UP"
+    open val signalBearish: String = "24h DOWN"
     open val signalAccumulation: String = "ACCUMULATION BREAKOUT"
     open val signalConfidence: String = "Historical Reference Frequency"
     open val signalLiveFeed: String = "Live CoinGecko Feed • 1s Ticks"
@@ -371,11 +371,11 @@ open class AppStrings(
     open val widgetDaysSinceAthLabel: String = "Days Since ATH"
 
     // Whale Radar & Live Order Flow
-    open val whaleRadarTitle: String = "WHALE RADAR & LARGE ON-CHAIN MOVES (PRO)"
-    open val whaleRadarSub: String = "Real-time telemetry tracking institutional wallet and exchange flows (>$10M+)"
+    open val whaleRadarTitle: String = "LARGE BINANCE USDT-M PRINTS (PRO)"
+    open val whaleRadarSub: String = "Binance USDT-M futures prints from $100k. Not on-chain wallet transfers."
     open val whaleNotificationsTitle: String = "Whale Alert Push Notifications"
     open val whaleNotificationsDesc: String = "Receive instant push alerts when massive whale buys or exchange dumps occur."
-    open val whaleNotificationsProLockedDesc: String = "Exclusive PRO feature. Real-time push alerts for market-moving whale transfers ($10M+)."
+    open val whaleNotificationsProLockedDesc: String = "Pro: push when a Binance USDT-M print clears your size filter. Not on-chain wallet transfers."
     open val whaleThresholdTitle: String = "Whale Alert Minimum Size"
     open val whaleFilterAll: String = "All Whales"
     open val whaleFilterInflow: String = "🚨 Inflows / Dumps"
@@ -726,7 +726,7 @@ open class AppStrings(
     open val liquidationWarningText: String = "High liquidation clusters detected. Increased volatility risk if support breaks."
     open val exchangeBinance: String = "Binance"
     open val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
-    open val derivativesRiskGuardrail: String = "Derivatives Protocol: Trade responsibly. Never risk more than 1-2% equity per position."
+    open val derivativesRiskGuardrail: String = "This screen reads the perpetual tape. It is not a trade desk and it does not size positions."
 }
 
 val EnglishStrings: AppStrings = AppStrings(AppLanguage.ENGLISH)

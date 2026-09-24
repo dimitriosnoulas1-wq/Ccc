@@ -912,7 +912,7 @@ fun CyberAltcoinSeasonPanel(
                     color = QuantumCyan
                 )
                 Text(
-                    text = "Fear & Greed: $fearGreedScore",
+                    text = if (fearGreedScore > 0) "Fear & Greed: $fearGreedScore" else "Fear & Greed: —",
                     fontSize = 11.sp,
                     fontFamily = JetBrainsMonoFont,
                     fontWeight = FontWeight.SemiBold,

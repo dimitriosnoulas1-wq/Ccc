@@ -559,8 +559,14 @@ fun MacroScreen(
             item {
                 CollapsibleCardContainer(
                     title = if (isGreek) "😱 Fear & Greed Index" else "😱 Fear & Greed Index",
-                    subtitle = if (isGreek) "${fearGreedData.score}/100 · ${fearGreedData.sentimentEl} (${fearGreedData.sentiment})" else "${fearGreedData.score}/100 · ${fearGreedData.sentiment} Sentiment",
-                    badge = "${fearGreedData.score}/100",
+                    subtitle = if (!fearGreedData.isLive) {
+                        if (isGreek) "Εκτός σύνδεσης" else "Offline"
+                    } else if (isGreek) {
+                        "${fearGreedData.score}/100 · ${fearGreedData.sentimentEl} (${fearGreedData.sentiment})"
+                    } else {
+                        "${fearGreedData.score}/100 · ${fearGreedData.sentiment} Sentiment"
+                    },
+                    badge = if (fearGreedData.isLive) "${fearGreedData.score}/100" else "—",
                     badgeColor = GainGreen,
                     isExpanded = fearGreedExpanded,
                     onToggle = { fearGreedExpanded = !fearGreedExpanded }
