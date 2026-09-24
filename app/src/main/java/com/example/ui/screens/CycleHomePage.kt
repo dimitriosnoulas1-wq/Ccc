@@ -213,6 +213,14 @@ fun CycleHomePage(
             )
         }
         item {
+            CycleRainbowHome(
+                reading = reading,
+                priceUsd = latestPriceUsd,
+                priceIsLive = btcPriceIsLive,
+                greek = greek
+            )
+        }
+        item {
             Text(
                 text = CycleReadingText.disclaimer(greek),
                 fontSize = 12.sp,

@@ -32,7 +32,10 @@ data class CycleFractalData(
     val multipleNow: Double? = null,
     val multiple2012: Double? = null,
     val multiple2016: Double? = null,
-    val multiple2020: Double? = null
+    val multiple2020: Double? = null,
+    val close2012: Double? = null,
+    val close2016: Double? = null,
+    val close2020: Double? = null
 )
 
 object CycleFractalEngine {

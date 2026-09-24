@@ -287,14 +287,21 @@ object HistoricalMarketRepository {
             multipleNow = multipleAt(cycleNow, currentDay),
             multiple2012 = multipleAt(cycle2012, currentDay),
             multiple2016 = multipleAt(cycle2016, currentDay),
-            multiple2020 = multipleAt(cycle2020, currentDay)
+            multiple2020 = multipleAt(cycle2020, currentDay),
+            close2012 = priceAt(cycle2012, currentDay),
+            close2016 = priceAt(cycle2016, currentDay),
+            close2020 = priceAt(cycle2020, currentDay)
         )
     }
 
-    private fun multipleAt(drafts: List<CycleDraft>, day: Int): Double? {
+    private fun multipleAt(drafts: List<CycleDraft>, day: Int): Double? = hitAt(drafts, day)?.multiple
+
+    private fun priceAt(drafts: List<CycleDraft>, day: Int): Double? = hitAt(drafts, day)?.price
+
+    private fun hitAt(drafts: List<CycleDraft>, day: Int): CycleDraft? {
         val hit = drafts.minByOrNull { abs(it.day - day) } ?: return null
         if (abs(hit.day - day) > 14) return null
-        return hit.multiple
+        return hit
     }
 
     private data class CycleDraft(val day: Int, val multiple: Double, val price: Double, val label: String)
