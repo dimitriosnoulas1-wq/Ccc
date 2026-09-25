@@ -25,10 +25,12 @@ import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -95,6 +97,12 @@ fun BitcoinRainbowChart(
 
     var scrubbedPoint by remember { mutableStateOf<RainbowModelEngine.PricePoint?>(null) }
     var touchXPosition by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(touchXPosition, scrubbedPoint) {
+        if (touchXPosition == null && scrubbedPoint == null) return@LaunchedEffect
+        delay(3_000)
+        scrubbedPoint = null
+        touchXPosition = null
+    }
 
     Column(
         modifier = modifier
@@ -706,10 +714,8 @@ object RainbowModelEngine {
 
         cycleMarkers.forEachIndexed { index, marker ->
             if (marker.y <= 0.0 || marker.x !in X_MIN..X_MAX) return@forEachIndexed
-            val origin = priceSeries.minByOrNull { kotlin.math.abs(it.x - marker.x) }
-                ?.takeIf { kotlin.math.abs(it.x - marker.x) < 0.6 }
-            val startX = getX(origin?.x ?: marker.x)
-            val startY = getY(origin?.y ?: marker.y)
+            val startX = getX(marker.x)
+            val startY = getY(marker.y)
             val stem = 26.dp.toPx() + index * 4.dp.toPx()
             val end = Offset(
                 x = (startX + stem).coerceAtMost(paddingLeft + plotWidth - 8.dp.toPx()),

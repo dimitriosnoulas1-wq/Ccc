@@ -1,12 +1,22 @@
 package com.example.util
 
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import kotlin.math.max
 
 object HalvingCycleUtils {
 
+    private const val DAY_MS = 86_400_000L
+
+    // Block 210,000 — 28 Nov 2012 15:24:38 UTC
+    const val HALVING_2012_TIMESTAMP = 1_354_116_278_000L
+    // Block 420,000 — 9 Jul 2016 16:46:13 UTC
+    const val HALVING_2016_TIMESTAMP = 1_468_082_773_000L
+    // Block 630,000 — 11 May 2020 19:23:43 UTC
+    const val HALVING_2020_TIMESTAMP = 1_589_225_023_000L
     // 4th Bitcoin Halving (Block 840,000): April 20, 2024 00:09 UTC
     const val HALVING_4TH_TIMESTAMP = 1713571740000L
 
@@ -37,9 +47,30 @@ object HalvingCycleUtils {
     )
 
     fun getDaysSince4thHalving(): Int {
-        val now = System.currentTimeMillis()
-        val diff = now - HALVING_4TH_TIMESTAMP
-        return (diff / (1000L * 60 * 60 * 24)).toInt().coerceAtLeast(0)
+        return utcCalendarDaysSince(HALVING_4TH_TIMESTAMP).coerceAtLeast(0)
+    }
+
+    /** Whole UTC calendar days from one instant's date to another's. Not elapsed 24-hour blocks. */
+    fun utcCalendarDaysSince(fromMs: Long, toMs: Long = System.currentTimeMillis()): Int {
+        val from = utcDateOnly(fromMs).timeInMillis
+        val to = utcDateOnly(toMs).timeInMillis
+        return ((to - from) / DAY_MS).toInt()
+    }
+
+    fun utcDatePlusDays(fromMs: Long, days: Int): Long {
+        val calendar = utcDateOnly(fromMs)
+        calendar.add(Calendar.DAY_OF_YEAR, days)
+        return calendar.timeInMillis
+    }
+
+    private fun utcDateOnly(timeMs: Long): Calendar {
+        return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            this.timeInMillis = timeMs
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
     }
 
     fun getLiveHalvingCountdown(): HalvingCountdownState {
