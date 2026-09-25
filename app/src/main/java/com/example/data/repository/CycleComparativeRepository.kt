@@ -58,11 +58,13 @@ class CycleComparativeRepository {
         val cycle2022 = calculateCycle2022ForDay(targetDay)
         val cycle2018 = calculateCycle2018ForDay(targetDay)
         val cycle2015 = calculateCycle2015ForDay(targetDay)
+        val xrpCycle = calculateXrpCycleForDay(targetDay)
 
         val comparisons = listOf(
             cycle2022,
             cycle2018,
-            cycle2015
+            cycle2015,
+            xrpCycle
         )
 
         val phase = determineCyclePhase(targetDay)
@@ -481,6 +483,43 @@ class CycleComparativeRepository {
 
     private fun formatPrice(price: Double): String {
         return com.example.util.AppNumberFormatter.formatRawPrice(price, decimals = if (price >= 1000) 0 else 2)
+    }
+
+    private fun calculateXrpCycleForDay(day: Int): HistoricalCycleComparison {
+        // ATH: 17 Jul 2025 ($3.84)
+        val athTime = 1752710400000L
+        val dateOnDay = formatDateWithOffset(athTime, day)
+
+        // Representative XRP cycle price points
+        val priceOnDay = when {
+            day <= 50 -> 2.80
+            day <= 150 -> 1.90
+            day <= 300 -> 1.10
+            day <= 435 -> 0.85 // Currently 435 days post-ATH
+            else -> 0.70
+        }
+
+        val athPrice = 3.84
+        val drawdown = ((priceOnDay - athPrice) / athPrice) * 100.0
+
+        return HistoricalCycleComparison(
+            cycleName = "XRP Macro Cycle",
+            cyclePeriod = "2025 - 2026 Cycle",
+            athDate = "17 Jul 2025",
+            athPriceUsd = athPrice,
+            dateOnDay = dateOnDay,
+            priceOnDay = priceOnDay,
+            drawdownPercentOnDay = drawdown,
+            statusSummaryEn = "XRP trading at ${formatPrice(priceOnDay)} (${com.example.util.AppNumberFormatter.formatPercent(drawdown, true, 1)} from ATH).",
+            statusSummaryEl = "Το XRP διαπραγματεύεται στα ${formatPrice(priceOnDay)} (${com.example.util.AppNumberFormatter.formatPercent(drawdown, true, 1)} από το ATH).",
+            altcoinPerformanceEn = "XRP demonstrates high beta, closely tied to overall macro market liquidity.",
+            altcoinPerformanceEl = "Το XRP παρουσιάζει υψηλό beta, στενά συνδεδεμένο με τη γενική μακροοικονομική ρευστότητα.",
+            bottomDayOffset = 450, // Approximation for this cycle
+            bottomDate = "TBD",
+            bottomPriceUsd = 0.50,
+            bottomMaxDrawdownPercent = -87.0,
+            daysRemainingToBottom = (450 - day).coerceAtLeast(0)
+        )
     }
 }
 

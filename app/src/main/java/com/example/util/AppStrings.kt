@@ -725,7 +725,7 @@ open class AppStrings(
     open val liquidationMapTab: String = "Liquidation Map"
     open val liquidationHeatmapTab: String = "Liquidation Heatmap"
     open val liquidationWarningText: String = "High liquidation clusters detected. Increased volatility risk if support breaks."
-    open val exchangeBinance: String = "Binance"
+    open val xrpMacroCycleMilestones: String = "XRP Macro Cycle Milestones"
     open val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
     open val derivativesRiskGuardrail: String = "This screen reads the perpetual tape. It is not a trade desk and it does not size positions."
 }

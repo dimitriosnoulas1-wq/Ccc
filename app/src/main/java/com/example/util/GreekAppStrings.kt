@@ -721,7 +721,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val liquidationMapTab: String = "Χάρτης Ρευστοποιήσεων"
     override val liquidationHeatmapTab: String = "Heatmap Ρευστοποιήσεων"
     override val liquidationWarningText: String = "Εντοπίστηκαν πυκνά pools ρευστοποιήσεων. Αυξημένος κίνδυνος μεταβλητότητας εάν σπάσει η στήριξη."
-    override val exchangeBinance: String = "Binance"
+    override val xrpMacroCycleMilestones: String = "XRP Μακροοικονομικά Ορόσημα Κύκλου"
     override val backtestBadgeText: String = "Live whale radar · live order flow · live liquidations"
     override val derivativesRiskGuardrail: String = "Αυτή η οθόνη διαβάζει την ταινία των perpetuals. Δεν είναι γραφείο συναλλαγών και δεν ορίζει μέγεθος θέσης."
 }

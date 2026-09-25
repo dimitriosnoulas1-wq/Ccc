@@ -261,12 +261,6 @@ fun BitcoinRainbowChart(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = if (isGreek) "Τρέχουσα ζώνη" else "Current band",
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280),
-                    fontWeight = FontWeight.Medium
-                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = currentBandInfo.band.name,
@@ -354,7 +348,7 @@ object RainbowModelEngine {
         BandDef("HODL!", Color(0xFFFBE57F)),
         BandDef("Still cheap", Color(0xFFA3D18B)),
         BandDef("Accumulate", Color(0xFF4FB37A)),
-        BandDef("Basically a Fire Sale", Color(0xFF4472C4))
+        BandDef("Lowest Band", Color(0xFF4472C4))
     )
 
     val BAND_COLORS_TEXT = listOf(
