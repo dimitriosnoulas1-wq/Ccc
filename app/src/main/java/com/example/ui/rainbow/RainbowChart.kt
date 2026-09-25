@@ -16,6 +16,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -43,6 +45,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,12 +62,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -151,9 +157,14 @@ fun RainbowChartCard(series: List<PricePoint>, today: Long, insights: List<Cycle
     val end = (RainbowModel.HALVINGS.last().day + 150).toDouble()
     val lastHalving = RainbowModel.currentHalving(today).day.toDouble()
 
+    val defMax = min(end, today + 900.0)
     var xMin by remember { mutableStateOf(first) }
-    var xMax by remember { mutableStateOf(min(end, today + 900.0)) }
+    var xMax by remember { mutableStateOf(defMax) }
     var scrubDay by remember { mutableStateOf<Long?>(null) }
+    var ghostOn by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val rangeAnim = remember { Animatable(0f) }
 
     // Η γραμμή τιμής "ζωγραφίζεται" από την αρχή ως σήμερα στο πρώτο άνοιγμα.
     val reveal = remember { Animatable(0f) }
@@ -166,8 +177,28 @@ fun RainbowChartCard(series: List<PricePoint>, today: Long, insights: List<Cycle
     val markers = remember(series, today, insights) { buildMarkers(insights, series) }
     val yRange = remember(series, xMin, xMax) { logRange(series, xMin, xMax) }
 
+    val ghosts = remember(series, today) {
+        val cur = RainbowModel.currentHalving(today)
+        val n = RainbowModel.daysSinceHalving(today)
+        RainbowModel.HALVINGS.filter { !it.estimated && it != cur }
+            .map { h -> h to RainbowVisuals.ghost(series, h, cur, n) }
+            .filter { it.second.size > 1 }
+    }
+
+    // Ομαλή μετάβαση στο νέο εύρος (κουμπιά, διπλό πάτημα, mini-map).
     fun setRange(a: Double, b: Double) {
-        xMin = a.coerceAtLeast(first); xMax = b.coerceAtMost(end); scrubDay = null
+        val ta = a.coerceAtLeast(first)
+        val tb = b.coerceAtMost(end)
+        val fa = xMin
+        val fb = xMax
+        scrubDay = null
+        scope.launch {
+            rangeAnim.snapTo(0f)
+            rangeAnim.animateTo(1f, tween(450, easing = FastOutSlowInEasing)) {
+                xMin = RainbowVisuals.lerp(fa, ta, value)
+                xMax = RainbowVisuals.lerp(fb, tb, value)
+            }
+        }
     }
 
     Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = CARD_BG)) {
@@ -188,18 +219,35 @@ fun RainbowChartCard(series: List<PricePoint>, today: Long, insights: List<Cycle
             Spacer(Modifier.height(10.dp))
 
             Box(
-                Modifier.fillMaxWidth().height(CHART_HEIGHT).pointerInput(first, end) {
+                Modifier.fillMaxWidth().height(CHART_HEIGHT).pointerInput(series, first, end) {
                     val rightPad = RIGHT_PAD.toPx()
+                    val slop = viewConfiguration.touchSlop
+                    var lastTap = 0L
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val plotW = size.width - rightPad
                         fun toDay(x: Float) =
                             (xMin + (x / plotW).coerceIn(0f, 1f) * (xMax - xMin)).roundToLong()
-                        scrubDay = toDay(down.position.x)
+                        var lastBand = -1
+                        // Ελαφριά δόνηση όταν το tooltip περνά σε άλλη ζώνη.
+                        fun scrubTo(x: Float) {
+                            val d = toDay(x)
+                            scrubDay = d
+                            val pt = series.nearest(d) ?: return
+                            val bnd = RainbowModel.bandIndex(pt.day, pt.price)
+                            if (lastBand != -1 && bnd != lastBand) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
+                            lastBand = bnd
+                        }
+                        scrubTo(down.position.x)
                         down.consume()
                         var multi = false
+                        var moved = false
+                        var upTime = down.uptimeMillis
                         while (true) {
                             val ev = awaitPointerEvent()
+                            ev.changes.firstOrNull()?.let { upTime = it.uptimeMillis }
                             val pressed = ev.changes.filter { it.pressed }
                             if (pressed.isEmpty()) break
                             if (pressed.size >= 2) {
@@ -218,15 +266,28 @@ fun RainbowChartCard(series: List<PricePoint>, today: Long, insights: List<Cycle
                                 ev.changes.forEach { it.consume() }
                             } else if (!multi) {
                                 // 1 δάχτυλο: tooltip
-                                scrubDay = toDay(pressed[0].position.x)
+                                if ((pressed[0].position - down.position).getDistance() > slop) moved = true
+                                scrubTo(pressed[0].position.x)
                                 pressed[0].consume()
+                            }
+                        }
+                        // Διπλό πάτημα: επιστροφή στην αρχική προβολή.
+                        if (!multi && !moved && upTime - down.uptimeMillis < 250) {
+                            if (down.uptimeMillis - lastTap < 320) {
+                                lastTap = 0L
+                                setRange(first, defMax)
+                            } else {
+                                lastTap = down.uptimeMillis
                             }
                         }
                     }
                 }
             ) {
                 Canvas(Modifier.fillMaxSize()) {
-                    drawRainbow(series, insights, markers, xMin, xMax, yRange, scrubDay, reveal.value, greek, paints)
+                    drawRainbow(
+                        series, insights, markers, if (ghostOn) ghosts else emptyList(), today,
+                        xMin, xMax, yRange, scrubDay, reveal.value, greek, paints
+                    )
                 }
                 // Ξεχωριστό layer για τον παλμό ώστε να μην ξαναζωγραφίζονται οι ζώνες σε κάθε frame.
                 if (reveal.value >= 1f) {
@@ -236,16 +297,41 @@ fun RainbowChartCard(series: List<PricePoint>, today: Long, insights: List<Cycle
                 }
             }
 
+            Spacer(Modifier.height(8.dp))
+            MiniMap(series, first, end, xMin, xMax) { center ->
+                val span = xMax - xMin
+                val a = (center - span / 2).coerceIn(first, max(first, end - span))
+                xMin = a
+                xMax = a + span
+                scrubDay = null
+            }
+
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 RangeChip(if (greek) "Όλα" else "All") { setRange(first, end) }
                 RangeChip(if (greek) "Κύκλος" else "Cycle") { setRange(lastHalving - 150, today + 400.0) }
                 RangeChip(if (greek) "Σήμερα" else "Today") { setRange(today - 400.0, today + 120.0) }
+                RangeChip(if (ghostOn) "Ghost ✓" else "Ghost") {
+                    ghostOn = !ghostOn
+                    if (ghostOn) setRange(lastHalving - 60, today + 200.0)
+                }
                 RangeChip("✕") { scrubDay = null }
             }
+            if (ghostOn) {
+                Text(
+                    if (greek) "Ghost: η πορεία των κύκλων 2012/2016/2020 από το halving ως τη σημερινή μέρα-μέτρησης, " +
+                        "μετατοπισμένη στο halving 2024 και κλιμακωμένη στην τιμή του. Δείχνει μόνο το παρελθόν, όχι πρόβλεψη."
+                    else "Ghost: the 2012/2016/2020 paths from their halving up to today's day count, shifted onto the " +
+                        "2024 halving and scaled to its price. Past only, not a forecast.",
+                    fontSize = 11.sp, color = FAINT, lineHeight = 15.sp, modifier = Modifier.padding(top = 6.dp)
+                )
+            }
             Text(
-                if (greek) "1 δάχτυλο: λεπτομέρειες · 2 δάχτυλα: zoom & μετακίνηση"
-                else "1 finger: details · 2 fingers: zoom & pan",
+                if (greek) "1 δάχτυλο: λεπτομέρειες · 2 δάχτυλα: zoom & μετακίνηση · διπλό πάτημα: αρχική προβολή"
+                else "1 finger: details · 2 fingers: zoom & pan · double tap: reset view",
                 fontSize = 11.sp, color = FAINT, modifier = Modifier.padding(top = 6.dp)
             )
             Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -266,10 +352,83 @@ fun RainbowChartCard(series: List<PricePoint>, today: Long, insights: List<Cycle
 @Composable
 private fun RangeChip(label: String, onClick: () -> Unit) {
     OutlinedButton(
-        onClick = onClick, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+        onClick = onClick, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
         modifier = Modifier.height(32.dp)
     ) {
         Text(label, fontSize = 12.sp, color = TEXT)
+    }
+}
+
+// ─── Mini-map: όλο το ιστορικό, με το ορατό παράθυρο. Άγγιγμα/σύρσιμο = μετακίνηση. ─────
+@Composable
+private fun MiniMap(
+    series: List<PricePoint>, first: Double, end: Double, xMin: Double, xMax: Double,
+    onCenter: (Double) -> Unit,
+) {
+    val runs = remember(series) {
+        val stride = max(1, series.size / 400)
+        RainbowVisuals.bandRuns(series.filterIndexed { i, _ -> i % stride == 0 || i == series.lastIndex })
+    }
+    val lo = remember(series) { log10(series.minOf { it.price }) }
+    val hi = remember(series) { log10(series.maxOf { it.price }) }
+    Canvas(
+        Modifier.fillMaxWidth().height(44.dp).pointerInput(first, end) {
+            val plotW = size.width - RIGHT_PAD.toPx()
+            fun dayAt(x: Float) = first + (x / plotW).coerceIn(0f, 1f) * (end - first)
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                onCenter(dayAt(down.position.x))
+                down.consume()
+                while (true) {
+                    val ev = awaitPointerEvent()
+                    val c = ev.changes.firstOrNull { it.pressed } ?: break
+                    onCenter(dayAt(c.position.x))
+                    c.consume()
+                }
+            }
+        }
+    ) {
+        val w = size.width - RIGHT_PAD.toPx()
+        val h = size.height
+        val pad = 4.dp.toPx()
+        fun x(d: Double) = ((d - first) / (end - first) * w).toFloat()
+        fun y(p: Double) = h - pad - ((log10(p) - lo) / max(1e-9, hi - lo) * (h - 2 * pad)).toFloat()
+        drawRoundRect(CARD_BG_2, Offset.Zero, Size(w, h), CornerRadius(8.dp.toPx()))
+        // Γραμμή τιμής στο χρώμα της ζώνης όπου βρισκόταν κάθε κομμάτι.
+        runs.forEach { (band, pts) ->
+            val path = Path()
+            pts.forEachIndexed { i, pt ->
+                val px = x(pt.day.toDouble()); val py = y(pt.price)
+                if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+            }
+            drawPath(path, Color(RainbowModel.BANDS[band].color), style = Stroke(1.6.dp.toPx(), join = StrokeJoin.Round))
+        }
+        val a = x(xMin); val b = x(xMax)
+        drawRect(Color(0x2622D3EE), Offset(a, 0f), Size(max(2f, b - a), h))
+        drawRoundRect(ACCENT, Offset(a, 0f), Size(max(2f, b - a), h), CornerRadius(6.dp.toPx()), style = Stroke(1.5.dp.toPx()))
+    }
+}
+
+// ─── Gauge: πού βρίσκεται η τιμή μέσα στο rainbow ─────────────────────────────
+@Composable
+private fun RainbowGauge(day: Long, price: Double) {
+    val pos = RainbowVisuals.position(day, price).toFloat()
+    Canvas(Modifier.fillMaxWidth().height(22.dp)) {
+        val n = RainbowModel.BANDS.size
+        val gap = 2.dp.toPx()
+        val barH = 8.dp.toPx()
+        val top = (size.height - barH) / 2
+        val segW = (size.width - gap * (n - 1)) / n
+        RainbowModel.BANDS.forEachIndexed { i, band ->
+            drawRoundRect(
+                Color(band.color), Offset(i * (segW + gap), top), Size(segW, barH), CornerRadius(barH / 2)
+            )
+        }
+        val mx = pos * size.width
+        val cy = size.height / 2
+        drawCircle(Color(0x66FFFFFF), 10.dp.toPx(), Offset(mx, cy))
+        drawCircle(Color(0xFF0B0B12), 6.5.dp.toPx(), Offset(mx, cy))
+        drawCircle(LINE, 6.5.dp.toPx(), Offset(mx, cy), style = Stroke(2.dp.toPx()))
     }
 }
 
@@ -352,6 +511,7 @@ private fun shorten(s: String, max: Int) = if (s.length <= max) s else s.take(ma
 
 private fun DrawScope.drawRainbow(
     series: List<PricePoint>, insights: List<CycleInsights.Insight>, markers: List<Marker>,
+    ghosts: List<Pair<Halving, List<PricePoint>>>, today: Long,
     xMin: Double, xMax: Double, yRange: Pair<Double, Double>,
     scrubDay: Long?, reveal: Float, greek: Boolean, p: ChartPaints,
 ) {
@@ -379,6 +539,21 @@ private fun DrawScope.drawRainbow(
             }
             path.close()
             drawPath(path, Color(RainbowModel.BANDS[i].color).copy(alpha = 0.88f))
+        }
+
+        // "Ομίχλη μέλλοντος": οι ζώνες μετά από σήμερα φαίνονται αχνά (είναι μόνο ο τύπος, όχι δεδομένα).
+        val xt = f.x(today + 0.5)
+        if (xt < r) {
+            val fx = max(xt, l)
+            drawRect(Color(0x990D0F1C), Offset(fx, t), Size(r - fx, f.h))
+            drawLine(Color(0x66FFFFFF), Offset(fx, t), Offset(fx, b), 1.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 6f)))
+            if (r - fx > 60.dp.toPx()) {
+                p.axis.color = 0xFFCBD5E1.toInt()
+                native.drawText(if (greek) "ΜΕΛΛΟΝ · μόνο ο τύπος" else "FUTURE · model only",
+                    fx + 6.dp.toPx(), t + 14.dp.toPx(), p.axis)
+                p.axis.color = 0xFF9CA3AF.toInt()
+            }
         }
 
         // Grid τιμών (δυνάμεις του 10) και ετών
@@ -432,6 +607,27 @@ private fun DrawScope.drawRainbow(
         }
 
         if (reveal >= 1f) {
+            // Ghost cycles: προηγούμενοι κύκλοι ευθυγραμμισμένοι στο τρέχον halving (μόνο ως σήμερα)
+            ghosts.forEach { (h, pts) ->
+                val gp = Path()
+                val stride = max(1, pts.size / max(1, (f.w / 1.5f).toInt()))
+                var started = false
+                pts.forEachIndexed { i, pt ->
+                    if (i % stride != 0 && i != pts.lastIndex) return@forEachIndexed
+                    val x = f.x(pt.day.toDouble()); val y = f.y(pt.price)
+                    if (!started) { gp.moveTo(x, y); started = true } else gp.lineTo(x, y)
+                }
+                drawPath(gp, Color(0x99000000), style = Stroke(4.dp.toPx(), join = StrokeJoin.Round, cap = StrokeCap.Round))
+                drawPath(gp, Color(h.color).copy(alpha = 0.95f), style = Stroke(2.dp.toPx(), join = StrokeJoin.Round, cap = StrokeCap.Round))
+                val last = pts.last()
+                val gx = f.x(last.day.toDouble()); val gy = f.y(last.price)
+                if (gx in l..r) {
+                    p.label.textSize = 11.sp.toPx()
+                    p.label.color = Color(h.color).toArgb()
+                    native.drawText("${h.year}", gx + 5.dp.toPx(), gy + 4.dp.toPx(), p.label)
+                }
+            }
+
             // Γεγονότα / κορυφές / πάτοι πάνω στη γραμμή
             markers.forEach { m ->
                 val x = f.x(m.day.toDouble())
@@ -561,6 +757,12 @@ private fun RainbowNowCard(
                 usd(last.price) + "  ·  " + DateUtil.format(last.day, greek),
                 fontSize = 18.sp, fontFamily = FontFamily.Monospace, color = TEXT
             )
+            Spacer(Modifier.height(10.dp))
+            RainbowGauge(last.day, last.price)
+            Row(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 6.dp)) {
+                Text(RainbowModel.BANDS.first().name, fontSize = 10.sp, color = FAINT, modifier = Modifier.weight(1f))
+                Text(RainbowModel.BANDS.last().name, fontSize = 10.sp, color = FAINT)
+            }
             cur?.let { c -> CycleInsights.summary(c, greek).forEach { Text("• $it", fontSize = 13.sp, color = MUTED) } }
             cur?.nearby?.take(3)?.forEach { NearbyRow(it, greek) }
 
