@@ -62,15 +62,15 @@ object RainbowModel {
 
     /** Από κάτω προς τα πάνω. */
     val BANDS = listOf(
-        Band("Lowest Band",       0xFF4A6FD0),
-        Band("Buy",               0xFF4FB37A),
-        Band("Accumulate",        0xFF8FCB84),
-        Band("Still Cheap",       0xFFC4DF8E),
-        Band("HODL",              0xFFF5DE75),
+        Band("Lowest Band", 0xFF4A6FD0),
+        Band("Historically deep floor", 0xFF4FB37A),
+        Band("Accumulate", 0xFF8FCB84),
+        Band("Still Cheap", 0xFFC4DF8E),
+        Band("HODL", 0xFFF5DE75),
         Band("Is this a bubble?", 0xFFF6B55B),
-        Band("FOMO intensifies",  0xFFEF8A3C),
-        Band("Sell. Seriously",   0xFFE0532D),
-        Band("Maximum Bubble",    0xFFB8141C),
+        Band("FOMO intensifies", 0xFFEF8A3C),
+        Band("Historically overheated", 0xFFE0532D),
+        Band("Maximum Bubble", 0xFFB8141C),
     )
 
     val HALVINGS = listOf(

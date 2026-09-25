@@ -36,7 +36,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,15 +85,15 @@ private val TOP_PAD = 6.dp
 @Composable
 fun RainbowCycleSection(
     greek: Boolean,
+    liveUsd: Double = 0.0,
+    priceIsLive: Boolean = false,
     modifier: Modifier = Modifier,
     vm: RainbowViewModel = viewModel(),
 ) {
     val s by vm.state.collectAsState()
     val today = remember { DateUtil.today() }
-    val series = remember(s.history, s.live) { buildSeries(s.history, s.live, today) }
-
-    // Polling μόνο όσο το section είναι composed (ορατό στη λίστα).
-    LaunchedEffect(vm) { vm.pollLive() }
+    val live = liveUsd.takeIf { priceIsLive && it > 0.0 }
+    val series = remember(s.history, live) { buildSeries(s.history, live, today) }
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         when {
@@ -113,7 +112,7 @@ fun RainbowCycleSection(
             }
             else -> {
                 RainbowChartCard(series, today, greek)
-                RainbowStatusCard(series, today, s.lastUpdate, greek)
+                RainbowStatusCard(series, today, priceIsLive && live != null, greek)
             }
         }
     }
@@ -445,7 +444,7 @@ private fun DrawScope.drawRainbow(
 
 // ─── Κάρτα: τρέχον band, τιμή, ίδια μέρα σε κάθε κύκλο ───────────────────────
 @Composable
-private fun RainbowStatusCard(series: List<PricePoint>, today: Long, lastUpdate: Long, greek: Boolean) {
+private fun RainbowStatusCard(series: List<PricePoint>, today: Long, priceIsLive: Boolean, greek: Boolean) {
     val last = series.last()
     val band = RainbowModel.BANDS[RainbowModel.bandIndex(last.day, last.price)]
     val hv = RainbowModel.currentHalving(today)
@@ -468,16 +467,16 @@ private fun RainbowStatusCard(series: List<PricePoint>, today: Long, lastUpdate:
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                     Box(
                         Modifier.size(8.dp).background(
-                            if (lastUpdate > 0) Color(0xFF10B981) else Color(0xFF9CA3AF), CircleShape
+                            if (priceIsLive) Color(0xFF10B981) else Color(0xFF9CA3AF), CircleShape
                         )
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
                         when {
-                            lastUpdate > 0 && greek -> "Live · ανανέωση κάθε 15s"
-                            lastUpdate > 0 -> "Live · refreshes every 15s"
-                            greek -> "Σύνδεση στο live feed…"
-                            else -> "Connecting to live feed…"
+                            priceIsLive && greek -> "Ζωντανή τιμή BTC"
+                            priceIsLive -> "Live BTC price"
+                            greek -> "Η ζωντανή τιμή λείπει"
+                            else -> "Live price missing"
                         },
                         fontSize = 12.sp, color = MUTED
                     )

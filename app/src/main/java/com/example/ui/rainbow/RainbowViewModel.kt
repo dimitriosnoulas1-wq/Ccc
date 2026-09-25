@@ -2,11 +2,9 @@ package com.example.ui.rainbow
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 data class RainbowUiState(
@@ -23,14 +21,6 @@ class RainbowViewModel : ViewModel() {
 
     init {
         load()
-        viewModelScope.launch {
-            while (isActive) {
-                runCatching { BtcRepository.spot() }.onSuccess { p ->
-                    _state.update { it.copy(live = p, lastUpdate = System.currentTimeMillis()) }
-                }
-                delay(15_000)
-            }
-        }
     }
 
     fun load() {
@@ -43,9 +33,10 @@ class RainbowViewModel : ViewModel() {
     }
 }
 
-/** Ιστορικό + σημερινή live τιμή ως τελευταίο σημείο. */
+/** Daily history, plus today's live print only when that print is real. */
 fun buildSeries(history: List<PricePoint>, live: Double?, today: Long): List<PricePoint> {
     if (history.isEmpty()) return emptyList()
     val past = history.filter { it.day < today }
-    return past + PricePoint(today, live ?: history.last().price)
+    if (live != null && live > 0.0) return past + PricePoint(today, live)
+    return past.ifEmpty { history }
 }

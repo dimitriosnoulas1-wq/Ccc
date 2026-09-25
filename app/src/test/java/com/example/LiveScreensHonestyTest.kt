@@ -111,6 +111,10 @@ class LiveScreensHonestyTest {
             assertFalse(band.descriptionEn.contains("scaling out", ignoreCase = true))
             assertFalse(band.nameEn.contains("ΑΓΟΡΑ"))
         }
+        com.example.ui.rainbow.RainbowModel.BANDS.forEach { band ->
+            assertFalse(band.name.contains("Buy", ignoreCase = true))
+            assertFalse(band.name.contains("Sell", ignoreCase = true))
+        }
     }
 
     @Test
