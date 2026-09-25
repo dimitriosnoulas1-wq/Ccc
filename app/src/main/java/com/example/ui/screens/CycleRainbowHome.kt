@@ -48,7 +48,11 @@ fun CycleRainbowHome(
         modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        RainbowCycleSection(greek = greek)
+        RainbowCycleSection(
+            greek = greek,
+            liveUsd = priceUsd,
+            priceIsLive = priceIsLive
+        )
         Text(
             text = if (greek) "Πού ήμασταν την ίδια ημέρα" else "Where we were on this same day",
             fontSize = 16.sp,
