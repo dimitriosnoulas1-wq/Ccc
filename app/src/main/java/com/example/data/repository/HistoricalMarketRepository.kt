@@ -36,9 +36,9 @@ object HistoricalMarketRepository {
     private const val TTL_MS = 10 * 60 * 1000L
 
     private const val DAY_MS = 86_400_000L
-    private const val HALVING_2012 = 1354116278000L
-    private const val HALVING_2016 = 1468082773000L
-    private const val HALVING_2020 = 1589217823000L
+    private const val HALVING_2012 = HalvingCycleUtils.HALVING_2012_TIMESTAMP
+    private const val HALVING_2016 = HalvingCycleUtils.HALVING_2016_TIMESTAMP
+    private const val HALVING_2020 = HalvingCycleUtils.HALVING_2020_TIMESTAMP
     private const val ANCHOR_MS = 14 * DAY_MS
 
     @Suppress("UNUSED_PARAMETER")
@@ -263,7 +263,8 @@ object HistoricalMarketRepository {
         val currentDay = if (nowMs <= HalvingCycleUtils.HALVING_4TH_TIMESTAMP) {
             0
         } else {
-            ((nowMs - HalvingCycleUtils.HALVING_4TH_TIMESTAMP) / DAY_MS).toInt().coerceIn(0, axisDays)
+            HalvingCycleUtils.utcCalendarDaysSince(HalvingCycleUtils.HALVING_4TH_TIMESTAMP, nowMs)
+                .coerceIn(0, axisDays)
         }
         val change = if (cycleNow.size >= 2) (cycleNow.last().multiple - 1.0) * 100.0 else 0.0
         return CycleFractalData(

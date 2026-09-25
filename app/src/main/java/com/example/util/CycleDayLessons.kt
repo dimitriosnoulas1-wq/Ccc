@@ -9,8 +9,6 @@ import kotlin.math.abs
  * happened in that past cycle. It never says the same thing will happen next.
  */
 object CycleDayLessons {
-    private const val DAY_MS = 86_400_000L
-
     data class Lesson(
         val cycle: Int,
         val day: Int,
@@ -84,13 +82,13 @@ object CycleDayLessons {
 
     private fun lesson(cycle: Int, year: Int, month: Int, day: Int, en: String, el: String): Lesson {
         val halving = when (cycle) {
-            2012 -> 1354116278000L
-            2016 -> 1468082773000L
-            2020 -> 1589217823000L
+            2012 -> HalvingCycleUtils.HALVING_2012_TIMESTAMP
+            2016 -> HalvingCycleUtils.HALVING_2016_TIMESTAMP
+            2020 -> HalvingCycleUtils.HALVING_2020_TIMESTAMP
             else -> HalvingCycleUtils.HALVING_4TH_TIMESTAMP
         }
         val eventMs = utc(year, month, day)
-        val cycleDay = ((eventMs - halving) / DAY_MS).toInt()
+        val cycleDay = HalvingCycleUtils.utcCalendarDaysSince(halving, eventMs)
         return Lesson(
             cycle = cycle,
             day = cycleDay,

@@ -26,6 +26,7 @@ import com.example.ui.theme.LocalAppColors
 import com.example.util.CycleDayLessons
 import com.example.util.CycleFractalData
 import com.example.util.CycleSameDayNote
+import com.example.util.HalvingCycleUtils
 import com.example.util.RainbowCalculator
 
 @Composable
@@ -144,9 +145,9 @@ private fun buildCycleMarkers(
 ): List<RainbowModelEngine.CycleMarker> {
     val day = reading?.currentDay ?: return emptyList()
     val markers = mutableListOf<RainbowModelEngine.CycleMarker>()
-    marker(1354116278000L, day, reading.close2012, Color(0xFF7C5CFF), "2012")?.let { markers += it }
-    marker(1468082773000L, day, reading.close2016, Color(0xFF0891B2), "2016")?.let { markers += it }
-    marker(1589217823000L, day, reading.close2020, Color(0xFFEA580C), "2020")?.let { markers += it }
+    marker(HalvingCycleUtils.HALVING_2012_TIMESTAMP, day, reading.close2012, Color(0xFF7C5CFF), "2012")?.let { markers += it }
+    marker(HalvingCycleUtils.HALVING_2016_TIMESTAMP, day, reading.close2016, Color(0xFF0891B2), "2016")?.let { markers += it }
+    marker(HalvingCycleUtils.HALVING_2020_TIMESTAMP, day, reading.close2020, Color(0xFFEA580C), "2020")?.let { markers += it }
     return markers
 }
 
@@ -175,7 +176,7 @@ private fun marker(
     label: String
 ): RainbowModelEngine.CycleMarker? {
     if (close == null || close <= 0.0) return null
-    val whenMs = halvingMs + day * 86_400_000L
+    val whenMs = HalvingCycleUtils.utcDatePlusDays(halvingMs, day)
     if (whenMs > System.currentTimeMillis()) return null
     return RainbowModelEngine.CycleMarker(
         x = RainbowCalculator.getCurrentFractionalYear(whenMs),
