@@ -170,11 +170,16 @@ class BinanceFuturesSocketManager(
         closeSocket()
 
         isManualDisconnect = false
-        val symLower = symbol.lowercase()
 
-        // Official Binance Futures Combined Stream Endpoint
-        val combinedStreamUrl = "wss://fstream.binance.com/stream?streams=" +
-                "${symLower}@markPrice@1s/${symLower}@aggTrade/${symLower}@ticker/${symLower}@bookTicker/!forceOrder@arr"
+        // Selected-symbol mark/book/ticker stay single-pair. Extra @aggTrade
+        // streams feed the Tape large-print list across majors.
+        val listed = try {
+            ExchangeDirectory.ensureLoaded()
+            ExchangeDirectory.futuresPairs()
+        } catch (_: Throwable) {
+            emptySet()
+        }
+        val combinedStreamUrl = TapeLargePrints.combinedStreamUrl(symbol, listed)
 
         val request = Request.Builder()
             .url(combinedStreamUrl)

@@ -384,7 +384,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val timeMinsAgo: String = "πριν %dλ"
     override val timeHoursAgo: String = "πριν %dω"
     override val liveOrderFlowTitle: String = "24/7 LIVE ΡΟΗ ΕΝΤΟΛΩΝ (BINANCE)"
-    override val liveOrderFlowSub: String = "Ροή tick σε πραγματικό χρόνο: ταλαντωτής πίεσης αγοράς vs πώλησης"
+    override val liveOrderFlowSub: String = "Μεγάλα prints Binance USDT-M από τα βασικά νομίσματα: πίεση αγοράς vs πώλησης"
     override val buyDominanceLabel: String = "ΠΙΕΣΗ ΑΓΟΡΩΝ"
     override val sellDominanceLabel: String = "ΠΙΕΣΗ ΠΩΛΗΣΕΩΝ"
     override val netVolumeDelta: String = "ΚΑΘΑΡΗ ΡΟΗ 24Ω"

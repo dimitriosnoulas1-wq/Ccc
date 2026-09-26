@@ -42,6 +42,7 @@ import com.example.data.repository.DefiLlamaLiquidityRepository
 import com.example.data.repository.DerivativesRepository
 import com.example.data.repository.DailyCycleLogRepository
 import com.example.data.repository.ForwardAuditTrailRepository
+import com.example.data.network.TapeLargePrints
 import com.example.data.repository.FuturesTerminalRepository
 import com.example.data.repository.LiveMacroFeedsRepository
 import com.example.data.repository.WhaleAlertRepository
@@ -156,6 +157,7 @@ class CryptoViewModel @JvmOverloads constructor(
     val futuresMarkFunding: StateFlow<FuturesMarkFunding?> = futuresRepository.markFunding
     val futuresOpenInterest: StateFlow<FuturesOpenInterest?> = futuresRepository.openInterest
     val futuresRecentTrades: StateFlow<List<FuturesTrade>> = futuresRepository.recentTrades
+    val futuresLargePrints: StateFlow<List<FuturesTrade>> = futuresRepository.recentLargePrints
     val futuresRecentLiquidations: StateFlow<List<FuturesLiquidationOrder>> = futuresRepository.recentLiquidations
     val futuresConnectionStatus: StateFlow<FuturesConnectionStatus> = futuresRepository.connectionStatus
     val futuresMacroSentiment: StateFlow<MacroMarketSentiment> = futuresRepository.macroSentiment
@@ -644,7 +646,9 @@ class CryptoViewModel @JvmOverloads constructor(
 
         viewModelScope.launch {
             futuresRepository.tradesFlow.collect { trade ->
-                if (trade.price > 0.0) {
+                if (trade.price > 0.0 &&
+                    TapeLargePrints.sameContract(trade.symbol, activeFuturesSymbol.value)
+                ) {
                     repository.updateCoinTradePrice(trade.symbol, trade.price, trade.timeMs)
                 }
                 if (trade.valueUsd >= 100_000.0) {
