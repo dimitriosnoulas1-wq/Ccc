@@ -210,15 +210,19 @@ fun WhereWeAreCard(
 
 @Composable
 private fun PastCyclePill(year: String, multiple: String, modifier: Modifier = Modifier) {
+    // Same cycle colour as the rainbow and cycle charts.
+    val accent = com.example.ui.rainbow.RainbowModel.HALVINGS
+        .firstOrNull { it.year.toString() == year }
+        ?.let { Color(it.color) } ?: QuantumCyan
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, QuantumCyan.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+            .border(1.dp, accent.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
             .padding(vertical = 12.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = year, fontSize = 11.sp, color = QuantumCyan, fontFamily = SpaceGroteskFont)
+        Text(text = year, fontSize = 12.sp, color = accent, fontFamily = SpaceGroteskFont)
         Text(
             text = multiple,
             fontFamily = SyneFont,

@@ -37,7 +37,6 @@ class LiveScreensHonestyTest {
         assertEquals(0.0, model.keySupport, 0.0)
         assertEquals(0.0, model.keyResistance, 0.0)
         assertEquals(0.0, model.invalidationLevel, 0.0)
-        assertEquals(0, model.probabilities.bullPct)
         assertFalse(model.hasLiveTape)
         assertFalse(model.simpleExplanation.contains("verified prediction", ignoreCase = true))
         assertFalse(model.riskWarning.contains("Do not take trades", ignoreCase = true))

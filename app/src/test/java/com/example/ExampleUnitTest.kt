@@ -85,18 +85,11 @@ class ExampleUnitTest {
   @Test
   fun catalogSeedDropsInventedProjections() {
     val coin = com.example.data.repository.CoinDataRegistry.getAllCoins().first()
-    assertEquals("—", coin.projectedNextMove1w)
-    assertEquals("—", coin.projectedNextMove2w)
-    assertEquals("—", coin.projectedNextMove4w)
-    assertEquals(0.0, coin.analog.projectedCyclePeak, 0.0)
-    assertEquals(0.0, coin.analog.projectedCycleBottom, 0.0)
     val moves = com.example.util.CoinLocalization.liveRealizedMoves(coin)
     assertEquals("—", moves.first)
-    assertEquals("—", com.example.util.CoinLocalization.getProjected1w(coin, AppLanguage.ENGLISH))
-    val (p1, p2, p3) = com.example.util.CoinLocalization.getProbabilitiesForCoin(coin)
-    assertEquals(0, p1)
-    assertEquals(0, p2)
-    assertEquals(0, p3)
+    // The coin model carries no projection or prediction fields at all.
+    val fields = com.example.data.model.CryptoCoin::class.java.declaredFields.map { it.name }
+    assertTrue(fields.toString(), fields.none { it.contains("projected", true) || it.contains("predicted", true) })
   }
 
   @Test

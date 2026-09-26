@@ -35,7 +35,7 @@ AI_PER_IP_10MIN=20          # requests per IP per 10 minutes (default 20)
 AI_DAILY_LIMIT=3000         # total requests per UTC day (default 3000)
 ```
 
-On Cloud Run set them as secrets (`--set-secrets`), not in the image. The daily cap bounds the worst-case bill
+On Cloud Run set them as secrets (`--set-secrets`), not in the image, and deploy with `--max-instances=1`: the per-IP and daily limits are kept in memory, so each extra instance would get its own allowance. The daily cap bounds the worst-case bill
 if someone scripts the endpoint. `GET /health` shows `"ai": true` once a key is set.
 
 Tests: `cd hub && npm test`

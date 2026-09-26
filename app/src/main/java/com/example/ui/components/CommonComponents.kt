@@ -438,29 +438,9 @@ fun CryptoCoinRow(
         prevPrice = coin.priceUsd
     }
 
-    // Dynamic holographic shimmer duration scaled to price momentum / volatility
-    val volatilityMultiplier = (kotlin.math.abs(coin.change24h).toFloat() / 4f).coerceIn(0.6f, 3.5f)
-    val shimmerDuration = (2200 / volatilityMultiplier).toInt()
-
-    val infiniteTransition = rememberInfiniteTransition(label = "coin_row_shimmer")
-    val shimmerPhase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = shimmerDuration, easing = androidx.compose.animation.core.LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmer_phase"
-    )
-    val cometPulse by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "comet_pulse"
-    )
+    // Static accents: 100 rows each running endless animations cost battery for no information.
+    val shimmerPhase = 0.35f
+    val cometPulse = 1f
 
     // The card always shows the 24h direction; the last tick only flashes the price text,
     // so a +3% coin never shows a red card because its latest print was a down-tick.

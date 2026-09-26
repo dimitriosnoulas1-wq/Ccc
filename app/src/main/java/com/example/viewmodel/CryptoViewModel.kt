@@ -89,7 +89,6 @@ class CryptoViewModel @JvmOverloads constructor(
     val monthlyPrice: StateFlow<String> = billingManager.monthlyPrice
     val yearlyPrice: StateFlow<String> = billingManager.yearlyPrice
     val monthlyTrialDays: StateFlow<Int?> = billingManager.monthlyTrialDays
-    val isBillingLoading: StateFlow<Boolean> = billingManager.isLoading
 
     private val aiPrefs = application.applicationContext.getSharedPreferences("crypto_cycles_ai_queries", android.content.Context.MODE_PRIVATE)
     private fun getTodayAiKey(): String {
@@ -98,7 +97,6 @@ class CryptoViewModel @JvmOverloads constructor(
     }
 
     private val _aiDailyQueryCount = MutableStateFlow(aiPrefs.getInt(getTodayAiKey(), 0))
-    val aiDailyQueryCount: StateFlow<Int> = _aiDailyQueryCount.asStateFlow()
 
     val aiQueriesRemaining: StateFlow<Int> = combine(_aiDailyQueryCount, isProUnlocked) { count, pro ->
         if (pro) 999 else (3 - count).coerceAtLeast(0)
@@ -507,7 +505,6 @@ class CryptoViewModel @JvmOverloads constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _selectedSignalCoinId = MutableStateFlow("solana")
-    val selectedSignalCoinId: StateFlow<String> = _selectedSignalCoinId.asStateFlow()
 
     val selectedSignalCoin: StateFlow<CryptoCoin?> = combine(
         repository.coins,

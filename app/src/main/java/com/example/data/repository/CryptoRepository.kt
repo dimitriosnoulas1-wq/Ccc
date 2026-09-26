@@ -170,10 +170,6 @@ class CryptoRepository(context: android.content.Context? = null) {
     private val _priceSource = MutableStateFlow("Binance")
     val priceSource: StateFlow<String> = _priceSource.asStateFlow()
 
-    private val initialBtc = _coins.value.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
-    private val initialEth = _coins.value.firstOrNull { it.symbol.equals("ETH", ignoreCase = true) }
-    private val initialSol = _coins.value.firstOrNull { it.symbol.equals("SOL", ignoreCase = true) }
-
     private val _priceBus = MutableStateFlow(
         PriceBusState(
             btcSpot = PriceTick("BTCUSDT", "Binance", PriceKind.SPOT, 0.0, 0.0, tsMillis = 0L, source = "https://api.binance.com"),

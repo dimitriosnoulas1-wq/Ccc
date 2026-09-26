@@ -179,7 +179,6 @@ fun MarketIntelligenceCard(
     )
 
     val isPos = activeReport.priceChange24h >= 0
-    val priceChangeColor = if (isPos) TachyonMint else SoftCrimson
 
     val regimeColor = when (activeReport.regime) {
         MarketRegimeState.SPOT_ACCUMULATION -> TachyonMint
@@ -1291,5 +1290,4 @@ private fun ExplainerBulletItem(
         }
     }
 }
-
 

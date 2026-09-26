@@ -62,6 +62,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -652,64 +654,26 @@ fun AiMarketFloatingButton(
     val palette = LocalAppColors.current
     val strings = LocalAppStrings.current
 
-    val infiniteTransition = rememberInfiniteTransition(label = "ai_glow")
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.95f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow"
-    )
-
+    // Compact, static round button: it floats over every list, so it stays small and quiet.
     Surface(
         onClick = {
             com.example.util.AppSoundManager.playTechClick()
             onClick()
         },
         modifier = modifier
-            .shadow(12.dp, RoundedCornerShape(24.dp), ambientColor = CopperAccent, spotColor = CopperAccent),
-        shape = RoundedCornerShape(24.dp),
+            .size(52.dp)
+            .shadow(8.dp, CircleShape, ambientColor = CopperAccent, spotColor = CopperAccent)
+            .semantics { contentDescription = strings.aiAssistantBadge },
+        shape = CircleShape,
         color = palette.surfaceElevated,
-        border = BorderStroke(1.5.dp, CopperAccent.copy(alpha = glowAlpha))
+        border = BorderStroke(1.5.dp, CopperAccent.copy(alpha = 0.8f))
     ) {
-        Row(
-            modifier = Modifier
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            palette.surfaceElevated,
-                            palette.surface
-                        )
-                    )
-                )
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(CopperAccent.copy(alpha = 0.2f))
-                    .border(1.dp, CopperAccent.copy(alpha = 0.6f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    tint = CopperAccent,
-                    modifier = Modifier.size(15.dp)
-                )
-            }
-
-            Text(
-                text = strings.aiAssistantBadge,
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = palette.textPrimary,
-                letterSpacing = 0.3.sp
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                tint = CopperAccent,
+                modifier = Modifier.size(22.dp)
             )
         }
     }

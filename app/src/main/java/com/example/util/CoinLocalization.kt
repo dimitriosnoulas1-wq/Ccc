@@ -3,7 +3,6 @@ package com.example.util
 import com.example.data.model.AppLanguage
 import com.example.data.model.CryptoCoin
 import com.example.data.model.Currency
-import com.example.data.model.HistoricalAnalog
 
 object CoinLocalization {
 
@@ -20,15 +19,6 @@ object CoinLocalization {
             String.format(java.util.Locale.US, "%+.1f%%", coin.drawdownPercent)
         } else "—"
         return Triple(change24, sparkMove, athMove)
-    }
-
-    fun getProbabilitiesForCoin(coin: CryptoCoin): Triple<Int, Int, Int> {
-        // Paid app: never invent win-rate percentages. Callers must use live prints or "—".
-        return Triple(0, 0, 0)
-    }
-
-    fun getProjected1w(coin: CryptoCoin, @Suppress("UNUSED_PARAMETER") language: AppLanguage): String {
-        return liveRealizedMoves(coin).first
     }
 
     fun getCycleAlignmentNarrative(coin: CryptoCoin, language: AppLanguage): String {

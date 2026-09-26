@@ -2,30 +2,8 @@ package com.example.data.repository
 
 import com.example.data.model.CoinCategory
 import com.example.data.model.CryptoCoin
-import com.example.data.model.CyclePhase
-import com.example.data.model.HistoricalAnalog
 
 object CoinDatabaseFull {
-
-    private fun analog(
-        d2020: String, d2016: String, day: Int,
-        g2020: Double, g2016: Double, peak: Double, bottom: Double,
-        phase: CyclePhase, phaseName: String, progress: Float
-    ) = HistoricalAnalog(
-        matchingDate2020 = d2020,
-        matchingDate2016 = d2016,
-        matchingCycleDay = day,
-        gainPostMatchingDate2020 = g2020,
-        gainPostMatchingDate2016 = g2016,
-        projectedCyclePeak = peak,
-        projectedCycleBottom = bottom,
-        cyclePhase = phase,
-        cyclePhaseName = phaseName,
-        cycleClockProgress = progress,
-        historicalCyclePointsCurrent = listOf(0.2f, 0.32f, 0.44f, 0.58f, 0.68f),
-        historicalCyclePoints2020 = listOf(0.12f, 0.25f, 0.48f, 0.82f, 1.0f, 0.52f),
-        historicalCyclePoints2016 = listOf(0.08f, 0.18f, 0.42f, 0.78f, 1.0f, 0.38f)
-    )
 
     fun get100Coins(): List<CryptoCoin> {
         val list = mutableListOf<CryptoCoin>()
@@ -42,12 +20,7 @@ object CoinDatabaseFull {
                 marketCap = 26500000000.0, circulatingSupply = 35750000000.0, totalSupply = 45000000000.0,
                 maxSupply = 45000000000.0, supplyUnit = "ADA", category = CoinCategory.LAYER1,
                 isPro = false,
-                analog = analog("04 Jan 2021", "12 Feb 2017", 230, 1450.0, 3100.0, 3.80, 0.35, CyclePhase.ACCUMULATION, "L1 Secondary Rotation", 0.38f),
                 sparkline = listOf(0.68, 0.70, 0.69, 0.71, 0.73, 0.74),
-                whereItMovesNow = "Συσσώρευση στην περιοχή $0.70-$0.80 με σταθερή ανάπτυξη smart contracts στο Plutus v3.",
-                whereItMovedPast = "2017 ($0.02) -> 2018 ($1.33) -> 2020 ($0.02) -> 2021 ($3.10) -> 2024 ($0.82).",
-                nextPredictedMoveNarrative = "Ιστορικά ακολουθεί με καθυστέρηση 40-60 ημερών το ράλι του Bitcoin με απότομες παραβολικές κινήσεις.",
-                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "29 Sep 2017", founderOrCreator = "Charles Hoskinson (IOHK)",
                 consensusMechanism = "Ouroboros Proof of Stake",
                 whitepaperSummary = "Ακαδημαϊκά σχεδιασμένο Layer 1 blockchain βασισμένο σε peer-reviewed έρευνα, με eUTXO μοντέλο και ασφάλεια τύπου Haskell.",
@@ -65,12 +38,7 @@ object CoinDatabaseFull {
                 marketCap = 39000000000.0, circulatingSupply = 146800000000.0, totalSupply = 146800000000.0,
                 maxSupply = null, supplyUnit = "DOGE", category = CoinCategory.MEME,
                 isPro = false,
-                analog = analog("28 Jan 2021", "15 Apr 2017", 260, 2800.0, 5200.0, 1.45, 0.09, CyclePhase.EXPANSION, "Meme Liquidity Impulse", 0.47f),
                 sparkline = listOf(0.238, 0.245, 0.251, 0.258, 0.261, 0.264),
-                whereItMovesNow = "Ανοδική επέκταση καθοδηγούμενη από κοινωνικό συναίσθημα και αυξανόμενη χρήση micropayments.",
-                whereItMovedPast = "2014 ($0.0002) -> 2018 ($0.018) -> 2021 ($0.737) -> 2024 ($0.45).",
-                nextPredictedMoveNarrative = "Τα meme ράλι χαρακτηρίζονται από ακραία ταχύτητα και εκθετική αύξηση όγκου σε σύντομα διαστήματα.",
-                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "06 Dec 2013", founderOrCreator = "Billy Markus & Jackson Palmer",
                 consensusMechanism = "Auxiliary Proof of Work (Scrypt Scrypt-merged mining)",
                 whitepaperSummary = "Το αυθεντικό P2P meme cryptocurrency που δημιουργήθηκε ως ανάλαφρο εναλλακτικό μέσο πληρωμών.",
@@ -88,12 +56,7 @@ object CoinDatabaseFull {
                 marketCap = 11500000000.0, circulatingSupply = 405000000.0, totalSupply = 445000000.0,
                 maxSupply = 720000000.0, supplyUnit = "AVAX", category = CoinCategory.LAYER1,
                 isPro = true,
-                analog = analog("10 Feb 2021", "02 Apr 2017", 265, 940.0, 2400.0, 125.0, 16.0, CyclePhase.EXPANSION, "Subnet Ecosystem Expansion", 0.41f),
                 sparkline = listOf(26.2, 26.8, 27.1, 27.5, 28.0, 28.45),
-                whereItMovesNow = "Ανάπτυξη Subnets και RWA tokenization partnerships με Wall Street ιδρύματα (Citi, J.P. Morgan).",
-                whereItMovedPast = "2020 ($3.00) -> 2021 ($146.22) -> 2023 ($9.00) -> 2024 ($65.00).",
-                nextPredictedMoveNarrative = "Σε περιόδους bull market τα Subnets οδηγούν σε επιταχυνόμενη καύση AVAX token fees.",
-                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "21 Sep 2020", founderOrCreator = "Emin Gün Sirer (Ava Labs)",
                 consensusMechanism = "Avalanche Consensus (Snow family Directed Acyclic Graph)",
                 whitepaperSummary = "Πλατφόρμα έξυπνων συμβολαίων με sub-second finality και δυνατότητα δημιουργίας προσαρμοσμένων Subnet blockchains.",
@@ -111,12 +74,7 @@ object CoinDatabaseFull {
                 marketCap = 11100000000.0, circulatingSupply = 608000000.0, totalSupply = 1000000000.0,
                 maxSupply = 1000000000.0, supplyUnit = "LINK", category = CoinCategory.UTILITY,
                 isPro = true,
-                analog = analog("28 Dec 2020", "15 Feb 2017", 238, 320.0, 950.0, 68.0, 11.0, CyclePhase.EXPANSION, "Oracle & CCIP Infra Wave", 0.43f),
                 sparkline = listOf(17.4, 17.6, 17.9, 17.8, 18.0, 18.2),
-                whereItMovesNow = "Κυριαρχία σε Cross-Chain Interoperability Protocol (CCIP) και Swift banking integrations.",
-                whereItMovedPast = "2017 ($0.15) -> 2019 ($4.50) -> 2021 ($52.88) -> 2023 ($5.50) -> 2024 ($22.00).",
-                nextPredictedMoveNarrative = "Το LINK λειτουργεί ως η βασική υποδομή για RWA tokenization και multi-chain composability.",
-                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "19 Sep 2017", founderOrCreator = "Sergey Nazarov & Steve Ellis",
                 consensusMechanism = "Decentralized Oracle Network (DON) + Chainlink Staking v0.2",
                 whitepaperSummary = "Το κορυφαίο αποκεντρωμένο δίκτυο οράκλων που συνδέει smart contracts με δεδομένα του πραγματικού κόσμου και τραπεζικά συστήματα.",
@@ -134,12 +92,7 @@ object CoinDatabaseFull {
                 marketCap = 5400000000.0, circulatingSupply = 2850000000.0, totalSupply = 10000000000.0,
                 maxSupply = 10000000000.0, supplyUnit = "SUI", category = CoinCategory.LAYER1,
                 isPro = true,
-                analog = analog("20 Jan 2021", "15 Mar 2017", 250, 1850.0, 3400.0, 14.50, 1.20, CyclePhase.EXPANSION, "New L1 High-Velocity Discovery", 0.50f),
                 sparkline = listOf(1.75, 1.80, 1.88, 1.85, 1.92, 1.95),
-                whereItMovesNow = "Ισχυρή ανοδική τροχιά με ρεκόρ TVL και εκρηκτική αύξηση on-chain δραστηριότητας.",
-                whereItMovedPast = "2023 ($0.36) -> 2024 ($2.18).",
-                nextPredictedMoveNarrative = "Το Move-based architecture προσελκύει μαζικά developers από άλλα L1s.",
-                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "03 May 2023", founderOrCreator = "Mysten Labs (Evan Cheng, Adeniyi Abiodun)",
                 consensusMechanism = "Mysticeti Consensus + Bullshark/Narwhal DAG",
                 whitepaperSummary = "Layer 1 blockchain βασισμένο στη γλώσσα Move με Object-centric μοντέλο και parallel transaction execution.",
@@ -158,12 +111,7 @@ object CoinDatabaseFull {
                 marketCap = 15600000000.0, circulatingSupply = 30000000000.0, totalSupply = 50001786967.0,
                 maxSupply = 50001786967.0, supplyUnit = "XLM", category = CoinCategory.LAYER1,
                 isPro = true,
-                analog = analog("12 Jan 2021", "08 Apr 2017", 240, 720.0, 3100.0, 1.25, 0.18, CyclePhase.EXPANSION, "Cross-Border Settlement Wave", 0.46f),
                 sparkline = listOf(0.46, 0.48, 0.49, 0.50, 0.51, 0.52),
-                whereItMovesNow = "Ισχυρή ανοδική συσσώρευση με ραγδαία αύξηση χρήσης του Soroban smart contracts και διασυνοριακών πληρωμών.",
-                whereItMovedPast = "2014 ($0.002) -> 2017 ($0.02) -> 2018 ($0.938) -> 2021 ($0.79) -> 2024 ($0.58).",
-                nextPredictedMoveNarrative = "Το Stellar ιστορικά συσχετίζεται έντονα με το Ripple (XRP), σημειώνοντας εκρηκτικά ράλι διασυνοριακής ρευστότητας.",
-                projectedNextMove1w = "—", projectedNextMove2w = "—", projectedNextMove4w = "—",
                 genesisDate = "31 Jul 2014", founderOrCreator = "Jed McCaleb & Joyce Kim",
                 consensusMechanism = "Stellar Consensus Protocol (SCP / FBA)",
                 whitepaperSummary = "Αποκεντρωμένο, ανοιχτού κώδικα δίκτυο πληρωμών που συνδέει τράπεζες, συστήματα πληρωμών και ανθρώπους παγκοσμίως με sub-cent fees.",
@@ -174,7 +122,6 @@ object CoinDatabaseFull {
         )
 
         // Remaining catalog coins: only assets that Binance still trades (spot or USDT-M perp).
-
 
         val additionalCoins = getRemainingCoins()
         list.addAll(additionalCoins)
@@ -202,14 +149,7 @@ object CoinDatabaseFull {
                     atlUsd = atl, atlDate = atlDate, change24h = change, volume24h = vol,
                     marketCap = mcap, circulatingSupply = circ, totalSupply = total, maxSupply = max,
                     supplyUnit = unit, category = cat, isPro = true,
-                    analog = analog(date2020, date2016, day, g2020, g2016, peak, bottom, CyclePhase.EXPANSION, "${cat.displayName} Momentum Wave", 0.44f),
                     sparkline = listOf(price * 0.94, price * 0.96, price * 0.95, price * 0.98, price * 0.99, price),
-                    whereItMovesNow = "Διαπραγματεύεται σε σταθερό εύρος συσσώρευσης με θετική δυναμική και αυξανόμενο on-chain όγκο.",
-                    whereItMovedPast = "Προηγούμενοι κύκλοι σημείωσαν ισχυρά πολλαπλάσια ανόδου κατά τη διάρκεια του post-halving altseason.",
-                    nextPredictedMoveNarrative = "",
-                    projectedNextMove1w = "—",
-                    projectedNextMove2w = "—",
-                    projectedNextMove4w = "—",
                     genesisDate = genDate, founderOrCreator = founder, consensusMechanism = consensus,
                     whitepaperSummary = wpSummary, technologyDetails = tech, tokenomicsDetails = tokenomics, useCases = uses
                 )

@@ -59,9 +59,6 @@ class BillingManager(
     private val _monthlyProductDetails = MutableStateFlow<ProductDetails?>(null)
     private val _yearlyProductDetails = MutableStateFlow<ProductDetails?>(null)
 
-    private val _billingStatusMessage = MutableStateFlow<String?>(null)
-    val billingStatusMessage: StateFlow<String?> = _billingStatusMessage.asStateFlow()
-
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 

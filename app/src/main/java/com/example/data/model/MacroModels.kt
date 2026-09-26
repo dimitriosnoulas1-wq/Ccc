@@ -12,7 +12,6 @@ data class AltcoinSeasonData(
 ) {
     val isAltSeason: Boolean get() = score > 75
     val isBtcSeason: Boolean get() = score < 25
-    val isNeutral: Boolean get() = score in 25..75
 
     val zoneNameEnglish: String
         get() = when {

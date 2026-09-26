@@ -56,7 +56,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.HistoricalAnalog
 import com.example.ui.theme.CosmicBorder
 import com.example.ui.theme.CosmicVoidBg
 import com.example.ui.theme.CosmicVoidSurface
@@ -88,7 +87,6 @@ enum class CycleChartMode {
 
 @Composable
 fun HistoricalCycleChart(
-    analog: HistoricalAnalog,
     modifier: Modifier = Modifier,
     coinSymbol: String = "BTC",
     currentPrice: Double? = null,

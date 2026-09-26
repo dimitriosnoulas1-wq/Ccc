@@ -157,7 +157,6 @@ fun MacroScreen(
     var rainbowExpanded by remember { mutableStateOf(true) }
     var altSeasonExpanded by remember { mutableStateOf(true) }
     var fearGreedExpanded by remember { mutableStateOf(true) }
-    var piCycleExpanded by remember { mutableStateOf(true) }
 
     // Pulsing live dot
     val infiniteTransition = rememberInfiniteTransition(label = "macro_pulse")

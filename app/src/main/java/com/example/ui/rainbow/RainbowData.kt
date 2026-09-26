@@ -9,7 +9,6 @@ import kotlin.math.pow
 data class PricePoint(val day: Long, val price: Double)
 data class Band(val name: String, val color: Long)
 data class Halving(val year: Int, val day: Long, val estimated: Boolean, val color: Long)
-data class CycleCompare(val halving: Halving, val day: Long, val price: Double?, val band: Int?)
 
 object DateUtil {
     private val MONTHS = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
@@ -81,10 +80,11 @@ object RainbowModel {
         Band("Maximum Bubble", 0xFFB8141C),
     )
 
+    // Cycle colours are the same across the app: 2012 rose, 2016 amber, 2020 violet, current cyan.
     val HALVINGS = listOf(
-        Halving(2012, DateUtil.epochDay(2012, 11, 28), false, 0xFF8B5CF6),
-        Halving(2016, DateUtil.epochDay(2016, 7, 9), false, 0xFF0891B2),
-        Halving(2020, DateUtil.epochDay(2020, 5, 11), false, 0xFFEA580C),
+        Halving(2012, DateUtil.epochDay(2012, 11, 28), false, 0xFFF472B6),
+        Halving(2016, DateUtil.epochDay(2016, 7, 9), false, 0xFFF59E0B),
+        Halving(2020, DateUtil.epochDay(2020, 5, 11), false, 0xFFC084FC),
         Halving(2024, DateUtil.epochDay(2024, 4, 20), false, 0xFF111827),
         Halving(2028, DateUtil.epochDay(2028, 4, 15), true, 0xFFDC2626),
         Halving(2032, DateUtil.epochDay(2032, 4, 10), true, 0xFFDC2626),
@@ -104,14 +104,6 @@ object RainbowModel {
     fun cycleOf(day: Long): Halving? = HALVINGS.lastOrNull { !it.estimated && it.day <= day }
     fun nextHalving(h: Halving): Halving? = HALVINGS.firstOrNull { it.day > h.day }
 
-    fun compareCycles(series: List<PricePoint>, today: Long): List<CycleCompare> {
-        val n = daysSinceHalving(today)
-        return HALVINGS.filter { !it.estimated }.map { h ->
-            val d = h.day + n
-            val p = series.priceNear(d)
-            CycleCompare(h, d, p, p?.let { bandIndex(d, it) })
-        }
-    }
 }
 
 fun List<PricePoint>.nearest(day: Long): PricePoint? {

@@ -46,12 +46,6 @@ class BinanceFuturesSocketManager(
         .retryOnConnectionFailure(true)
         .build()
 
-    private val httpRestClient = OkHttpClient.Builder()
-        .connectTimeout(2500, TimeUnit.MILLISECONDS)
-        .readTimeout(2500, TimeUnit.MILLISECONDS)
-        .retryOnConnectionFailure(true)
-        .build()
-
     // State Flows
     private val _currentSymbol = MutableStateFlow("BTCUSDT")
     val currentSymbol: StateFlow<String> = _currentSymbol.asStateFlow()
