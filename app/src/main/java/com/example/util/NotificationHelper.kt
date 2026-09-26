@@ -13,7 +13,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.MainActivity
 import com.example.R
-import com.example.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -116,7 +115,8 @@ object NotificationHelper {
         details: String,
         navTab: String,
         type: String,
-        bypassPermission: Boolean = false
+        bypassPermission: Boolean = false,
+        btcPrice: Double = 0.0
     ) {
         val appContext = context.applicationContext
 
@@ -159,7 +159,7 @@ object NotificationHelper {
                     title = title,
                     message = body,
                     detailedReason = details,
-                    btcPrice = 67200.0,
+                    btcPrice = btcPrice,
                     navTargetTab = navTab,
                     isUrgent = true
                 )
@@ -210,25 +210,5 @@ object NotificationHelper {
                 // Prevent any notification-related exceptions from crashing the app or ViewModel
             }
         }
-    }
-
-    fun sendFundingAlertNotification(
-        context: Context,
-        title: String,
-        message: String,
-        details: String
-    ) {
-        val eventId = "funding-${title.hashCode()}-${System.currentTimeMillis() / 60_000}"
-        recordAndNotify(
-            context = context,
-            eventId = eventId,
-            channelId = CHANNEL_FUNDING,
-            title = title,
-            body = message,
-            details = details,
-            navTab = "DERIVATIVES",
-            type = "FUNDING",
-            bypassPermission = BuildConfig.DEBUG
-        )
     }
 }

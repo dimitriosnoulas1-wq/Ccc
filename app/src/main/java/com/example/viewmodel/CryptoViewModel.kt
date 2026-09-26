@@ -827,6 +827,10 @@ class CryptoViewModel @JvmOverloads constructor(
         whaleRepository.setNotify200wSma(enabled)
     }
 
+    fun setNotifyFunding(enabled: Boolean) {
+        whaleRepository.setNotifyFunding(enabled)
+    }
+
 
     fun setCurrency(currency: Currency) {
         repository.setCurrency(currency)

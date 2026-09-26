@@ -101,6 +101,7 @@ fun SettingsScreen(
     onNotifyPiCycleChanged: (Boolean) -> Unit = {},
     onNotifyRainbowBandChanged: (Boolean) -> Unit = {},
     onNotify200wSmaChanged: (Boolean) -> Unit = {},
+    onNotifyFundingChanged: (Boolean) -> Unit = {},
     cycleDayAlertEnabled: Boolean = false,
     onCycleDayAlertChanged: (Boolean) -> Unit = {},
     logCharts: Boolean = true,
@@ -686,10 +687,10 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 listOf(
-                                    50_000_000.0 to "$50M",
-                                    100_000_000.0 to "$100M",
-                                    250_000_000.0 to "$250M",
-                                    500_000_000.0 to "$500M"
+                                    1_000_000.0 to "$1M",
+                                    2_500_000.0 to "$2.5M",
+                                    5_000_000.0 to "$5M",
+                                    10_000_000.0 to "$10M"
                                 ).forEach { (threshold, label) ->
                                     val isSelected = whaleSettings.minThresholdUsd == threshold
                                     Box(
@@ -879,6 +880,27 @@ fun SettingsScreen(
                                 }
                             } else {
                                 onNotify200wSmaChanged(false)
+                            }
+                        },
+                        palette = palette
+                    )
+
+                    // 5. Funding extremes (not counted in the free limit)
+                    CycleAlertToggleRow(
+                        title = if (strings.language.code == "el") "Ακραίο funding BTC" else "BTC funding extremes",
+                        desc = if (strings.language.code == "el") {
+                            "Ενημέρωση όταν το funding του BTCUSDT στη Binance περνά το +0.05% ή το −0.04% και όταν επιστρέφει. Έως μία ανά 6 ώρες"
+                        } else {
+                            "Notify when Binance BTCUSDT funding goes past +0.05% or −0.04%, and when it returns. At most one every 6 hours"
+                        },
+                        isChecked = whaleSettings.notifyFunding,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                requestNotificationPermissionIfNecessary {
+                                    onNotifyFundingChanged(true)
+                                }
+                            } else {
+                                onNotifyFundingChanged(false)
                             }
                         },
                         palette = palette

@@ -432,6 +432,7 @@ fun CryptoCyclesApp(
                                 onNotifyPiCycleChanged = { viewModel.setNotifyPiCycle(it) },
                                 onNotifyRainbowBandChanged = { viewModel.setNotifyRainbowBand(it) },
                                 onNotify200wSmaChanged = { viewModel.setNotify200wSma(it) },
+                                onNotifyFundingChanged = { viewModel.setNotifyFunding(it) },
                                 cycleDayAlertEnabled = cycleDayAlertEnabled,
                                 onCycleDayAlertChanged = { enabled ->
                                     if (enabled && !isProUnlocked) {
