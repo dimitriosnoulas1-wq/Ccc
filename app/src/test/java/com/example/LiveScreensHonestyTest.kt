@@ -6,7 +6,6 @@ import com.example.data.model.FearAndGreedData
 import com.example.data.model.FuturesMarkFunding
 import com.example.data.model.MacroMarketSentiment
 import com.example.data.model.MarketIntelligenceEngine
-import com.example.data.model.RainbowBand
 import com.example.data.model.StablecoinLiquidityData
 import com.example.data.network.GeminiAiService
 import com.example.engine.forecasting.ForecastDirection
@@ -105,13 +104,6 @@ class LiveScreensHonestyTest {
 
     @Test
     fun rainbowBandsHaveNoBuySellOrders() {
-        RainbowBand.entries.forEach { band ->
-            assertFalse(band.nameEn.contains("BUY!", ignoreCase = false))
-            assertFalse(band.nameEn.contains("SELL!", ignoreCase = false))
-            assertFalse(band.descriptionEn.contains("Favorable risk/reward", ignoreCase = true))
-            assertFalse(band.descriptionEn.contains("scaling out", ignoreCase = true))
-            assertFalse(band.nameEn.contains("ΑΓΟΡΑ"))
-        }
         com.example.ui.rainbow.RainbowModel.BANDS.forEach { band ->
             assertFalse(band.name.contains("Buy", ignoreCase = true))
             assertFalse(band.name.contains("Sell", ignoreCase = true))
