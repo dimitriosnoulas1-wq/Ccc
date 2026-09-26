@@ -64,6 +64,7 @@ data class LiveOrderExecution(
 )
 
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun LiveOrderFlowSection(
     activeCoin: CryptoCoin,
     currency: Currency,
@@ -72,8 +73,8 @@ fun LiveOrderFlowSection(
 ) {
     val strings = LocalAppStrings.current
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.US) }
-    val orderHistory = remember(recentTrades, activeCoin.symbol) {
-        recentTrades.take(6).map { trade ->
+    val orderHistory = remember(recentTrades) {
+        recentTrades.take(8).map { trade ->
             val rawAmt = trade.qty
             val amt = if (trade.price >= 1000.0) {
                 com.example.util.AppNumberFormatter.formatRawPrice(rawAmt, decimals = 3).removePrefix("$")
@@ -85,7 +86,7 @@ fun LiveOrderFlowSection(
             LiveOrderExecution(
                 id = trade.id.toString(),
                 timestamp = timeFormat.format(Date(trade.timeMs)),
-                symbol = trade.symbol.removeSuffix("USDT"),
+                symbol = com.example.data.network.SymbolMath.canonical(trade.symbol).first,
                 isBuy = !trade.isSell,
                 amount = amt,
                 valueUsd = trade.valueUsd,
@@ -248,7 +249,7 @@ fun LiveOrderFlowSection(
                     color = TextCyanSlate
                 )
 
-                orderHistory.take(4).forEach { order ->
+                orderHistory.take(8).forEach { order ->
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -356,7 +356,7 @@ class FrenchAppStrings : AppStrings(AppLanguage.FRENCH) {
     override val timeMinsAgo: String = "il y a %d min"
     override val timeHoursAgo: String = "il y a %d h"
     override val liveOrderFlowTitle: String = "24/7 LIVE FLUX D'ORDRES (BINANCE)"
-    override val liveOrderFlowSub: String = "Flux tick en temps réel : Oscillateur pression achat vs vente"
+    override val liveOrderFlowSub: String = "Gros prints Binance USDT-M sur les majeurs : pression achat vs vente"
     override val buyDominanceLabel: String = "PRESSION D'ACHAT"
     override val sellDominanceLabel: String = "PRESSION DE VENTE"
     override val netVolumeDelta: String = "FLUX NET 24H"

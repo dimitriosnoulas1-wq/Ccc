@@ -356,7 +356,7 @@ class GermanAppStrings : AppStrings(AppLanguage.GERMAN) {
     override val timeMinsAgo: String = "vor %d Min."
     override val timeHoursAgo: String = "vor %d Std."
     override val liveOrderFlowTitle: String = "24/7 LIVE ORDERFLOW (BINANCE)"
-    override val liveOrderFlowSub: String = "Echtzeit-Tickstream: Kauf- vs. Verkaufsdruck-Oszillator"
+    override val liveOrderFlowSub: String = "Große Binance-USDT-M-Prints der Majors: Kauf- vs. Verkaufsdruck"
     override val buyDominanceLabel: String = "KAUFDRUCK"
     override val sellDominanceLabel: String = "VERKAUFSDRUCK"
     override val netVolumeDelta: String = "NETTOFLUSS 24H"

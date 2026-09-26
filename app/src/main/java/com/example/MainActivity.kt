@@ -173,6 +173,7 @@ fun CryptoCyclesApp(
     val liveMovingAverages by viewModel.liveMovingAverages.collectAsState()
     val globalRiskSnapshot by viewModel.globalRiskSnapshot.collectAsState()
     val futuresRecentTrades by viewModel.futuresRecentTrades.collectAsState()
+    val futuresLargePrints by viewModel.futuresLargePrints.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLiveConnected by viewModel.isLiveConnected.collectAsState()
     val isCacheStale by viewModel.isCacheStale.collectAsState()
@@ -399,7 +400,7 @@ fun CryptoCyclesApp(
                                 whaleAlerts = whaleAlerts,
                                 whaleLeveragePositions = whaleLeveragePositions,
                                 whaleLeverageSummary = whaleLeverageSummary,
-                                recentTrades = futuresRecentTrades,
+                                recentTrades = futuresLargePrints,
                                 onOpenAiAssistant = { prompt -> viewModel.openAiAssistant(prompt) },
                                 onRefresh = { viewModel.manualRefresh() },
                                 onOpenFutures = { viewModel.setTab(MainTab.FUTURES) },

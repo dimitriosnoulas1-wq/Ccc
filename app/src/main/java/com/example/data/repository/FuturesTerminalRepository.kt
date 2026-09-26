@@ -13,6 +13,7 @@ import com.example.data.model.AggregatedDerivativesSnapshot
 import com.example.data.model.MacroMarketSentiment
 import com.example.data.network.BinanceFuturesSocketManager
 import com.example.data.network.SymbolMath
+import com.example.data.network.TapeLargePrints
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -44,6 +45,9 @@ class FuturesTerminalRepository(
 
     private val _recentTrades = MutableStateFlow<List<FuturesTrade>>(emptyList())
     val recentTrades: StateFlow<List<FuturesTrade>> = _recentTrades.asStateFlow()
+
+    private val _recentLargePrints = MutableStateFlow<List<FuturesTrade>>(emptyList())
+    val recentLargePrints: StateFlow<List<FuturesTrade>> = _recentLargePrints.asStateFlow()
 
     private val _recentLiquidations = MutableStateFlow<List<FuturesLiquidationOrder>>(emptyList())
     val recentLiquidations: StateFlow<List<FuturesLiquidationOrder>> = _recentLiquidations.asStateFlow()
@@ -118,11 +122,11 @@ class FuturesTerminalRepository(
         // Collect streaming trades
         scope.launch {
             socketManager.tradesFlow.collect { trade ->
+                if (TapeLargePrints.isLarge(trade)) {
+                    _recentLargePrints.value = TapeLargePrints.merge(_recentLargePrints.value, trade)
+                }
                 val current = currentSymbol.value
-                if (trade.symbol.equals(current, ignoreCase = true) ||
-                    trade.symbol.equals(current.removePrefix("1000"), ignoreCase = true) ||
-                    "1000${trade.symbol}".equals(current, ignoreCase = true)
-                ) {
+                if (TapeLargePrints.sameContract(trade.symbol, current)) {
                     val now = android.os.SystemClock.elapsedRealtime()
                     if (now - lastTradeUiEmitMs >= 200L) {
                         lastTradeUiEmitMs = now
@@ -149,7 +153,8 @@ class FuturesTerminalRepository(
             }
         }
 
-        // Collect streaming forced liquidations
+        // Terminal liquidation tape stays on the selected contract.
+        // !forceOrder@arr is all-market; the Tape large-print list uses aggTrade instead.
         scope.launch {
             socketManager.liquidationsFlow.collect { liq ->
                 val active = SymbolMath.canonical(currentSymbol.value).first

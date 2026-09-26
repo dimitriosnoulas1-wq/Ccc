@@ -388,7 +388,7 @@ open class AppStrings(
     open val timeMinsAgo: String = "%dm ago"
     open val timeHoursAgo: String = "%dh ago"
     open val liveOrderFlowTitle: String = "24/7 LIVE ORDER FLOW (BINANCE)"
-    open val liveOrderFlowSub: String = "Real-time tick stream: Buy vs Sell pressure oscillator"
+    open val liveOrderFlowSub: String = "Large Binance USDT-M prints across majors: buy vs sell pressure"
     open val buyDominanceLabel: String = "BUY PRESSURE"
     open val sellDominanceLabel: String = "SELL PRESSURE"
     open val netVolumeDelta: String = "NET FLOW 24H"
