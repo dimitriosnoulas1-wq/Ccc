@@ -44,17 +44,21 @@ object WhereWeAreReading {
         openInterestUsd: Double?,
         liquidationUsd: Double?
     ): View {
+        val tape = Tape(
+            fundingPct = formatFunding(fundingRate),
+            openInterest = formatUsd(openInterestUsd),
+            liquidations = formatUsd(liquidationUsd)
+        )
+        val hasTape = listOf(tape.fundingPct, tape.openInterest, tape.liquidations).any { it != "—" }
         return View(
             dayText = day?.takeIf { it >= 0 }?.toString() ?: "—",
             nowMultiple = CycleReadingText.formatMultiple(liveMultiple(priceUsd, priceIsLive)),
             multiple2012 = CycleReadingText.formatMultiple(multiple2012),
             multiple2016 = CycleReadingText.formatMultiple(multiple2016),
             multiple2020 = CycleReadingText.formatMultiple(multiple2020),
-            tape = Tape(
-                fundingPct = formatFunding(fundingRate),
-                openInterest = formatUsd(openInterestUsd),
-                liquidations = formatUsd(liquidationUsd)
-            )
+            tape = tape,
+            familyEn = if (hasTape) "Calm" else "No data",
+            familyEl = if (hasTape) "Ηρεμία" else "Χωρίς δεδομένα"
         )
     }
 

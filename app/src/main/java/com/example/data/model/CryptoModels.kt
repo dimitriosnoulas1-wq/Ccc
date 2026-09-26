@@ -255,9 +255,9 @@ data class MacroCycleSignal(
 )
 
 enum class WhaleAlertType(val displayName: String, val iconEmoji: String) {
-    EXCHANGE_INFLOW("Exchange Inflow (Sell Risk)", "🚨"),
+    EXCHANGE_INFLOW("Large futures sell", "🔻"),
     EXCHANGE_OUTFLOW("Exchange Outflow (Accumulation)", "🟢"),
-    WHALE_BUY("Mega Market Buy (Pump Pressure)", "🚀"),
+    WHALE_BUY("Large futures buy", "🔺"),
     WHALE_TRANSFER("Whale Wallet Transfer", "🐋")
 }
 

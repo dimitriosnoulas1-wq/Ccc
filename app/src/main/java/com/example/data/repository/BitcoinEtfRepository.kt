@@ -82,7 +82,7 @@ class BitcoinEtfRepository(
                 asOfDate = latest.first,
                 isAvailable = true,
                 isLive = true,
-                sourceName = "Farside Investors (Verified Live Feed)"
+                sourceName = "Farside Investors"
             )
         } catch (_: Throwable) {
         }

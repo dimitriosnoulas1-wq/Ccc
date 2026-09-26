@@ -66,5 +66,7 @@ class WhereWeAreReadingTest {
         assertEquals("—", view.tape.fundingPct)
         assertEquals("—", view.tape.openInterest)
         assertEquals("—", view.tape.liquidations)
+        assertEquals("No data", view.familyEn)
+        assertEquals("Χωρίς δεδομένα", view.familyEl)
     }
 }

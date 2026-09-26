@@ -939,7 +939,7 @@ fun SignalsScreen(
                             )
                         }
                         Text(
-                            text = "${(cycleProgressRatio * 100).toInt()}%",
+                            text = "${daysAfterAth}d",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Black,
                             color = NeonCyan
@@ -1046,14 +1046,14 @@ fun SignalsScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = if (isBottomReached) "0" else "$daysToBottom",
+                                text = "~$typicalDays",
                                 fontSize = 48.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = (-1.5).sp,
-                                color = if (isBottomReached) NeonEmerald else NeonAmber
+                                color = TextSecondary
                             )
                             Text(
-                                text = if (isBottomReached) "days to bottom (Completed)" else strings.daysToBottomLabel,
+                                text = strings.daysToBottomLabel,
                                 fontSize = 11.sp,
                                 color = TextSecondary
                             )
@@ -1074,7 +1074,7 @@ fun SignalsScreen(
                                     .fillMaxWidth(cycleProgressRatio)
                                     .height(8.dp)
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(if (isBottomReached) NeonEmerald else Color(0xFFFB7185))
+                                    .background(Color(0xFFFB7185))
                             )
                         }
 
@@ -1085,8 +1085,7 @@ fun SignalsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(text = strings.highMarker, fontSize = 11.sp, color = TextMuted)
-                            Text(text = "~${typicalDays}d bottom", fontSize = 11.sp, color = TextMuted)
-                            Text(text = if (isBottomReached) "Expansion" else strings.lowMarker, fontSize = 11.sp, color = if (isBottomReached) NeonEmerald else TextMuted)
+                            Text(text = if (isGreek) "~${typicalDays}ημ παλιές διορθώσεις" else "~${typicalDays}d past corrections", fontSize = 11.sp, color = TextMuted)
                         }
                     }
 
@@ -1194,8 +1193,8 @@ fun SignalsScreen(
             val cardBadge = if (isBtc) "~2028 (Block 1,050,000)" else "ATH: ${activeCoin.athDate.ifBlank { "N/A" }}"
             val box1Val = if (isBtc) halvingCountdown.totalDaysString else activeCoin.calculatedAthDaysAgo.toString()
             val box1Lbl = if (isBtc) strings.halvingDaysLabel else "Days Post-Token-ATH"
-            val box2Val = if (isBtc) halvingCountdown.hoursString else daysToBottom.toString()
-            val box2Lbl = if (isBtc) strings.halvingHoursLabel else "Days to Cycle Low"
+            val box2Val = if (isBtc) halvingCountdown.hoursString else "~$typicalDays"
+            val box2Lbl = if (isBtc) strings.halvingHoursLabel else if (isGreek) "Ημέρες παλιών διορθώσεων" else "Past corrections (days)"
             val subTickerText = if (isBtc) "Live Ticker: ${halvingCountdown.minutesString}m ${halvingCountdown.secondsString}s" else "Macro Anchor: ATH $${activeCoin.athUsd}"
             val rightTagText = if (isBtc) "Post-Halving Day ${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}" else "Rel. BTC Halving D${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}"
 
@@ -1364,7 +1363,7 @@ fun SignalsScreen(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = strings.whatCameNextTitle,
+                    text = if (isGreek) "Κινήσεις τώρα (live)" else "Live moves right now",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp,
@@ -1376,9 +1375,9 @@ fun SignalsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val liveMoves = CoinLocalization.liveRealizedMoves(activeCoin)
-                    WhatCameNextCard(timeframe = strings.timeframe1wk, gain = liveMoves.first, winRate = if (isGreek) "live 24ω" else "live 24h", modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe2wk, gain = liveMoves.second, winRate = if (isGreek) "live 7ημ" else "live 7d", modifier = Modifier.weight(1f))
-                    WhatCameNextCard(timeframe = strings.timeframe4wk, gain = liveMoves.third, winRate = if (isGreek) "από ATH" else "from ATH", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = if (isGreek) "Τελ. 24ω" else "Last 24h", gain = liveMoves.first, winRate = "live", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = if (isGreek) "Τελ. 7ημ" else "Last 7d", gain = liveMoves.second, winRate = "live", modifier = Modifier.weight(1f))
+                    WhatCameNextCard(timeframe = if (isGreek) "Από το ATH" else "Since ATH", gain = liveMoves.third, winRate = "live", modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -1417,10 +1416,6 @@ fun SignalsScreen(
                         } else {
                             "Current phase is ${signal.cycleClockPhase} with live cycle score ${signal.riskScore}/100."
                         }
-                    )
-                    WhyWeSayThisPoint(
-                        number = 4,
-                        text = CoinLocalization.getNextPredictedMoveNarrative(activeCoin, strings.language)
                     )
                 }
             }

@@ -161,25 +161,20 @@ fun WhaleRadarSection(
                     onClick = { selectedFilter = WhaleAlertType.EXCHANGE_INFLOW }
                 )
                 FilterChipItem(
-                    label = strings.whaleFilterOutflow,
-                    isSelected = selectedFilter == WhaleAlertType.EXCHANGE_OUTFLOW,
-                    onClick = { selectedFilter = WhaleAlertType.EXCHANGE_OUTFLOW }
-                )
-                FilterChipItem(
                     label = strings.whaleFilterBuy,
                     isSelected = selectedFilter == WhaleAlertType.WHALE_BUY,
                     onClick = { selectedFilter = WhaleAlertType.WHALE_BUY }
                 )
             }
 
-            // 3-Metric Summary Card (24h Inflow | 24h Outflow | Net Flow)
-            val inflow24h = remember(alerts) {
+            // Large futures prints: sells vs buys (not exchange wallet flows)
+            val sells24h = remember(alerts) {
                 alerts.filter { it.type == WhaleAlertType.EXCHANGE_INFLOW }.sumOf { it.amountUsd }
             }
-            val outflow24h = remember(alerts) {
-                alerts.filter { it.type == WhaleAlertType.EXCHANGE_OUTFLOW }.sumOf { it.amountUsd }
+            val buys24h = remember(alerts) {
+                alerts.filter { it.type == WhaleAlertType.WHALE_BUY }.sumOf { it.amountUsd }
             }
-            val netFlow = outflow24h - inflow24h
+            val netFlow = buys24h - sells24h
 
             fun formatFlowUsd(amount: Double): String {
                 val prefix = if (amount < 0) "-" else ""
@@ -197,13 +192,12 @@ fun WhaleRadarSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 24h Inflow (Sell risk)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "24h Inflow",
+                        text = "24h Sells",
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextCyanSlate,
@@ -212,7 +206,7 @@ fun WhaleRadarSection(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formatFlowUsd(inflow24h),
+                        text = formatFlowUsd(sells24h),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -229,13 +223,12 @@ fun WhaleRadarSection(
                         .background(CosmicBorder)
                 )
 
-                // 24h Outflow (Accumulation)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "24h Outflow",
+                        text = "24h Buys",
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextCyanSlate,
@@ -244,7 +237,7 @@ fun WhaleRadarSection(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formatFlowUsd(outflow24h),
+                        text = formatFlowUsd(buys24h),
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -267,7 +260,7 @@ fun WhaleRadarSection(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "Net Flow",
+                        text = "Net",
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextCyanSlate,
@@ -276,7 +269,7 @@ fun WhaleRadarSection(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "${if (netFlow >= 0) "+" else "-"}${formatFlowUsd(netFlow)}",
+                        text = "${if (netFlow >= 0) "+" else ""}${formatFlowUsd(netFlow)}",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
