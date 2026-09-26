@@ -3,6 +3,7 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const ai = require('./ai');
 
 const PORT = Number(process.env.PORT || 8080);
 const ALLOWED_HOSTS = new Set([
@@ -784,8 +785,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') {
       res.writeHead(204, {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Accept, User-Agent'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Accept, User-Agent, Content-Type'
       });
       res.end();
       return;
@@ -796,8 +797,13 @@ const server = http.createServer(async (req, res) => {
         service: 'cryptocycles-hub',
         cache: cache.size,
         derivatives: derivCache.size,
+        ai: Boolean(ai.config.geminiKey || ai.config.openaiKey),
         stats
       });
+      return;
+    }
+    if (incoming.pathname === '/v1/ai') {
+      await ai.handleAi(req, res, sendJson);
       return;
     }
     if (incoming.pathname === '/v1/derivatives') {

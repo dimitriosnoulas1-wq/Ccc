@@ -1,7 +1,6 @@
 package com.example.data.network
 
 import android.util.Log
-import com.example.BuildConfig
 import com.example.data.model.AppLanguage
 import com.example.data.model.LiveMarketContextSnapshot
 import kotlinx.coroutines.Dispatchers
@@ -10,58 +9,21 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONArray
 import org.json.JSONObject
-import java.net.URLEncoder
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class GeminiAiService(
     private val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(45, TimeUnit.SECONDS)
         .writeTimeout(12, TimeUnit.SECONDS)
         .build(),
-    private val apiKeyOverride: String? = null,
-    private val openAiKeyOverride: String? = null
+    // null = the build's MarketHub URL; "" = no hub, answer locally (used by tests).
+    private val hubBaseUrl: String? = null
 ) {
     companion object {
         private const val TAG = "GeminiAiService"
-        // Cheapest models that currently serve this key first.
-        // 3.1-flash-lite is slightly cheaper ($0.25/$1.50) but returns 503 high-demand;
-        // 3.5-flash-lite ($0.30/$2.50) is the cheapest reliable option vs 3.6-flash ($0.75/$3.75).
-        internal val MODELS = listOf(
-            "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite",
-            "gemini-3.6-flash"
-        )
-        internal val OPENAI_MODELS = listOf(
-            "gpt-5-nano",
-            "gpt-4.1-nano",
-            "gpt-4o-mini"
-        )
-        // Cloud / AI Studio secret names. Lookup is case-insensitive so `gpt`, `Gpt`, and `GPT` all match.
-        internal val OPENAI_SECRET_ALIASES = arrayOf(
-            "OPENAI_API_KEY",
-            "OPENAI",
-            "ChatGPT",
-            "gpt"
-        )
-        private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-        private const val OPENAI_URL = "https://api.openai.com/v1/chat/completions"
-        private val PLACEHOLDER_KEYS = setOf(
-            "MY_GEMINI_API_KEY",
-            "MY_OPENAI_API_KEY",
-            "MY_CHATGPT_API_KEY"
-        )
-
-        internal fun firstNamedValue(source: Map<String, String>, vararg names: String): String {
-            val wanted = names.map { it.lowercase(Locale.ROOT) }.toSet()
-            return source.entries
-                .firstOrNull { it.key.lowercase(Locale.ROOT) in wanted }
-                ?.value
-                .orEmpty()
-        }
     }
 
     suspend fun analyzeMarketQuery(
@@ -69,8 +31,6 @@ class GeminiAiService(
         snapshot: LiveMarketContextSnapshot,
         language: AppLanguage
     ): String = withContext(Dispatchers.IO) {
-        val apiKey = resolveApiKey()
-
         val isGreeklishOrGreek = prompt.any { it in '\u0370'..'\u03ff' } ||
                 prompt.contains("pes", ignoreCase = true) ||
                 prompt.contains("meres", ignoreCase = true) ||
@@ -107,68 +67,19 @@ class GeminiAiService(
             return@withContext presenceReply(effectiveLanguage)
         }
 
-        if (apiKey.isNotBlank()) {
-            for (model in MODELS) {
-                // Standard generateContent first: search grounding is extra cost and often quota-blocked.
-                try {
-                    val responseText = callGeminiRestApi(apiKey, model, prompt, snapshot, targetLangName, enableSearch = false)
-                    if (responseText.isNotBlank()) {
-                        Log.d(TAG, "Gemini standard live call successful with model: $model")
-                        return@withContext responseText
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Gemini model $model standard call failed: ${e.message}")
-                }
-            }
-        }
-
-        val openAiKey = resolveOpenAiApiKey()
-        if (openAiKey.isNotBlank()) {
-            for (model in OPENAI_MODELS) {
-                try {
-                    val responseText = callOpenAiChat(openAiKey, model, prompt, snapshot, targetLangName)
-                    if (responseText.isNotBlank()) {
-                        Log.d(TAG, "OpenAI backup call successful with model: $model")
-                        return@withContext responseText
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "OpenAI backup model $model failed: ${e.message}")
-                }
+        // The AI keys live only on the hub; the app never holds them.
+        val hub = (hubBaseUrl ?: MarketHub.baseUrl).trim().trimEnd('/')
+        if (hub.isNotBlank()) {
+            try {
+                val responseText = callHub(hub, prompt, snapshot, targetLangName)
+                if (responseText.isNotBlank()) return@withContext responseText
+            } catch (e: Exception) {
+                Log.w(TAG, "Hub AI call failed: ${e.message}")
             }
         }
 
         // Conversational intelligence synthesizer fallback
         generateRealtimeQuantitativeAnalysis(prompt, snapshot, effectiveLanguage)
-    }
-
-    private fun resolveApiKey(): String {
-        if (apiKeyOverride != null) {
-            return sanitizeApiKey(apiKeyOverride)
-        }
-        val buildKey = runCatching { BuildConfig.GEMINI_API_KEY }.getOrDefault("")
-        val injectedKey = runCatching { BuildConfig.GEMINI_INJECTED_API_KEY }.getOrDefault("")
-        return sanitizeApiKey(buildKey).ifBlank { sanitizeApiKey(injectedKey) }
-    }
-
-    private fun resolveOpenAiApiKey(): String {
-        if (openAiKeyOverride != null) {
-            return sanitizeApiKey(openAiKeyOverride)
-        }
-        val buildKey = runCatching { BuildConfig.OPENAI_API_KEY }.getOrDefault("")
-        val injectedKey = runCatching { BuildConfig.OPENAI_INJECTED_API_KEY }.getOrDefault("")
-        val runtimeKey = firstNamedValue(System.getenv(), *OPENAI_SECRET_ALIASES)
-        return sanitizeApiKey(buildKey)
-            .ifBlank { sanitizeApiKey(injectedKey) }
-            .ifBlank { sanitizeApiKey(runtimeKey) }
-    }
-
-    private fun sanitizeApiKey(raw: String): String {
-        val key = raw.trim()
-        return if (key.isNotBlank() && PLACEHOLDER_KEYS.none { it.equals(key, ignoreCase = true) }) {
-            key
-        } else {
-            ""
-        }
     }
 
     internal fun presenceReply(language: AppLanguage): String = when (language) {
@@ -220,126 +131,28 @@ class GeminiAiService(
         return needles.any { normalizedPrompt.contains(it) }
     }
 
-    private fun callGeminiRestApi(
-        apiKey: String,
-        modelName: String,
-        prompt: String,
-        snapshot: LiveMarketContextSnapshot,
-        targetLangName: String,
-        enableSearch: Boolean = false
-    ): String {
-        val url = "$BASE_URL/$modelName:generateContent?key=$apiKey"
-
-        val systemInstructionText = buildAnalystSystemInstruction(snapshot, targetLangName)
-
-        val jsonBody = JSONObject().apply {
-            put("systemInstruction", JSONObject().apply {
-                put("parts", JSONArray().apply {
-                    put(JSONObject().apply { put("text", systemInstructionText) })
-                })
-            })
-            put("contents", JSONArray().apply {
-                put(JSONObject().apply {
-                    put("role", "user")
-                    put("parts", JSONArray().apply {
-                        put(JSONObject().apply { put("text", prompt) })
-                    })
-                })
-            })
-            put("generationConfig", JSONObject().apply {
-                put("temperature", 0.7)
-                put("maxOutputTokens", 2048)
-            })
-            if (enableSearch) {
-                put("tools", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("googleSearch", JSONObject())
-                    })
-                })
-            }
-        }
-
-        val request = Request.Builder()
-            .url(url)
-            .addHeader("Content-Type", "application/json")
-            .addHeader("x-goog-api-key", apiKey)
-            .post(jsonBody.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
-            .build()
-
-        val responseString = client.newCall(request).execute().use { response ->
-            val bodyString = response.body?.string() ?: ""
-            if (!response.isSuccessful) {
-                Log.e(TAG, "Gemini error code ${response.code}: $bodyString")
-                throw RuntimeException("Gemini API Error: ${response.code} - $bodyString")
-            }
-            bodyString
-        }
-
-        val respJson = JSONObject(responseString)
-        val candidates = respJson.optJSONArray("candidates") ?: return ""
-        if (candidates.length() == 0) return ""
-        val firstCandidate = candidates.getJSONObject(0)
-        val content = firstCandidate.optJSONObject("content") ?: return ""
-        val parts = content.optJSONArray("parts") ?: return ""
-        if (parts.length() == 0) return ""
-
-        val textBuilder = StringBuilder()
-        for (i in 0 until parts.length()) {
-            val part = parts.getJSONObject(i)
-            textBuilder.append(part.optString("text", ""))
-        }
-        return textBuilder.toString().trim()
-    }
-
-    private fun callOpenAiChat(
-        apiKey: String,
-        modelName: String,
+    private fun callHub(
+        hub: String,
         prompt: String,
         snapshot: LiveMarketContextSnapshot,
         targetLangName: String
     ): String {
         val jsonBody = JSONObject().apply {
-            put("model", modelName)
-            put(
-                "messages",
-                JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("role", "system")
-                        put("content", buildAnalystSystemInstruction(snapshot, targetLangName))
-                    })
-                    put(JSONObject().apply {
-                        put("role", "user")
-                        put("content", prompt)
-                    })
-                }
-            )
-            put("max_completion_tokens", 1024)
+            put("system", buildAnalystSystemInstruction(snapshot, targetLangName))
+            put("prompt", prompt.take(2_000))
         }
-
         val request = Request.Builder()
-            .url(OPENAI_URL)
+            .url("$hub/v1/ai")
             .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer $apiKey")
             .post(jsonBody.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
             .build()
-
-        val responseString = client.newCall(request).execute().use { response ->
-            val bodyString = response.body?.string() ?: ""
+        return client.newCall(request).execute().use { response ->
+            val bodyString = response.body?.string().orEmpty()
             if (!response.isSuccessful) {
-                Log.e(TAG, "OpenAI error code ${response.code}")
-                throw RuntimeException("OpenAI API Error: ${response.code}")
+                throw RuntimeException("Hub AI error ${response.code}")
             }
-            bodyString
+            JSONObject(bodyString).optString("text").trim()
         }
-
-        val respJson = JSONObject(responseString)
-        val choices = respJson.optJSONArray("choices") ?: return ""
-        if (choices.length() == 0) return ""
-        return choices.getJSONObject(0)
-            .optJSONObject("message")
-            ?.optString("content")
-            .orEmpty()
-            .trim()
     }
 
     private fun buildAnalystSystemInstruction(

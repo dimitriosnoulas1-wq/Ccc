@@ -6,14 +6,6 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
-fun firstEnvIgnoreCase(vararg names: String): String {
-  val wanted = names.map { it.lowercase() }.toSet()
-  return System.getenv().entries
-    .firstOrNull { it.key.lowercase() in wanted }
-    ?.value
-    .orEmpty()
-}
-
 android {
   namespace = "com.example"
   // AI Studio / fresh clones may only have the base SDK 36 image, not 36.1.
@@ -29,24 +21,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     val hubUrl = (System.getenv("MARKET_HUB_URL") ?: "").replace("\"", "")
     buildConfigField("String", "MARKET_HUB_URL", "\"$hubUrl\"")
-    // Maps Cloud/AI Studio secrets (GEMINI_API_KEY or Gemini) into the APK without committing .env.
-    val injectedGeminiKey = (System.getenv("GEMINI_API_KEY") ?: System.getenv("Gemini") ?: "")
-      .replace("\\", "\\\\")
-      .replace("\"", "\\\"")
-      .replace("\n", "")
-      .replace("\r", "")
-    buildConfigField("String", "GEMINI_INJECTED_API_KEY", "\"$injectedGeminiKey\"")
-    val injectedOpenAiKey = firstEnvIgnoreCase(
-      "OPENAI_API_KEY",
-      "OPENAI",
-      "ChatGPT",
-      "gpt"
-    )
-      .replace("\\", "\\\\")
-      .replace("\"", "\\\"")
-      .replace("\n", "")
-      .replace("\r", "")
-    buildConfigField("String", "OPENAI_INJECTED_API_KEY", "\"$injectedOpenAiKey\"")
+    // AI keys are never built into the APK: they live on the hub (see hub/README.md).
   }
 
   signingConfigs {
@@ -108,6 +83,8 @@ secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
+  // Never turn AI keys from .env into BuildConfig fields.
+  ignoreList.add("(?i).*(gemini|openai|chatgpt|gpt).*")
 }
 
 // Some unused dependencies are commented out below instead of being removed.

@@ -162,7 +162,7 @@ class LiveScreensHonestyTest {
 
     @Test
     fun aiFallbackDoesNotInventPeakDay() = runBlocking {
-        val service = GeminiAiService(apiKeyOverride = "", openAiKeyOverride = "")
+        val service = GeminiAiService(hubBaseUrl = "")
         val snapshot = com.example.data.model.LiveMarketContextSnapshot(
             btcPrice = 85_200.0,
             btc24hChange = 2.4,
