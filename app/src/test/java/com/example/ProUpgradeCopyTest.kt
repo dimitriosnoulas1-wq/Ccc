@@ -51,15 +51,7 @@ class ProUpgradeCopyTest {
                 strings.macroGateDesc,
                 strings.proAnalyticsDesc,
                 strings.proTapeDesc,
-                strings.historicalAnalogProUnlockText,
-                strings.proMembershipPrice,
-                strings.proPriceTrialLine,
-                strings.planMonthlyPrice,
-                strings.planAnnualPrice,
-                strings.planAnnualBadge,
-                strings.startFreeTrialSub,
-                strings.continueYearlyBtn,
-                strings.continueYearlySub
+                strings.historicalAnalogProUnlockText
             ).joinToString("\n")
             assertFalse(pitch.contains("Masterclass", ignoreCase = true))
             assertFalse(pitch.contains("4.79"))
@@ -76,12 +68,9 @@ class ProUpgradeCopyTest {
             assertFalse(pitch.contains("institutional-grade", ignoreCase = true))
             assertFalse(pitch.contains("Chapters 18-22", ignoreCase = true))
             assertFalse(pitch.contains("whale", ignoreCase = true))
-            assertTrue(
-                strings.proPriceTrialLine.contains("2.99") || strings.proPriceTrialLine.contains("2,99")
-            )
-            assertTrue(
-                strings.planAnnualPrice.contains("24.99") || strings.planAnnualPrice.contains("24,99")
-            )
+            // Prices and trial length come only from Google Play, never from the copy.
+            assertFalse(pitch, Regex("""(€\s?\d+[.,]\d{2}|\d+[.,]\d{2}\s?€)""").containsMatchIn(pitch))
+            assertFalse(pitch.contains("7-day", ignoreCase = true))
             assertTrue(
                 strings.proModalSubtitle.contains("stay free", ignoreCase = true) ||
                     strings.proModalSubtitle.contains("μένουν δωρεάν") ||
@@ -94,9 +83,9 @@ class ProUpgradeCopyTest {
     }
 
     @Test
-    fun billingDefaultsMatchTheHonestPrice() {
-        assertTrue(BillingManager.DEFAULT_MONTHLY_PRICE.contains("2.99"))
-        assertTrue(BillingManager.DEFAULT_YEARLY_PRICE.contains("24.99"))
+    fun billingDefaultsAreBlankUntilPlayAnswers() {
+        assertTrue(BillingManager.DEFAULT_MONTHLY_PRICE.isEmpty())
+        assertTrue(BillingManager.DEFAULT_YEARLY_PRICE.isEmpty())
     }
 
     @Test

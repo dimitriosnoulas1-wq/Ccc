@@ -111,7 +111,7 @@ fun WhereWeAreCard(
             )
             Column(modifier = Modifier.padding(bottom = 10.dp)) {
                 Text(
-                    text = if (greek) "ημέρα" else "day",
+                    text = if (greek) "ημέρες" else "days",
                     fontFamily = SpaceGroteskFont,
                     fontSize = 16.sp,
                     color = QuantumCyan
@@ -132,9 +132,9 @@ fun WhereWeAreCard(
         )
         Text(
             text = if (greek) {
-                "φορές την τιμή της ημέρας του halving"
+                "την τιμή της ημέρας του halving"
             } else {
-                "times the halving-day price"
+                "the halving-day price"
             },
             fontSize = 13.sp,
             color = palette.textSecondary
@@ -157,11 +157,7 @@ fun WhereWeAreCard(
                 TapeChip(if (greek) "Liq" else "Liq", view.tape.liquidations, Modifier.weight(1f))
             }
             Text(
-                text = if (greek) {
-                    "Ταινία Binance · ${view.familyEl}. Όχι σήμα ξετυλίγματος."
-                } else {
-                    "Binance tape · ${view.familyEn}. Not an unwind call."
-                },
+                text = if (greek) "Ταινία Binance · ${view.familyEl}." else "Binance tape · ${view.familyEn}.",
                 fontSize = 11.sp,
                 color = palette.textMuted
             )

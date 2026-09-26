@@ -74,8 +74,8 @@ import com.example.util.LocalAppStrings
 @Composable
 fun ProUpgradeModal(
     isProUnlocked: Boolean,
-    monthlyPrice: String = "€2.99",
-    yearlyPrice: String = "€24.99",
+    monthlyPrice: String = "",
+    yearlyPrice: String = "",
     onDismiss: () -> Unit,
     onPurchaseMonthly: () -> Unit,
     onPurchaseYearly: () -> Unit,
@@ -223,17 +223,19 @@ fun ProUpgradeModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Plan Selectors: Monthly (with 7-Day Trial) vs Yearly
+            val paywall = com.example.ui.components.LocalPaywallPrices.current
+            val pricesReady = monthlyPrice.isNotBlank() && yearlyPrice.isNotBlank()
+            val monthlyPlan = com.example.billing.PaywallText.monthly(strings.language, monthlyPrice, paywall.trialDays)
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Monthly with 7-Day Free Trial
                 PlanOptionCard(
                     title = strings.planMonthlyTitle,
-                    price = monthlyPrice,
+                    price = monthlyPrice.ifBlank { "—" },
                     period = strings.planMonthlyPeriod,
-                    badge = strings.planMonthlyBadge,
+                    badge = monthlyPlan.badge,
                     badgeColor = QuantumCyan,
                     isSelected = selectedPlan == BillingManager.PRODUCT_PRO_MONTHLY,
                     onClick = {
@@ -248,9 +250,9 @@ fun ProUpgradeModal(
                 // Yearly
                 PlanOptionCard(
                     title = strings.planAnnualTitle,
-                    price = yearlyPrice,
+                    price = yearlyPrice.ifBlank { "—" },
                     period = strings.planAnnualPeriod,
-                    badge = strings.planAnnualBadge,
+                    badge = null,
                     badgeColor = PhotonGold,
                     isSelected = selectedPlan == BillingManager.PRODUCT_PRO_YEARLY,
                     onClick = {
@@ -353,10 +355,10 @@ fun ProUpgradeModal(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (selectedPlan == BillingManager.PRODUCT_PRO_MONTHLY) {
-                                strings.startFreeTrialBtn
-                            } else {
-                                strings.continueYearlyBtn
+                            text = when {
+                                !pricesReady -> com.example.billing.PaywallText.priceLine(strings.language, "", "", null)
+                                selectedPlan == BillingManager.PRODUCT_PRO_MONTHLY -> monthlyPlan.button
+                                else -> com.example.billing.PaywallText.yearlyButton(strings.language, yearlyPrice)
                             },
                             color = Color(0xFF05050F),
                             fontWeight = FontWeight.Bold,
@@ -369,23 +371,10 @@ fun ProUpgradeModal(
 
                 // Subtext for selected plan
                 Text(
-                    text = if (selectedPlan == BillingManager.PRODUCT_PRO_MONTHLY) {
-                        strings.startFreeTrialSub
-                            .replace("€2.99", monthlyPrice)
-                            .replace("2,99 €", monthlyPrice)
-                            .replace("2.99 €", monthlyPrice)
-                            .replace("€3.99", monthlyPrice)
-                            .replace("3,99 €", monthlyPrice)
-                    } else {
-                        strings.continueYearlySub
-                            .replace("€24.99", yearlyPrice)
-                            .replace("24,99 €", yearlyPrice)
-                            .replace("24.99 €", yearlyPrice)
-                            .replace("€29.99", yearlyPrice)
-                            .replace("29,99 €", yearlyPrice)
-                            .replace("29.99 €", yearlyPrice)
-                            .replace("€34.99", yearlyPrice)
-                            .replace("34,99 €", yearlyPrice)
+                    text = when {
+                        !pricesReady -> com.example.billing.PaywallText.priceLine(strings.language, "", "", null)
+                        selectedPlan == BillingManager.PRODUCT_PRO_MONTHLY -> monthlyPlan.sub
+                        else -> com.example.billing.PaywallText.yearlySub(strings.language, yearlyPrice)
                     },
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,

@@ -99,7 +99,8 @@ class LiveScreensHonestyTest {
         assertFalse(state.keyStanceSummaryEn.contains("recommended", ignoreCase = true))
         assertFalse(state.keyStanceSummaryEl.contains("κατοχύρωση", ignoreCase = true))
         assertTrue(state.keyStanceSummaryEn.contains("No trade call"))
-        assertTrue(state.rainbowBandName.contains("Historically", ignoreCase = true))
+        val band = com.example.ui.rainbow.RainbowModel.bandIndex(com.example.ui.rainbow.DateUtil.today(), 95_000.0)
+        assertEquals(com.example.ui.rainbow.RainbowModel.BANDS[band].name, state.rainbowBandName)
     }
 
     @Test
@@ -161,7 +162,7 @@ class LiveScreensHonestyTest {
 
     @Test
     fun aiFallbackDoesNotInventPeakDay() = runBlocking {
-        val service = GeminiAiService(apiKeyOverride = "", openAiKeyOverride = "")
+        val service = GeminiAiService(hubBaseUrl = "")
         val snapshot = com.example.data.model.LiveMarketContextSnapshot(
             btcPrice = 85_200.0,
             btc24hChange = 2.4,

@@ -582,9 +582,9 @@ fun BullishConfidenceOrbCard(
 
     // Dynamic Regime Title inside Orb
     val regimeTitle = if (isGreek) {
-        "ΕΜΠΙΣΤΟΣΥΝΗ: ${report.regime.labelGr.uppercase()}"
+        "ΑΝΑΓΝΩΣΗ: ${report.regime.labelGr.uppercase()}"
     } else {
-        "CONFIDENCE: ${report.regime.labelEn.uppercase()}"
+        "READ: ${report.regime.labelEn.uppercase()}"
     }
 
     // Dynamic Risk indicator

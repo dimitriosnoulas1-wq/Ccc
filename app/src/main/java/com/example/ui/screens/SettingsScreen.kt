@@ -86,8 +86,8 @@ fun SettingsScreen(
     currency: Currency,
     selectedLanguage: AppLanguage,
     isProUnlocked: Boolean,
-    monthlyPrice: String = "€2.99",
-    yearlyPrice: String = "€24.99",
+    monthlyPrice: String = "",
+    yearlyPrice: String = "",
     whaleSettings: WhaleAlertSettings = WhaleAlertSettings(),
     btcPrice: Double = 0.0,
     onCurrencyChanged: (Currency) -> Unit,
@@ -101,6 +101,7 @@ fun SettingsScreen(
     onNotifyPiCycleChanged: (Boolean) -> Unit = {},
     onNotifyRainbowBandChanged: (Boolean) -> Unit = {},
     onNotify200wSmaChanged: (Boolean) -> Unit = {},
+    onNotifyFundingChanged: (Boolean) -> Unit = {},
     cycleDayAlertEnabled: Boolean = false,
     onCycleDayAlertChanged: (Boolean) -> Unit = {},
     logCharts: Boolean = true,
@@ -480,7 +481,7 @@ fun SettingsScreen(
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = if (isProUnlocked) strings.proActive else monthlyPrice,
+                                text = if (isProUnlocked) strings.proActive else monthlyPrice.ifBlank { "Pro" },
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isProUnlocked) palette.gainColor else palette.primary
@@ -489,7 +490,12 @@ fun SettingsScreen(
                     }
 
                     Text(
-                        text = "$monthlyPrice ${strings.planMonthlyPeriod} (${strings.planMonthlyBadge}) · $yearlyPrice ${strings.planAnnualPeriod}",
+                        text = com.example.billing.PaywallText.priceLine(
+                            strings.language,
+                            monthlyPrice,
+                            yearlyPrice,
+                            com.example.ui.components.LocalPaywallPrices.current.trialDays
+                        ),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = palette.textSecondary
@@ -558,7 +564,7 @@ fun SettingsScreen(
                             .testTag("settings_upgrade_pro_button")
                     ) {
                         Text(
-                            text = if (isProUnlocked) strings.manageProSubscription else "${strings.upgradeToPro} (${strings.planMonthlyBadge})",
+                            text = if (isProUnlocked) strings.manageProSubscription else strings.upgradeToPro,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isProUnlocked) palette.textPrimary else (if (palette.isLight) Color.White else Color(0xFF05050F))
@@ -686,10 +692,10 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 listOf(
-                                    50_000_000.0 to "$50M",
-                                    100_000_000.0 to "$100M",
-                                    250_000_000.0 to "$250M",
-                                    500_000_000.0 to "$500M"
+                                    1_000_000.0 to "$1M",
+                                    2_500_000.0 to "$2.5M",
+                                    5_000_000.0 to "$5M",
+                                    10_000_000.0 to "$10M"
                                 ).forEach { (threshold, label) ->
                                     val isSelected = whaleSettings.minThresholdUsd == threshold
                                     Box(
@@ -883,6 +889,27 @@ fun SettingsScreen(
                         },
                         palette = palette
                     )
+
+                    // 5. Funding extremes (not counted in the free limit)
+                    CycleAlertToggleRow(
+                        title = if (strings.language.code == "el") "Ακραίο funding BTC" else "BTC funding extremes",
+                        desc = if (strings.language.code == "el") {
+                            "Ενημέρωση όταν το funding του BTCUSDT στη Binance περνά το +0.05% ή το −0.04% και όταν επιστρέφει. Έως μία ανά 6 ώρες"
+                        } else {
+                            "Notify when Binance BTCUSDT funding goes past +0.05% or −0.04%, and when it returns. At most one every 6 hours"
+                        },
+                        isChecked = whaleSettings.notifyFunding,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                requestNotificationPermissionIfNecessary {
+                                    onNotifyFundingChanged(true)
+                                }
+                            } else {
+                                onNotifyFundingChanged(false)
+                            }
+                        },
+                        palette = palette
+                    )
                 }
             }
         }
@@ -1069,12 +1096,6 @@ fun SettingsScreen(
                     ) {
                         developerTapCount++
                     }
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Google Play Internal Testing Ready • Production Release",
-                    fontSize = 10.sp,
-                    color = palette.textMuted
                 )
 
                 if (onTogglePro != null && developerTapCount >= 7) {

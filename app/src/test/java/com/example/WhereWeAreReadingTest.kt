@@ -45,7 +45,7 @@ class WhereWeAreReadingTest {
         assertFalse(text.contains("sell", ignoreCase = true))
         assertFalse(text.contains("target", ignoreCase = true))
         assertFalse(text.contains("unwind", ignoreCase = true))
-        assertEquals("Calm", view.familyEn)
+        assertEquals("Live", view.familyEn)
     }
 
     @Test
@@ -66,5 +66,7 @@ class WhereWeAreReadingTest {
         assertEquals("—", view.tape.fundingPct)
         assertEquals("—", view.tape.openInterest)
         assertEquals("—", view.tape.liquidations)
+        assertEquals("No data", view.familyEn)
+        assertEquals("Χωρίς δεδομένα", view.familyEl)
     }
 }

@@ -74,7 +74,7 @@ class DefiLlamaLiquidityRepository(
                     usdtDominancePercent = usdtDom,
                     usdcCirculatingUsd = usdcCirculating,
                     isLiquidityExpanding = change7d >= 0.0,
-                    sourceName = "DefiLlama (Verified Real-Time)",
+                    sourceName = "DefiLlama",
                     asOfDate = "Live DefiLlama Feed",
                     isLive = true
                 )

@@ -12,7 +12,7 @@ import org.junit.Test
 class ExampleUnitTest {
   @Test
   fun testGeminiAiServiceDirectQuery() = runBlocking {
-    val service = GeminiAiService(apiKeyOverride = "", openAiKeyOverride = "")
+    val service = GeminiAiService(hubBaseUrl = "")
     val snapshot = LiveMarketContextSnapshot(
       btcPrice = 85200.0,
       btc24hChange = 2.4,
@@ -60,52 +60,11 @@ class ExampleUnitTest {
   }
 
   @Test
-  fun prefersCheapestGeminiModelsFirst() {
-    assertEquals(
-      listOf("gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash"),
-      GeminiAiService.MODELS
-    )
-  }
-
-  @Test
-  fun prefersCheapestOpenAiBackupModelsFirst() {
-    assertEquals(
-      listOf("gpt-5-nano", "gpt-4.1-nano", "gpt-4o-mini"),
-      GeminiAiService.OPENAI_MODELS
-    )
-  }
-
-  @Test
-  fun acceptsGptSecretNameInAnyCaseAsOpenAiBackup() {
-    assertTrue(GeminiAiService.OPENAI_SECRET_ALIASES.any { it.equals("gpt", ignoreCase = true) })
-    assertEquals(
-      "sk-test-backup",
-      GeminiAiService.firstNamedValue(
-        mapOf("Gpt" to "sk-test-backup"),
-        *GeminiAiService.OPENAI_SECRET_ALIASES
-      )
-    )
-    assertEquals(
-      "sk-test-backup",
-      GeminiAiService.firstNamedValue(
-        mapOf("GPT" to "sk-test-backup"),
-        *GeminiAiService.OPENAI_SECRET_ALIASES
-      )
-    )
-    assertEquals(
-      "sk-from-openai",
-      GeminiAiService.firstNamedValue(
-        mapOf("OPENAI_API_KEY" to "sk-from-openai", "Gpt" to "sk-other"),
-        *GeminiAiService.OPENAI_SECRET_ALIASES
-      )
-    )
-    assertEquals(
-      "",
-      GeminiAiService.firstNamedValue(
-        mapOf("Gemini" to "unused"),
-        *GeminiAiService.OPENAI_SECRET_ALIASES
-      )
-    )
+  fun apkCarriesNoAiKeys() {
+    // Model order and key handling now live on the hub (hub/ai.test.js).
+    val leaked = BuildConfig::class.java.declaredFields.map { it.name }
+      .filter { name -> listOf("GEMINI", "OPENAI", "GPT").any { name.contains(it, ignoreCase = true) } }
+    assertTrue("AI key fields in BuildConfig: $leaked", leaked.isEmpty())
   }
 
   @Test

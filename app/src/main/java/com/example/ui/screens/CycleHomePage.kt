@@ -278,8 +278,8 @@ private fun HolderFactsStrip(
             .padding(horizontal = 10.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        HolderFact(if (greek) "BTC" else "BTC", priceText, palette.textPrimary)
-        HolderFact("24ω", changeText, changeColor)
+        HolderFact("BTC", priceText, palette.textPrimary)
+        HolderFact(if (greek) "24ω" else "24h", changeText, changeColor)
         Column(
             modifier = Modifier.clickable(onClick = onFearGreedClick),
             horizontalAlignment = Alignment.CenterHorizontally

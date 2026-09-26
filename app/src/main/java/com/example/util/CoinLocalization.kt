@@ -153,10 +153,6 @@ object CoinLocalization {
         }
     }
 
-    fun getNextPredictedMoveNarrative(coin: CryptoCoin, language: AppLanguage): String {
-        return getCycleAlignmentNarrative(coin, language)
-    }
-
     fun liveRealizedMoves(coin: CryptoCoin): Triple<String, String, String> {
         val change24 = if (coin.priceUpdatedAtMs > 0L) {
             String.format(java.util.Locale.US, "%+.1f%%", coin.change24h)
@@ -437,21 +433,21 @@ object CoinLocalization {
         val athFormatted = coin.formattedAth(currency)
         return if (!isBottomReached) {
             when (language) {
-                AppLanguage.ENGLISH -> "We are $daysAfterAth days after the all-time high of $athFormatted. Historically, pullbacks to the bottom lasted ~$typicalDays days. Estimated $daysToBottom days to a potential bottom zone."
-                AppLanguage.GREEK -> "Βρισκόμαστε $daysAfterAth ημέρες μετά το ιστορικό υψηλό των $athFormatted. Ιστορικά, η πορεία στον πυθμένα διήρκεσε ~$typicalDays ημέρες. Απομένουν περίπου $daysToBottom ημέρες για πιθανή ζώνη πυθμένα."
-                AppLanguage.GERMAN -> "Wir befinden uns $daysAfterAth Tage nach dem Allzeithoch von $athFormatted. Historisch dauerte der Weg zum Tief ~$typicalDays Tage. Noch ca. $daysToBottom Tage bis zu einem möglichen Tiefpunkt."
-                AppLanguage.FRENCH -> "Nous sommes à $daysAfterAth jours du record de $athFormatted. Historiquement, le creux a duré ~$typicalDays jours. Environ $daysToBottom jours avant un creux potentiel."
-                AppLanguage.SPANISH -> "Estamos a $daysAfterAth días del máximo de $athFormatted. Históricamente, la caída al suelo duró ~$typicalDays días. Faltan unos $daysToBottom días para un posible suelo."
-                AppLanguage.ITALIAN -> "Siamo a $daysAfterAth giorni dal massimo di $athFormatted. Storicamente, il calo al minimo è durato ~$typicalDays giorni. Rimangono circa $daysToBottom giorni per un possibile minimo."
+                AppLanguage.ENGLISH -> "We are $daysAfterAth days after the all-time high of $athFormatted. Past corrections lasted about $typicalDays days. That is a count, not a date for a bottom."
+                AppLanguage.GREEK -> "Βρισκόμαστε $daysAfterAth ημέρες μετά το ιστορικό υψηλό των $athFormatted. Οι προηγούμενες διορθώσεις κράτησαν περίπου $typicalDays ημέρες. Είναι μέτρηση, όχι ημερομηνία πυθμένα."
+                AppLanguage.GERMAN -> "Wir befinden uns $daysAfterAth Tage nach dem Allzeithoch von $athFormatted. Frühere Korrekturen dauerten etwa $typicalDays Tage. Das ist eine Zählung, kein Datum für ein Tief."
+                AppLanguage.FRENCH -> "Nous sommes à $daysAfterAth jours du record de $athFormatted. Les corrections passées ont duré environ $typicalDays jours. C'est un décompte, pas une date de creux."
+                AppLanguage.SPANISH -> "Estamos a $daysAfterAth días del máximo de $athFormatted. Las correcciones pasadas duraron unos $typicalDays días. Es un conteo, no una fecha de suelo."
+                AppLanguage.ITALIAN -> "Siamo a $daysAfterAth giorni dal massimo di $athFormatted. Le correzioni passate sono durate circa $typicalDays giorni. È un conteggio, non una data di minimo."
             }
         } else {
             when (language) {
-                AppLanguage.ENGLISH -> "We are $daysAfterAth days after the all-time high of $athFormatted. The historical ~$typicalDays-day correction cycle has completed. ${coin.symbol} is currently in the Cycle Accumulation & Expansion phase."
-                AppLanguage.GREEK -> "Βρισκόμαστε $daysAfterAth ημέρες μετά το ιστορικό υψηλό των $athFormatted. Ο ιστορικός κύκλος διόρθωσης (~$typicalDays ημ.) έχει ολοκληρωθεί. Το ${coin.symbol} βρίσκεται στη φάση Συσσώρευσης & Προετοιμασίας Ανόδου."
-                AppLanguage.GERMAN -> "Wir befinden uns $daysAfterAth Tage nach dem Allzeithoch von $athFormatted. Der historische ~$typicalDays-Tage-Korrekturzyklus ist abgeschlossen. ${coin.symbol} befindet sich in der Akkumulations- & Expansionsphase."
-                AppLanguage.FRENCH -> "Nous sommes à $daysAfterAth jours du record de $athFormatted. Le cycle historique de correction (~$typicalDays jours) est terminé. ${coin.symbol} est en phase d'accumulation et d'expansion."
-                AppLanguage.SPANISH -> "Estamos a $daysAfterAth días del máximo de $athFormatted. El ciclo histórico de corrección (~$typicalDays días) se ha completado. ${coin.symbol} está en fase de acumulación y expansión."
-                AppLanguage.ITALIAN -> "Siamo a $daysAfterAth giorni dal massimo di $athFormatted. Il ciclo storico di correzione (~$typicalDays giorni) è completato. ${coin.symbol} è in fase di accumulazione ed espansione."
+                AppLanguage.ENGLISH -> "We are $daysAfterAth days after the all-time high of $athFormatted. Past corrections lasted about $typicalDays days; this one has run longer. That does not mean the low is in."
+                AppLanguage.GREEK -> "Βρισκόμαστε $daysAfterAth ημέρες μετά το ιστορικό υψηλό των $athFormatted. Οι προηγούμενες διορθώσεις κράτησαν περίπου $typicalDays ημέρες· αυτή κρατάει ήδη περισσότερο. Αυτό δεν σημαίνει ότι ο πυθμένας έγινε."
+                AppLanguage.GERMAN -> "Wir befinden uns $daysAfterAth Tage nach dem Allzeithoch von $athFormatted. Frühere Korrekturen dauerten etwa $typicalDays Tage; diese dauert schon länger. Das heißt nicht, dass das Tief erreicht ist."
+                AppLanguage.FRENCH -> "Nous sommes à $daysAfterAth jours du record de $athFormatted. Les corrections passées ont duré environ $typicalDays jours ; celle-ci dure déjà plus longtemps. Cela ne veut pas dire que le creux est atteint."
+                AppLanguage.SPANISH -> "Estamos a $daysAfterAth días del máximo de $athFormatted. Las correcciones pasadas duraron unos $typicalDays días; esta ya dura más. Eso no significa que el suelo ya se haya visto."
+                AppLanguage.ITALIAN -> "Siamo a $daysAfterAth giorni dal massimo di $athFormatted. Le correzioni passate sono durate circa $typicalDays giorni; questa dura già di più. Non significa che il minimo sia stato toccato."
             }
         }
     }

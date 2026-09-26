@@ -5,7 +5,8 @@
   "description": "Shared market-data cache so every phone reads one Binance/CoinGecko/Bybit/OKX pull.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"

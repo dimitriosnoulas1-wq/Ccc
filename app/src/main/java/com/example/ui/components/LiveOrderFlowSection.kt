@@ -128,7 +128,7 @@ fun LiveOrderFlowSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = strings.liveOrderFlowTitle,
+                        text = "${strings.liveOrderFlowTitle} · ${activeCoin.symbol}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp,

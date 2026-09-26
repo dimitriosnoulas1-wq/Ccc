@@ -255,9 +255,9 @@ data class MacroCycleSignal(
 )
 
 enum class WhaleAlertType(val displayName: String, val iconEmoji: String) {
-    EXCHANGE_INFLOW("Exchange Inflow (Sell Risk)", "🚨"),
+    EXCHANGE_INFLOW("Large futures sell", "🔻"),
     EXCHANGE_OUTFLOW("Exchange Outflow (Accumulation)", "🟢"),
-    WHALE_BUY("Mega Market Buy (Pump Pressure)", "🚀"),
+    WHALE_BUY("Large futures buy", "🔺"),
     WHALE_TRANSFER("Whale Wallet Transfer", "🐋")
 }
 
@@ -297,16 +297,17 @@ data class WhaleAlert(
 
 data class WhaleAlertSettings(
     val notificationsEnabled: Boolean = false,
-    val minThresholdUsd: Double = 50_000_000.0, // Default 50M USD threshold
+    val minThresholdUsd: Double = 1_000_000.0,
     val soundAndVibration: Boolean = true,
     val notifyInflows: Boolean = true,
     val notifyOutflows: Boolean = true,
     val notifyMegaBuys: Boolean = true,
     // Cycle & Indicator Push Alerts
-    val notifyZoneChange: Boolean = true,
-    val notifyPiCycle: Boolean = true,
+    val notifyZoneChange: Boolean = false,
+    val notifyPiCycle: Boolean = false,
     val notifyRainbowBand: Boolean = false,
-    val notify200wSma: Boolean = false
+    val notify200wSma: Boolean = false,
+    val notifyFunding: Boolean = false
 )
 
 enum class PriceKind {

@@ -78,21 +78,6 @@ fun QuantForecastCard(
                         maxLines = 1
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(CosmicVoidSurfaceElevated)
-                        .border(0.8.dp, CosmicBorder, RoundedCornerShape(6.dp))
-                        .padding(horizontal = 6.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = model.modelVersion,
-                        color = Color(0xFF94A3B8),
-                        fontSize = 9.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -104,7 +89,7 @@ fun QuantForecastCard(
             ) {
                 Column {
                     Text(
-                        text = "REGIME",
+                        text = "DAILY TREND (EMA20/50, RSI)",
                         color = Color(0xFF64748B),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
@@ -131,38 +116,6 @@ fun QuantForecastCard(
                         fontFamily = FontFamily.Monospace
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            if (model.hasLiveTape) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Bull: ${model.probabilities.bullPct}%", color = TachyonMint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Base: ${model.probabilities.basePct}%", color = NeonAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Bear: ${model.probabilities.bearPct}%", color = SoftCrimson, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                    ) {
-                        Box(modifier = Modifier.weight(model.probabilities.bullPct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(TachyonMint))
-                        Box(modifier = Modifier.weight(model.probabilities.basePct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(NeonAmber))
-                        Box(modifier = Modifier.weight(model.probabilities.bearPct.toFloat().coerceAtLeast(1f)).fillMaxHeight().background(SoftCrimson))
-                    }
-                }
-            } else {
-                Text(
-                    text = "Bull / Base / Bear — until 30 daily closes arrive",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 11.sp
-                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -203,15 +156,10 @@ fun QuantForecastCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (showAdvancedDetails) "Hide Technical Evidences ▲" else "Why? View Quantitative Evidences ▼",
+                    text = if (showAdvancedDetails) "Hide inputs ▲" else "Why? Show the inputs ▼",
                     color = QuantumCyan,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Confidence: ${model.confidencePct}%",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 11.sp
                 )
             }
 

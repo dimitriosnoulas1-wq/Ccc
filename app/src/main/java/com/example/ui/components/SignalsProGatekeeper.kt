@@ -94,7 +94,9 @@ fun SignalsProGatekeeper(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = strings.proPriceTrialLine,
+                    text = LocalPaywallPrices.current.let {
+                        com.example.billing.PaywallText.priceLine(strings.language, it.monthly, it.yearly, it.trialDays)
+                    },
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )

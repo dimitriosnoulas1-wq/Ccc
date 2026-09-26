@@ -5,11 +5,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 enum class MarketRegime(val label: String, val isBullish: Boolean) {
-    STRONG_BULL("STRONG UPTREND READ", true),
-    BULL("UPTREND READ", true),
-    NEUTRAL("RANGE READ", true),
-    BEAR("DOWNTREND READ", false),
-    STRONG_BEAR("STRONG DOWNTREND READ", false),
+    STRONG_BULL("STRONG UP", true),
+    BULL("UP", true),
+    NEUTRAL("MIXED", true),
+    BEAR("DOWN", false),
+    STRONG_BEAR("STRONG DOWN", false),
     INSUFFICIENT_DATA("INSUFFICIENT DATA", false)
 }
 

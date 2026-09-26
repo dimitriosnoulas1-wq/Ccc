@@ -5,14 +5,19 @@ import com.example.data.model.FuturesTrade
 import com.example.data.model.WhaleAlert
 import com.example.data.model.WhaleAlertSettings
 import com.example.data.model.WhaleAlertType
+import com.example.util.AlertSettingsStore
+import com.example.util.CycleAlertRules
+import com.example.util.CycleDayAlertPrefs
+import com.example.util.NotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class WhaleAlertRepository(
-    @Suppress("UNUSED_PARAMETER") context: Context
+    context: Context
 ) {
-    private val _settings = MutableStateFlow(WhaleAlertSettings())
+    private val appContext = context.applicationContext
+    private val _settings = MutableStateFlow(AlertSettingsStore.load(appContext))
     val settings: StateFlow<WhaleAlertSettings> = _settings.asStateFlow()
 
     private val _isProUser = MutableStateFlow(false)
@@ -26,31 +31,22 @@ class WhaleAlertRepository(
 
     fun updateSettings(newSettings: WhaleAlertSettings) {
         _settings.value = newSettings
+        AlertSettingsStore.save(appContext, newSettings)
     }
 
-    fun setNotificationsEnabled(enabled: Boolean) {
-        _settings.value = _settings.value.copy(notificationsEnabled = enabled)
-    }
+    fun setNotificationsEnabled(enabled: Boolean) = updateSettings(_settings.value.copy(notificationsEnabled = enabled))
 
-    fun setMinThreshold(thresholdUsd: Double) {
-        _settings.value = _settings.value.copy(minThresholdUsd = thresholdUsd)
-    }
+    fun setMinThreshold(thresholdUsd: Double) = updateSettings(_settings.value.copy(minThresholdUsd = thresholdUsd))
 
-    fun setNotifyZoneChange(enabled: Boolean) {
-        _settings.value = _settings.value.copy(notifyZoneChange = enabled)
-    }
+    fun setNotifyZoneChange(enabled: Boolean) = updateSettings(_settings.value.copy(notifyZoneChange = enabled))
 
-    fun setNotifyPiCycle(enabled: Boolean) {
-        _settings.value = _settings.value.copy(notifyPiCycle = enabled)
-    }
+    fun setNotifyPiCycle(enabled: Boolean) = updateSettings(_settings.value.copy(notifyPiCycle = enabled))
 
-    fun setNotifyRainbowBand(enabled: Boolean) {
-        _settings.value = _settings.value.copy(notifyRainbowBand = enabled)
-    }
+    fun setNotifyRainbowBand(enabled: Boolean) = updateSettings(_settings.value.copy(notifyRainbowBand = enabled))
 
-    fun setNotify200wSma(enabled: Boolean) {
-        _settings.value = _settings.value.copy(notify200wSma = enabled)
-    }
+    fun setNotify200wSma(enabled: Boolean) = updateSettings(_settings.value.copy(notify200wSma = enabled))
+
+    fun setNotifyFunding(enabled: Boolean) = updateSettings(_settings.value.copy(notifyFunding = enabled))
 
     fun ingestLargePrints(trades: List<FuturesTrade>, minUsd: Double = 100_000.0) {
         val large = trades.filter { it.valueUsd >= minUsd }
@@ -64,6 +60,28 @@ class WhaleAlertRepository(
             .take(30)
         if (merged.map { it.id } != existing.map { it.id }) {
             _alerts.value = merged
+        }
+        notifyLargePrints(large.filter { known["bn-${it.id}"] == null })
+    }
+
+    private fun notifyLargePrints(fresh: List<FuturesTrade>) {
+        val s = _settings.value
+        if (!s.notificationsEnabled || !_isProUser.value) return
+        val greek = CycleDayAlertPrefs.isGreek(appContext)
+        val recent = System.currentTimeMillis() - 5 * 60_000L
+        fresh.filter { it.valueUsd >= s.minThresholdUsd && it.timeMs >= recent }.forEach { trade ->
+            val symbol = trade.symbol.removeSuffix("USDT").removeSuffix("BUSD").removePrefix("1000")
+            val msg = CycleAlertRules.whaleMessage(symbol, trade.isSell, trade.valueUsd, greek)
+            NotificationHelper.recordAndNotify(
+                context = appContext,
+                eventId = "whale-bn-${trade.id}",
+                channelId = NotificationHelper.CHANNEL_WHALES,
+                title = msg.title,
+                body = msg.body,
+                details = if (greek) "Μία συναλλαγή, όχι σήμα." else "One trade print, not a signal.",
+                navTab = "TAPE",
+                type = "WHALE"
+            )
         }
     }
 

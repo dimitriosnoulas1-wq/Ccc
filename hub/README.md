@@ -15,6 +15,7 @@ MARKET_HUB_URL=https://YOUR-HUB-HOST ./gradlew :app:assembleRelease
 ```
 
 Health check: `GET /health`  
+AI: `POST /v1/ai` with `{"system": "...", "prompt": "..."}` → `{"text": "..."}`  
 Proxy: `GET /v1/proxy?u=<https-url>`  
 Derivatives: `GET /v1/derivatives?symbol=BTC`
 
@@ -22,3 +23,19 @@ Derivatives: `GET /v1/derivatives?symbol=BTC`
 
 If `MARKET_HUB_URL` is empty, the app talks to the exchanges directly (same as before).
 If the hub is down at runtime, each phone falls back to the exchanges.
+
+## AI keys (never in the app)
+
+The app sends AI questions to `/v1/ai`; the Gemini / OpenAI keys exist only as env vars on the hub:
+
+```bash
+GEMINI_API_KEY=...          # required for Gemini
+OPENAI_API_KEY=...          # optional backup
+AI_PER_IP_10MIN=20          # requests per IP per 10 minutes (default 20)
+AI_DAILY_LIMIT=3000         # total requests per UTC day (default 3000)
+```
+
+On Cloud Run set them as secrets (`--set-secrets`), not in the image. The daily cap bounds the worst-case bill
+if someone scripts the endpoint. `GET /health` shows `"ai": true` once a key is set.
+
+Tests: `cd hub && npm test`
