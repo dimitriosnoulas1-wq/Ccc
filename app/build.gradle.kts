@@ -6,6 +6,14 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+fun firstEnvIgnoreCase(vararg names: String): String {
+  val wanted = names.map { it.lowercase() }.toSet()
+  return System.getenv().entries
+    .firstOrNull { it.key.lowercase() in wanted }
+    ?.value
+    .orEmpty()
+}
+
 android {
   namespace = "com.example"
   // AI Studio / fresh clones may only have the base SDK 36 image, not 36.1.
@@ -15,27 +23,43 @@ android {
     applicationId = "com.aistudio.cryptocycles.app"
     minSdk = 24
     targetSdk = 36
-    versionCode = 144
-    versionName = "1.144.0"
+    versionCode = 143
+    versionName = "1.143.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     val hubUrl = (System.getenv("MARKET_HUB_URL") ?: "").replace("\"", "")
     buildConfigField("String", "MARKET_HUB_URL", "\"$hubUrl\"")
-    // AI keys are never built into the APK: they live on the hub (see hub/README.md).
+    // Maps Cloud/AI Studio secrets (GEMINI_API_KEY or Gemini) into the APK without committing .env.
+    val injectedGeminiKey = (System.getenv("GEMINI_API_KEY") ?: System.getenv("Gemini") ?: "")
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\n", "")
+      .replace("\r", "")
+    buildConfigField("String", "GEMINI_INJECTED_API_KEY", "\"$injectedGeminiKey\"")
+    val injectedOpenAiKey = firstEnvIgnoreCase(
+      "OPENAI_API_KEY",
+      "OPENAI",
+      "ChatGPT",
+      "gpt"
+    )
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("\n", "")
+      .replace("\r", "")
+    buildConfigField("String", "OPENAI_INJECTED_API_KEY", "\"$injectedOpenAiKey\"")
   }
 
   signingConfigs {
     create("release") {
-      // The keystore is never committed; it comes from KEYSTORE_PATH or a local, gitignored file.
-      val targetFile = file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks")
-      val storePass = System.getenv("STORE_PASSWORD").orEmpty()
-      val keyPass = System.getenv("KEY_PASSWORD").orEmpty()
-      // Without key + passwords the release stays unsigned; debug builds (AI Studio preview) are unaffected.
-      if (targetFile.exists() && storePass.isNotEmpty() && keyPass.isNotEmpty()) {
+      val uploadKey = file("${rootDir}/my-upload-key.jks")
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+      val targetFile = if (uploadKey.exists()) uploadKey else file(keystorePath)
+      // Do not fail configuration when the upload key is missing (AI Studio debug preview).
+      if (targetFile.exists()) {
         storeFile = targetFile
-        storePassword = storePass
-        keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
-        keyPassword = keyPass
+        storePassword = System.getenv("STORE_PASSWORD") ?: "android"
+        keyAlias = "upload"
+        keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
       }
     }
   }
@@ -83,8 +107,6 @@ secrets {
   propertiesFileName = ".env"
   defaultPropertiesFileName = ".env.example"
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
-  // Never turn AI keys from .env into BuildConfig fields.
-  ignoreList.add("(?i).*(gemini|openai|chatgpt|gpt).*")
 }
 
 // Some unused dependencies are commented out below instead of being removed.

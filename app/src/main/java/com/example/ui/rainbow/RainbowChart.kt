@@ -650,12 +650,13 @@ private fun DrawScope.drawRainbow(
                 drawCircle(Color(0xFF0B0B12), 2.dp.toPx(), Offset(x, y))
                 drawCircle(Color(c.halving.color), 6.dp.toPx(), Offset(ex, ey))
                 drawCircle(LINE, 6.dp.toPx(), Offset(ex, ey), style = Stroke(1.5.dp.toPx()))
+                val yearText = DateUtil.civil(c.day).first.toString()
                 drawRoundRect(
                     Color(0xCC0B0B12), Offset(ex + 9.dp.toPx(), ey - 10.dp.toPx()),
-                    Size(p.label.measureText("${c.halving.year}") + 10.dp.toPx(), 20.dp.toPx()),
+                    Size(p.label.measureText(yearText) + 10.dp.toPx(), 20.dp.toPx()),
                     CornerRadius(6.dp.toPx())
                 )
-                native.drawText("${c.halving.year}", ex + 14.dp.toPx(), ey + 5.dp.toPx(), p.label)
+                native.drawText(yearText, ex + 14.dp.toPx(), ey + 5.dp.toPx(), p.label)
             }
         }
 
