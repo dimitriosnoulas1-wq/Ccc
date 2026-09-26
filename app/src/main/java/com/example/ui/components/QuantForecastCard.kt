@@ -1,6 +1,10 @@
 package com.example.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -81,6 +93,17 @@ fun QuantForecastCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            if (model.recentCloses.size >= 5) {
+                TapeSparkline(
+                    closes = model.recentCloses,
+                    lineColor = regimeColor,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -252,3 +275,73 @@ fun QuantForecastCard(
 
 private fun moneyOrDash(value: Double): String =
     if (value > 0.0) "$${String.format(java.util.Locale.US, "%.2f", value)}" else "—"
+
+/**
+ * Small live sparkline of this coin's own recent real daily closes — the same
+ * tape the RSI/EMA/ATR reading above is computed from. Purely a visual
+ * companion to the numbers; draws nothing that isn't in [closes].
+ */
+@Composable
+private fun TapeSparkline(
+    closes: List<Double>,
+    lineColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val reveal = remember(closes) { Animatable(0f) }
+    LaunchedEffect(closes) {
+        reveal.snapTo(0f)
+        reveal.animateTo(1f, animationSpec = tween(700, easing = FastOutSlowInEasing))
+    }
+    val minVal = closes.min()
+    val maxVal = closes.max()
+    val span = (maxVal - minVal).takeIf { it > 1e-9 } ?: (maxVal.takeIf { it > 0.0 } ?: 1.0)
+
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val padY = 4.dp.toPx()
+        val revealX = w * reveal.value.coerceIn(0f, 1f)
+
+        clipRect(right = revealX) {
+            val points = closes.mapIndexed { i, v ->
+                val x = if (closes.size == 1) 0f else w * (i.toFloat() / (closes.size - 1).toFloat())
+                val norm = ((v - minVal) / span).toFloat().coerceIn(0f, 1f)
+                Offset(x, padY + (h - padY * 2) * (1f - norm))
+            }
+            if (points.size >= 2) {
+                val linePath = Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    for (i in 1 until points.size) lineTo(points[i].x, points[i].y)
+                }
+                val areaPath = Path().apply {
+                    addPath(linePath)
+                    lineTo(points.last().x, h)
+                    lineTo(points.first().x, h)
+                    close()
+                }
+                drawPath(
+                    path = areaPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(lineColor.copy(alpha = 0.28f), Color.Transparent),
+                        startY = 0f,
+                        endY = h
+                    ),
+                    style = Fill
+                )
+                // Soft underglow, then a crisp core line — same recipe as the cycle chart.
+                drawPath(
+                    path = linePath,
+                    color = lineColor.copy(alpha = 0.35f),
+                    style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+                drawPath(
+                    path = linePath,
+                    color = lineColor,
+                    style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                )
+                drawCircle(color = lineColor, radius = 3.dp.toPx(), center = points.last())
+                drawCircle(color = Color.White, radius = 1.4.dp.toPx(), center = points.last())
+            }
+        }
+    }
+}

@@ -35,7 +35,10 @@ data class ForecastCardModel(
     val hasLiveTape: Boolean = false,
     val hasLiveFunding: Boolean = false,
     val hasLiveEtf: Boolean = false,
-    val hasLiveLevels: Boolean = false
+    val hasLiveLevels: Boolean = false,
+    // Real recent daily closes, for the small sparkline on the tape card. Same tape
+    // used for RSI/EMA/ATR above — nothing extra fetched, nothing invented.
+    val recentCloses: List<Double> = emptyList()
 )
 
 object QuantForecastEngine {
@@ -125,7 +128,8 @@ object QuantForecastEngine {
                 hasLiveTape = false,
                 hasLiveFunding = fundingRate != null,
                 hasLiveEtf = etfInflowsUsd != null,
-                hasLiveLevels = false
+                hasLiveLevels = false,
+                recentCloses = historicalPrices
             )
         }
 
@@ -254,7 +258,8 @@ object QuantForecastEngine {
             hasLiveTape = true,
             hasLiveFunding = fundingRate != null,
             hasLiveEtf = etfInflowsUsd != null,
-            hasLiveLevels = hasLevels
+            hasLiveLevels = hasLevels,
+            recentCloses = historicalPrices.takeLast(60)
         )
     }
 }
