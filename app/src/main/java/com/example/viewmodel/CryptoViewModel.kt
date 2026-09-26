@@ -88,6 +88,7 @@ class CryptoViewModel @JvmOverloads constructor(
     val isProUnlocked: StateFlow<Boolean> = billingManager.isProUnlocked
     val monthlyPrice: StateFlow<String> = billingManager.monthlyPrice
     val yearlyPrice: StateFlow<String> = billingManager.yearlyPrice
+    val monthlyTrialDays: StateFlow<Int?> = billingManager.monthlyTrialDays
     val isBillingLoading: StateFlow<Boolean> = billingManager.isLoading
 
     private val aiPrefs = application.applicationContext.getSharedPreferences("crypto_cycles_ai_queries", android.content.Context.MODE_PRIVATE)

@@ -471,6 +471,10 @@ private fun ChatMessageItem(message: AiChatMessage) {
     val palette = LocalAppColors.current
     val strings = LocalAppStrings.current
     val isUser = message.sender == AiMessageSender.USER
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val greek = strings.language == com.example.data.model.AppLanguage.GREEK
+    var reported by remember(message.id) { mutableStateOf(false) }
+    val canReport = !isUser && !message.isThinking && !message.isError
 
     val bubbleBgColor: Color = if (isUser) CopperAccent.copy(alpha = 0.18f) else palette.surfaceElevated
     val bubbleBorderColor: Color = if (isUser) {
@@ -510,26 +514,64 @@ private fun ChatMessageItem(message: AiChatMessage) {
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(if (isUser) 0.85f else 0.92f)
-                .clip(bubbleShape)
-                .background(bubbleBgColor)
-                .border(1.dp, bubbleBorderColor, bubbleShape)
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            if (message.isThinking) {
-                ThinkingIndicator(strings.aiThinking)
-            } else {
-                val cleanedText = message.text
-                    .replace(Regex("^#{1,6}\\s*", setOf(RegexOption.MULTILINE)), "")
-                    .replace(Regex("\\*\\*"), "")
+        Column(modifier = Modifier.fillMaxWidth(if (isUser) 0.85f else 0.92f)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(bubbleShape)
+                    .background(bubbleBgColor)
+                    .border(1.dp, bubbleBorderColor, bubbleShape)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                if (message.isThinking) {
+                    ThinkingIndicator(strings.aiThinking)
+                } else if (reported) {
+                    Text(
+                        text = if (greek) "Η απάντηση αναφέρθηκε και κρύφτηκε. Ευχαριστούμε." else "Answer reported and hidden. Thank you.",
+                        fontSize = 12.sp,
+                        color = palette.textMuted
+                    )
+                } else {
+                    val cleanedText = message.text
+                        .replace(Regex("^#{1,6}\\s*", setOf(RegexOption.MULTILINE)), "")
+                        .replace(Regex("\\*\\*"), "")
+                    Text(
+                        text = cleanedText,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = if (message.isError) MarketRed else palette.textPrimary,
+                        fontWeight = if (isUser) FontWeight.Medium else FontWeight.Normal
+                    )
+                }
+            }
+            if (canReport && !reported) {
                 Text(
-                    text = cleanedText,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                    color = if (message.isError) MarketRed else palette.textPrimary,
-                    fontWeight = if (isUser) FontWeight.Medium else FontWeight.Normal
+                    text = if (greek) "Αναφορά απάντησης" else "Report answer",
+                    fontSize = 11.sp,
+                    color = palette.textMuted,
+                    modifier = Modifier
+                        .padding(top = 4.dp, start = 4.dp)
+                        .clickable {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                                data = android.net.Uri.parse("mailto:")
+                                putExtra(android.content.Intent.EXTRA_EMAIL, arrayOf(com.example.util.AiReport.SUPPORT_EMAIL))
+                                putExtra(android.content.Intent.EXTRA_SUBJECT, com.example.util.AiReport.subject(greek))
+                                putExtra(
+                                    android.content.Intent.EXTRA_TEXT,
+                                    com.example.util.AiReport.body(message.id, message.timestamp, message.text, greek)
+                                )
+                            }
+                            reported = true
+                            try {
+                                context.startActivity(intent)
+                            } catch (_: android.content.ActivityNotFoundException) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    com.example.util.AiReport.SUPPORT_EMAIL,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                 )
             }
         }

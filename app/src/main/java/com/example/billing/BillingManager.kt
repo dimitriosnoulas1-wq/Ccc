@@ -36,8 +36,9 @@ class BillingManager(
         const val PRODUCT_PRO_MONTHLY = "pro_monthly"
         const val PRODUCT_PRO_YEARLY = "pro_yearly"
 
-        const val DEFAULT_MONTHLY_PRICE = "€2.99"
-        const val DEFAULT_YEARLY_PRICE = "€24.99"
+        // Empty until Google Play answers; the UI then says "Prices in Google Play".
+        const val DEFAULT_MONTHLY_PRICE = ""
+        const val DEFAULT_YEARLY_PRICE = ""
     }
 
     private val prefs: SharedPreferences =
@@ -51,6 +52,9 @@ class BillingManager(
 
     private val _yearlyPrice = MutableStateFlow(DEFAULT_YEARLY_PRICE)
     val yearlyPrice: StateFlow<String> = _yearlyPrice.asStateFlow()
+
+    private val _monthlyTrialDays = MutableStateFlow<Int?>(null)
+    val monthlyTrialDays: StateFlow<Int?> = _monthlyTrialDays.asStateFlow()
 
     private val _monthlyProductDetails = MutableStateFlow<ProductDetails?>(null)
     private val _yearlyProductDetails = MutableStateFlow<ProductDetails?>(null)
@@ -151,12 +155,13 @@ class BillingManager(
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList != null) {
                     Log.d(TAG, "Products queried successfully: ${productDetailsList.size} found")
                     for (product in productDetailsList) {
-                        val offer = product.subscriptionOfferDetails?.firstOrNull()
+                        val offer = pickOffer(product)
                         val pricingPhase = offer?.pricingPhases?.pricingPhaseList?.lastOrNull()
                         val formattedPrice = pricingPhase?.formattedPrice
 
                         if (product.productId == PRODUCT_PRO_MONTHLY) {
                             _monthlyProductDetails.value = product
+                            _monthlyTrialDays.value = offer?.let { trialDays(it) }
                             if (!formattedPrice.isNullOrBlank()) {
                                 _monthlyPrice.value = formattedPrice
                             }
@@ -203,9 +208,8 @@ class BillingManager(
                         }
                     }
 
-                    if (hasActivePro) {
-                        updateProState(true)
-                    }
+                    // Play is the source of truth: an expired or cancelled subscription removes Pro.
+                    updateProState(hasActivePro)
 
                     onFinished?.invoke(hasActivePro)
                 } else {
@@ -289,7 +293,7 @@ class BillingManager(
             return
         }
 
-        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+        val offerToken = pickOffer(productDetails)?.offerToken
         if (offerToken == null) {
             onLaunched?.invoke(false, "Subscription offer token not available.")
             return
@@ -325,6 +329,17 @@ class BillingManager(
             }
         }
     }
+
+    /** The offer the paywall describes: one with a free phase (trial) if Play offers it to this user. */
+    private fun pickOffer(product: ProductDetails): ProductDetails.SubscriptionOfferDetails? {
+        val offers = product.subscriptionOfferDetails ?: return null
+        return offers.firstOrNull { trialDays(it) != null } ?: offers.firstOrNull()
+    }
+
+    private fun trialDays(offer: ProductDetails.SubscriptionOfferDetails): Int? =
+        offer.pricingPhases.pricingPhaseList
+            .firstOrNull { it.priceAmountMicros == 0L }
+            ?.let { PaywallText.isoPeriodDays(it.billingPeriod) }
 
     fun updateProState(unlocked: Boolean) {
         _isProUnlocked.value = unlocked

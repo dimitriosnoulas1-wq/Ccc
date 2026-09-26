@@ -157,6 +157,7 @@ fun CryptoCyclesApp(
     val isProUnlocked by viewModel.isProUnlocked.collectAsState()
     val monthlyPrice by viewModel.monthlyPrice.collectAsState()
     val yearlyPrice by viewModel.yearlyPrice.collectAsState()
+    val monthlyTrialDays by viewModel.monthlyTrialDays.collectAsState()
     val selectedCurrency by viewModel.selectedCurrency.collectAsState()
     val selectedLanguage by viewModel.selectedLanguage.collectAsState()
     val selectedTheme by viewModel.selectedTheme.collectAsState()
@@ -225,7 +226,11 @@ fun CryptoCyclesApp(
     }
 
     MyApplicationTheme(theme = selectedTheme) {
-        CompositionLocalProvider(LocalAppStrings provides appStrings) {
+        CompositionLocalProvider(
+            LocalAppStrings provides appStrings,
+            com.example.ui.components.LocalPaywallPrices provides
+                com.example.ui.components.PaywallPrices(monthlyPrice, yearlyPrice, monthlyTrialDays)
+        ) {
             val palette = com.example.ui.theme.LocalAppColors.current
             val view = LocalView.current
             if (!view.isInEditMode) {
@@ -443,7 +448,12 @@ fun CryptoCyclesApp(
                                 },
                                 logCharts = viewModel.logCharts.collectAsState().value,
                                 onLogChartsChanged = { viewModel.setLogCharts(it) },
-                                onTogglePro = { viewModel.setProUnlocked(it) }
+                                // Test-only switch: release builds never get it, so Pro comes only from Play.
+                                onTogglePro = if (com.example.BuildConfig.DEBUG) {
+                                    { unlocked: Boolean -> viewModel.setProUnlocked(unlocked) }
+                                } else {
+                                    null
+                                }
                             )
                         }
                     }

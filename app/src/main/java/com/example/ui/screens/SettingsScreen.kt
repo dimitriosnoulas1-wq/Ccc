@@ -86,8 +86,8 @@ fun SettingsScreen(
     currency: Currency,
     selectedLanguage: AppLanguage,
     isProUnlocked: Boolean,
-    monthlyPrice: String = "€2.99",
-    yearlyPrice: String = "€24.99",
+    monthlyPrice: String = "",
+    yearlyPrice: String = "",
     whaleSettings: WhaleAlertSettings = WhaleAlertSettings(),
     btcPrice: Double = 0.0,
     onCurrencyChanged: (Currency) -> Unit,
@@ -481,7 +481,7 @@ fun SettingsScreen(
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = if (isProUnlocked) strings.proActive else monthlyPrice,
+                                text = if (isProUnlocked) strings.proActive else monthlyPrice.ifBlank { "Pro" },
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isProUnlocked) palette.gainColor else palette.primary
@@ -490,7 +490,12 @@ fun SettingsScreen(
                     }
 
                     Text(
-                        text = "$monthlyPrice ${strings.planMonthlyPeriod} (${strings.planMonthlyBadge}) · $yearlyPrice ${strings.planAnnualPeriod}",
+                        text = com.example.billing.PaywallText.priceLine(
+                            strings.language,
+                            monthlyPrice,
+                            yearlyPrice,
+                            com.example.ui.components.LocalPaywallPrices.current.trialDays
+                        ),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = palette.textSecondary
@@ -559,7 +564,7 @@ fun SettingsScreen(
                             .testTag("settings_upgrade_pro_button")
                     ) {
                         Text(
-                            text = if (isProUnlocked) strings.manageProSubscription else "${strings.upgradeToPro} (${strings.planMonthlyBadge})",
+                            text = if (isProUnlocked) strings.manageProSubscription else strings.upgradeToPro,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isProUnlocked) palette.textPrimary else (if (palette.isLight) Color.White else Color(0xFF05050F))
@@ -1091,12 +1096,6 @@ fun SettingsScreen(
                     ) {
                         developerTapCount++
                     }
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Google Play Internal Testing Ready • Production Release",
-                    fontSize = 10.sp,
-                    color = palette.textMuted
                 )
 
                 if (onTogglePro != null && developerTapCount >= 7) {
