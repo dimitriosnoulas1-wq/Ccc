@@ -156,9 +156,6 @@ fun GrokZigZagChart(
     val effectiveLogScale = if (onToggleLogScale != null) isLogScale else localLogScale
     var touchXNormalized by remember { mutableStateOf<Float?>(null) }
 
-    // Pro gating for projection
-    val effectiveShowProjection = showProjection
-
     // Pulsing animation for the "LIVE / NOW" point
     val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
     val pulseRadius by infiniteTransition.animateFloat(
@@ -260,15 +257,6 @@ fun GrokZigZagChart(
             color = android.graphics.Color.parseColor("#94A3B8")
             textSize = 24f
             textAlign = android.graphics.Paint.Align.CENTER
-            isAntiAlias = true
-        }
-    }
-    val badgeTitlePaint = remember {
-        android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#00F5FF")
-            textSize = 24f
-            textAlign = android.graphics.Paint.Align.CENTER
-            isFakeBoldText = true
             isAntiAlias = true
         }
     }

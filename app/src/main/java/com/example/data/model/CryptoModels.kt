@@ -36,13 +36,6 @@ enum class CoinCategory(val displayName: String) {
     FAVORITES("Favorites")
 }
 
-enum class CyclePhase(val title: String, val description: String, val colorHex: Long) {
-    ACCUMULATION("Accumulation Phase", "Smart money accumulation and cycle bottom establishment.", 0xFF00FF88),
-    EXPANSION("Expansion Phase", "Post-halving liquidity growth and momentum breakout.", 0xFF00F5FF),
-    EUPHORIA_TOP("Euphoria Peak Window", "Parabolic blow-off top risk zone. Consider scaling profits.", 0xFFF59E0B),
-    BEAR_CAPITULATION("Cycle Cooldown / Reset", "Deep post-peak drawdown and market reset.", 0xFFF43F5E)
-}
-
 enum class Currency(val symbol: String, val code: String, var rateToUsd: Double) {
     USD("$", "USD", 1.0),
     EUR("€", "EUR", 0.924),
@@ -54,22 +47,6 @@ enum class AppThemeOption(val key: String) {
     PURE_BLACK("black"),
     CLEAN_WHITE("white")
 }
-
-data class HistoricalAnalog(
-    val matchingDate2020: String,
-    val matchingDate2016: String,
-    val matchingCycleDay: Int,
-    val gainPostMatchingDate2020: Double,
-    val gainPostMatchingDate2016: Double,
-    val projectedCyclePeak: Double,
-    val projectedCycleBottom: Double,
-    val cyclePhase: CyclePhase,
-    val cyclePhaseName: String,
-    val cycleClockProgress: Float, // 0.0 to 1.0 within 4-year cycle
-    val historicalCyclePointsCurrent: List<Float>,
-    val historicalCyclePoints2020: List<Float>,
-    val historicalCyclePoints2016: List<Float>
-)
 
 data class CryptoCoin(
     val id: String,
@@ -92,15 +69,7 @@ data class CryptoCoin(
     val category: CoinCategory,
     val isPro: Boolean = false,
     val isFavorite: Boolean = false,
-    val analog: HistoricalAnalog,
     val sparkline: List<Double> = emptyList(),
-    // Deep-dive Cycle & Move Analytics
-    val whereItMovesNow: String,
-    val whereItMovedPast: String,
-    val nextPredictedMoveNarrative: String,
-    val projectedNextMove1w: String,
-    val projectedNextMove2w: String,
-    val projectedNextMove4w: String,
     // Whitepaper & Technical Details (Λευκή Βίβλος & Τεχνολογία)
     val genesisDate: String,
     val founderOrCreator: String,
@@ -121,9 +90,6 @@ data class CryptoCoin(
         get() = priceUpdatedAtMs > 0L &&
             (System.currentTimeMillis() - priceUpdatedAtMs) <= LIVE_PRICE_MAX_AGE_MS
 
-    val priceAgeMs: Long
-        get() = if (priceUpdatedAtMs <= 0L) Long.MAX_VALUE else System.currentTimeMillis() - priceUpdatedAtMs
-
     val drawdownPercent: Double
         get() = if (athUsd > 0 && priceUsd > 0) ((priceUsd - athUsd) / athUsd) * 100.0 else 0.0
 
@@ -135,18 +101,7 @@ data class CryptoCoin(
         marketCap = 0.0,
         sparkline = emptyList(),
         priceUpdatedAtMs = 0L,
-        quoteState = QuoteState.PENDING,
-        projectedNextMove1w = "—",
-        projectedNextMove2w = "—",
-        projectedNextMove4w = "—",
-        nextPredictedMoveNarrative = "",
-        analog = analog.copy(
-            projectedCyclePeak = 0.0,
-            projectedCycleBottom = 0.0,
-            gainPostMatchingDate2020 = 0.0,
-            gainPostMatchingDate2016 = 0.0
-        )
-    )
+        quoteState = QuoteState.PENDING)
 
     val calculatedAthDaysAgo: Int
         get() = com.example.util.HalvingCycleUtils.parseAthDaysAgo(athDate, athDaysAgo)
@@ -298,11 +253,6 @@ data class WhaleAlert(
 data class WhaleAlertSettings(
     val notificationsEnabled: Boolean = false,
     val minThresholdUsd: Double = 1_000_000.0,
-    val soundAndVibration: Boolean = true,
-    val notifyInflows: Boolean = true,
-    val notifyOutflows: Boolean = true,
-    val notifyMegaBuys: Boolean = true,
-    // Cycle & Indicator Push Alerts
     val notifyZoneChange: Boolean = false,
     val notifyPiCycle: Boolean = false,
     val notifyRainbowBand: Boolean = false,
@@ -327,8 +277,6 @@ data class PriceTick(
     val source: String = "https://api.binance.com"
 ) {
     val isStale: Boolean get() = tsMillis <= 0L || (System.currentTimeMillis() - tsMillis) > 120_000L
-    val isDisconnected: Boolean get() = (System.currentTimeMillis() - tsMillis) > 90_000L
-    val ageSeconds: Long get() = ((System.currentTimeMillis() - tsMillis) / 1000L).coerceAtLeast(0L)
 }
 
 data class PriceBusState(
@@ -341,15 +289,6 @@ data class PriceBusState(
     val liveTicks: Map<String, PriceTick> = emptyMap(),
     val lastUpdatedTimestamp: Long = System.currentTimeMillis()
 ) {
-    fun getTickForSymbol(symbol: String): PriceTick? {
-        val clean = symbol.uppercase().removeSuffix("USDT").removePrefix("1000000").removePrefix("1000")
-        return liveTicks[clean] ?: when (clean) {
-            "BTC" -> if (btcPerp.price > 0.0) btcPerp else btcSpot
-            "ETH" -> if (ethPerp.price > 0.0) ethPerp else ethSpot
-            "SOL" -> solSpot
-            else -> null
-        }
-    }
 }
 
 data class CentralizedPriceState(
@@ -362,10 +301,5 @@ data class CentralizedPriceState(
     val primarySource: String = "Binance",
     val priceBus: PriceBusState = PriceBusState()
 ) {
-    val spreadBasisUsd: Double get() = btcPerpPrice - btcSpotPrice
-    val spreadBasisPercent: Double get() = if (btcSpotPrice > 0) ((btcPerpPrice - btcSpotPrice) / btcSpotPrice) * 100.0 else 0.0
 }
-
-
-
 

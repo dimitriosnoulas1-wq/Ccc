@@ -432,7 +432,9 @@ private fun LearnTopHeader(
                 fontSize = 11.5.sp,
                 fontFamily = SpaceGroteskFont,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryHighContrast
+                color = TextPrimaryHighContrast,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }

@@ -20,28 +20,18 @@ enum class ForecastDirection {
     UNKNOWN
 }
 
-data class ProbabilityScenario(
-    val bullPct: Int,
-    val basePct: Int,
-    val bearPct: Int
-)
-
 data class ForecastCardModel(
     val asset: String,
     val currentPrice: Double,
     val regime: MarketRegime,
     val direction: ForecastDirection,
     val compositeScore: Int,
-    val probabilities: ProbabilityScenario,
-    val confidencePct: Int,
     val keySupport: Double,
     val keyResistance: Double,
     val invalidationLevel: Double,
     val simpleExplanation: String,
     val technicalEvidences: List<String>,
     val riskWarning: String,
-    val dataQualityScore: String = "Live inputs only",
-    val modelVersion: String = "v140-TapeRead",
     val hasLiveTape: Boolean = false,
     val hasLiveFunding: Boolean = false,
     val hasLiveEtf: Boolean = false,
@@ -123,8 +113,6 @@ object QuantForecastEngine {
                 regime = MarketRegime.INSUFFICIENT_DATA,
                 direction = ForecastDirection.UNKNOWN,
                 compositeScore = 0,
-                probabilities = ProbabilityScenario(0, 0, 0),
-                confidencePct = 0,
                 keySupport = 0.0,
                 keyResistance = 0.0,
                 invalidationLevel = 0.0,
@@ -189,21 +177,6 @@ object QuantForecastEngine {
             compositeScore >= 25 -> ForecastDirection.BULLISH
             compositeScore <= -25 -> ForecastDirection.BEARISH
             else -> ForecastDirection.NEUTRAL
-        }
-
-        val (bullP, baseP, bearP) = when (direction) {
-            ForecastDirection.BULLISH -> {
-                val b = min(75, 45 + (compositeScore / 3))
-                val br = max(10, 20 - (compositeScore / 10))
-                Triple(b, 100 - b - br, br)
-            }
-            ForecastDirection.BEARISH -> {
-                val br = min(75, 45 + (abs(compositeScore) / 3))
-                val b = max(10, 20 - (abs(compositeScore) / 10))
-                Triple(b, 100 - b - br, br)
-            }
-            ForecastDirection.NEUTRAL -> Triple(30, 45, 25)
-            ForecastDirection.UNKNOWN -> Triple(0, 0, 0)
         }
 
         val lookbackCloses = historicalPrices.takeLast(20)
@@ -272,8 +245,6 @@ object QuantForecastEngine {
             regime = regime,
             direction = direction,
             compositeScore = compositeScore,
-            probabilities = ProbabilityScenario(bullP, baseP, bearP),
-            confidencePct = min(92, 50 + (abs(compositeScore) / 2)),
             keySupport = support,
             keyResistance = resistance,
             invalidationLevel = invalidation,

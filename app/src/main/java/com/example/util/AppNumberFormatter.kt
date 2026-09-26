@@ -162,25 +162,6 @@ object AppNumberFormatter {
     ): String = formatCompactCurrency(amountUsd.toDouble(), currency, language, currencySymbol)
 
     /**
-     * Compact token/crypto amount (e.g. 4,100.4 BTC or 4.100,4 BTC)
-     */
-    fun formatCryptoAmount(
-        amount: Double,
-        symbol: String = "",
-        language: AppLanguage = currentLanguage
-    ): String {
-        val locale = getLocale(language)
-        val symbols = getDecimalFormatSymbols(locale)
-        val df = when {
-            amount >= 1000.0 -> DecimalFormat("#,##0.0", symbols)
-            amount >= 1.0 -> DecimalFormat("#,##0.00", symbols)
-            else -> DecimalFormat("0.0000", symbols)
-        }
-        val formatted = df.format(amount)
-        return if (symbol.isNotEmpty()) "$formatted $symbol" else formatted
-    }
-
-    /**
      * Compact number formatting without currency symbol (e.g. 1.2M / 1,2M)
      */
     fun formatCompactNumber(

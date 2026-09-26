@@ -630,7 +630,6 @@ private fun OverviewTabContent(
     // Historical Cycle Trajectory & Price Chart.
     // Zoom lives inside HistoricalCycleChart so every coin shares one selector.
     HistoricalCycleChart(
-        analog = coin.analog,
         coinSymbol = coin.symbol,
         currentPrice = coin.priceUsd,
         coinName = coin.name,
@@ -895,7 +894,6 @@ private fun AnalyticsTabContent(
             )
 
             HistoricalCycleChart(
-                analog = coin.analog,
                 coinSymbol = coin.symbol,
                 currentPrice = coin.priceUsd,
                 coinName = coin.name,

@@ -92,7 +92,6 @@ import com.example.ui.components.BitcoinEtfFlowsCard
 import com.example.ui.components.DefiLlamaStablecoinsCard
 import com.example.ui.components.ForwardAuditTrailCard
 import com.example.ui.components.AltcoinSeasonIndexCard
-import com.example.ui.components.BitcoinRainbowChart
 import com.example.ui.components.CycleDayComparisonCard
 import com.example.ui.components.FearAndGreedIndexCard
 import com.example.ui.components.MacroProGatekeeper
@@ -158,7 +157,6 @@ fun MacroScreen(
     var rainbowExpanded by remember { mutableStateOf(true) }
     var altSeasonExpanded by remember { mutableStateOf(true) }
     var fearGreedExpanded by remember { mutableStateOf(true) }
-    var piCycleExpanded by remember { mutableStateOf(true) }
 
     // Pulsing live dot
     val infiniteTransition = rememberInfiniteTransition(label = "macro_pulse")
@@ -516,18 +514,17 @@ fun MacroScreen(
             item {
                 CollapsibleCardContainer(
                     title = if (isGreek) "🌈 Bitcoin Rainbow Price Model" else "🌈 Bitcoin Rainbow Price Model",
-                    subtitle = if (isGreek) "Ζώνες Αποτίμησης & Power Law" else "Logarithmic Valuation Bands",
+                    subtitle = if (isGreek) "Λογαριθμικές ζώνες αποτίμησης" else "Logarithmic valuation bands",
                     badge = "HISTORY",
                     badgeColor = NeonCyan,
                     isExpanded = rainbowExpanded,
                     onToggle = { rainbowExpanded = !rainbowExpanded }
                 ) {
-                    BitcoinRainbowChart(
-                        btcPriceUsd = btcPriceUsd,
-                        currency = currency,
-                        isProUnlocked = isProUnlocked,
-                        onOpenProModal = onOpenProModal,
-                        btcSparkline = btcCoin?.sparkline ?: emptyList()
+                    // Same model and data as the Cycle tab, so both screens show the same band.
+                    com.example.ui.rainbow.RainbowCycleSection(
+                        greek = isGreek,
+                        liveUsd = btcPriceUsd,
+                        priceIsLive = btcPriceUsd > 0.0
                     )
                 }
             }

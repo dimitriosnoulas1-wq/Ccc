@@ -179,7 +179,6 @@ fun MarketIntelligenceCard(
     )
 
     val isPos = activeReport.priceChange24h >= 0
-    val priceChangeColor = if (isPos) TachyonMint else SoftCrimson
 
     val regimeColor = when (activeReport.regime) {
         MarketRegimeState.SPOT_ACCUMULATION -> TachyonMint
@@ -587,14 +586,17 @@ fun BullishConfidenceOrbCard(
         "READ: ${report.regime.labelEn.uppercase()}"
     }
 
-    // Dynamic Risk indicator
+    // Activity level: the % measures how extreme the inputs are, so more bars means a busier
+    // tape. (It used to read "LOW RISK" exactly when the inputs were most extreme.)
     val (riskLabel, riskColor, riskBarCount) = when {
         report.regime == MarketRegimeState.LONG_CASCADE || report.regime == MarketRegimeState.SHORT_SQUEEZE ->
-            Triple(if (isGreek) "ΥΨΗΛΟ ΡΙΣΚΟ" else "HIGH RISK", SoftCrimson, 5)
-        report.confidencePercent < 60 ->
-            Triple(if (isGreek) "ΜΕΣΑΙΟ ΡΙΣΚΟ" else "MED RISK", QuantumCyan, 3)
+            Triple(if (isGreek) "ΕΚΚΑΘΑΡΙΣΕΙΣ" else "LIQUIDATIONS", SoftCrimson, 5)
+        report.confidencePercent >= 60 ->
+            Triple(if (isGreek) "ΕΝΤΟΝΗ ΚΙΝΗΣΗ" else "ACTIVE", NeonAmber, 4)
+        report.confidencePercent >= 30 ->
+            Triple(if (isGreek) "ΜΕΤΡΙΑ" else "MODERATE", QuantumCyan, 3)
         else ->
-            Triple(if (isGreek) "ΧΑΜΗΛΟ ΡΙΣΚΟ" else "LOW RISK", TachyonMint, 2)
+            Triple(if (isGreek) "ΗΡΕΜΗ" else "QUIET", TachyonMint, 2)
     }
 
     val priceWord = when (strings) {
@@ -1288,5 +1290,4 @@ private fun ExplainerBulletItem(
         }
     }
 }
-
 

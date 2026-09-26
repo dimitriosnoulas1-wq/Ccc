@@ -56,7 +56,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.HistoricalAnalog
 import com.example.ui.theme.CosmicBorder
 import com.example.ui.theme.CosmicVoidBg
 import com.example.ui.theme.CosmicVoidSurface
@@ -88,7 +87,6 @@ enum class CycleChartMode {
 
 @Composable
 fun HistoricalCycleChart(
-    analog: HistoricalAnalog,
     modifier: Modifier = Modifier,
     coinSymbol: String = "BTC",
     currentPrice: Double? = null,
@@ -847,105 +845,6 @@ fun LegendItem(
             fontSize = 9.5.sp,
             color = TextSecondary
         )
-    }
-}
-
-@Composable
-fun CycleClockRadar(
-    progress: Float, // 0.0 to 1.0
-    phaseText: String,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .size(120.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2f, size.height / 2f)
-            val radius = size.width / 2f - 12f
-
-            // Outer dial track
-            drawCircle(
-                color = CosmicBorder,
-                radius = radius,
-                style = Stroke(width = 6.dp.toPx())
-            )
-
-            // 4 Cycle Quadrants: Accumulation (Green), Expansion (Cyan), Euphoria (Amber), Reset (Rose)
-            val strokeW = 6.dp.toPx()
-            drawArc(
-                color = TachyonMint,
-                startAngle = -90f,
-                sweepAngle = 90f,
-                useCenter = false,
-                style = Stroke(width = strokeW, cap = StrokeCap.Round)
-            )
-            drawArc(
-                color = QuantumCyan,
-                startAngle = 0f,
-                sweepAngle = 90f,
-                useCenter = false,
-                style = Stroke(width = strokeW, cap = StrokeCap.Round)
-            )
-            drawArc(
-                color = PhotonGold,
-                startAngle = 90f,
-                sweepAngle = 90f,
-                useCenter = false,
-                style = Stroke(width = strokeW, cap = StrokeCap.Round)
-            )
-            drawArc(
-                color = SoftCrimson,
-                startAngle = 180f,
-                sweepAngle = 90f,
-                useCenter = false,
-                style = Stroke(width = strokeW, cap = StrokeCap.Round)
-            )
-
-            // Angle for progress (0f is top -90 deg)
-            val angleDeg = (progress * 360f) - 90f
-            val angleRad = Math.toRadians(angleDeg.toDouble())
-            val handX = center.x + (cos(angleRad) * (radius - 4f)).toFloat()
-            val handY = center.y + (sin(angleRad) * (radius - 4f)).toFloat()
-
-            // Glowing indicator hand
-            drawLine(
-                brush = Brush.linearGradient(listOf(Color.White, QuantumCyan)),
-                start = center,
-                end = Offset(handX, handY),
-                strokeWidth = 3.dp.toPx(),
-                cap = StrokeCap.Round
-            )
-
-            drawCircle(
-                color = QuantumCyan,
-                radius = 5.dp.toPx(),
-                center = Offset(handX, handY)
-            )
-
-            drawCircle(
-                color = Color.White,
-                radius = 3.dp.toPx(),
-                center = center
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "${(progress * 100).toInt()}%",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            Text(
-                text = "CLOCK",
-                fontSize = 8.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.sp,
-                color = QuantumCyan
-            )
-        }
     }
 }
 

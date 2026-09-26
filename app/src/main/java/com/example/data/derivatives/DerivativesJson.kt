@@ -218,64 +218,6 @@ object DerivativesJson {
         )
     }
 
-    fun hubPayload(snapshot: AggregatedDerivativesSnapshot): JSONObject {
-        val venues = JSONArray()
-        snapshot.venues.forEach { venues.put(venueJson(it)) }
-        return JSONObject()
-            .put("ok", snapshot.venues.any { it.ok })
-            .put("symbol", snapshot.symbol)
-            .put("asOfMs", snapshot.asOfMs)
-            .put("freshness", snapshot.freshness.name)
-            .put("sourceLabel", snapshot.sourceLabel)
-            .put("venues", venues)
-            .put("aggregated", metricsJson(snapshot.aggregated))
-            .put("score", JSONObject()
-                .put("value", snapshot.score.value ?: JSONObject.NULL)
-                .put("redistributed", snapshot.score.redistributed)
-                .put("formula", snapshot.score.formula)
-            )
-    }
-
-    private fun venueJson(venue: VenueDerivativesSnapshot): JSONObject {
-        return JSONObject()
-            .put("venue", venue.venue)
-            .put("contract", venue.contract)
-            .put("ok", venue.ok)
-            .put("asOfMs", venue.asOfMs)
-            .put("markPrice", nullable(venue.markPrice))
-            .put("lastPrice", nullable(venue.lastPrice))
-            .put("change24hPct", nullable(venue.change24hPct))
-            .put("fundingRate", nullable(venue.fundingRate))
-            .put("openInterest", nullable(venue.openInterest))
-            .put("openInterestUsd", nullable(venue.openInterestUsd))
-            .put("oiChange1hPct", nullable(venue.oiChange1hPct))
-            .put("oiChangeZ", nullable(venue.oiChangeZ))
-            .put("fundingZ", nullable(venue.fundingZ))
-            .put("takerBuySellRatio", nullable(venue.takerBuySellRatio))
-            .put("longShortRatio", nullable(venue.longShortRatio))
-            .put("longLiqUsd", nullable(venue.longLiqUsd))
-            .put("shortLiqUsd", nullable(venue.shortLiqUsd))
-            .put("missing", JSONArray(venue.missing))
-            .put("error", venue.error ?: JSONObject.NULL)
-    }
-
-    private fun metricsJson(metrics: AggregatedDerivativesMetrics): JSONObject {
-        return JSONObject()
-            .put("markPrice", nullable(metrics.markPrice))
-            .put("lastPrice", nullable(metrics.lastPrice))
-            .put("change24hPct", nullable(metrics.change24hPct))
-            .put("fundingRate", nullable(metrics.fundingRate))
-            .put("openInterestUsd", nullable(metrics.openInterestUsd))
-            .put("oiChange1hPct", nullable(metrics.oiChange1hPct))
-            .put("oiChangeZ", nullable(metrics.oiChangeZ))
-            .put("fundingZ", nullable(metrics.fundingZ))
-            .put("takerBuySellRatio", nullable(metrics.takerBuySellRatio))
-            .put("longShortRatio", nullable(metrics.longShortRatio))
-            .put("longLiqUsd", nullable(metrics.longLiqUsd))
-            .put("shortLiqUsd", nullable(metrics.shortLiqUsd))
-            .put("venueCount", metrics.venueCount)
-    }
-
     private fun parseVenueArray(raw: Any?): List<VenueDerivativesSnapshot> {
         val out = mutableListOf<VenueDerivativesSnapshot>()
         when (raw) {

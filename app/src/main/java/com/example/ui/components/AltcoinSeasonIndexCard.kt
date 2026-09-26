@@ -71,12 +71,6 @@ fun AltcoinSeasonIndexCard(
     val strings = LocalAppStrings.current
     val isGreek = strings.language.code == "el"
 
-    val animatedScore by animateFloatAsState(
-        targetValue = altData.score.toFloat(),
-        animationSpec = tween(durationMillis = 1000),
-        label = "alt_season_score"
-    )
-
     val activeZoneColor = when {
         altData.isAltSeason -> SoftEmerald
         altData.isBtcSeason -> PhotonGoldBright

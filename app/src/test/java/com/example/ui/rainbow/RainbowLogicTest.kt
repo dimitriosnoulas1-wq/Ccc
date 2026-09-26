@@ -52,7 +52,8 @@ class RainbowLogicTest {
 
     @Test fun sameDayInPreviousCycles() {
         val today = d(2026, 9, 25)
-        val days = RainbowModel.compareCycles(emptyList(), today).map { DateUtil.civil(it.day) }
+        val series = (d(2012, 1, 1)..today).map { PricePoint(it, 1000.0) }
+        val days = CycleInsights.compute(series, today).map { DateUtil.civil(it.day) }
         assertEquals(
             listOf(Triple(2015, 5, 5), Triple(2018, 12, 14), Triple(2022, 10, 16), Triple(2026, 9, 25)),
             days

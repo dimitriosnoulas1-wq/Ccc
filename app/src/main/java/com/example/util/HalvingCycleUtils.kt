@@ -13,16 +13,9 @@ object HalvingCycleUtils {
     // Bitcoin Cycle ATH Peak: October 6, 2025 00:00 UTC ($126,500)
     const val BTC_CYCLE_ATH_TIMESTAMP = 1759708800000L
     const val BTC_CYCLE_ATH_USD = 126500.0
-    const val BTC_CYCLE_ATH_DATE_STR = "06 Oct 2025"
 
     // 5th Bitcoin Halving Estimate (Block 1,050,000): ~April 17, 2028 00:00 UTC
     const val HALVING_5TH_TIMESTAMP = 1839542400000L
-
-    fun getDaysSinceCycleAth(): Int {
-        val now = System.currentTimeMillis()
-        val diff = now - BTC_CYCLE_ATH_TIMESTAMP
-        return (diff / (1000L * 60 * 60 * 24)).toInt().coerceAtLeast(0)
-    }
 
     data class HalvingCountdownState(
         val days: Long,

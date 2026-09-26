@@ -1008,6 +1008,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -1025,19 +1026,21 @@ fun SettingsScreen(
                             modifier = Modifier.size(16.dp)
                         )
                     }
-                    Text(
-                        text = strings.privacyPolicyTitle,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = palette.textPrimary
-                    )
+                    Column {
+                        Text(
+                            text = strings.privacyPolicyTitle,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = palette.textPrimary
+                        )
+                        Text(
+                            text = strings.privacyPolicyView,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = palette.primary
+                        )
+                    }
                 }
-                Text(
-                    text = strings.privacyPolicyView,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = palette.primary
-                )
             }
         }
 

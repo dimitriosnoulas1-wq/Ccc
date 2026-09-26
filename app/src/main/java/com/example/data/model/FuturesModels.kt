@@ -7,31 +7,6 @@ enum class FeedState {
     UNAVAILABLE
 }
 
-data class MetricValue<T>(
-    val value: T?,
-    val source: String = "Binance Futures",
-    val eventTimeMs: Long = 0L,
-    val receivedTimeMs: Long = 0L,
-    val isAvailable: Boolean = true
-) {
-    val ageSeconds: Double
-        get() = if (receivedTimeMs > 0) ((System.currentTimeMillis() - receivedTimeMs) / 1000.0).coerceAtLeast(0.0) else 0.0
-
-    val feedState: FeedState
-        get() {
-            if (!isAvailable || value == null) return FeedState.UNAVAILABLE
-            if (receivedTimeMs == 0L) return FeedState.OFFLINE
-            val ageMs = System.currentTimeMillis() - receivedTimeMs
-            return if (ageMs > 5000) FeedState.STALE else FeedState.LIVE
-        }
-
-    val ageDisplay: String
-        get() {
-            val age = ageSeconds
-            return if (age < 1.0) "0.${(age * 10).toInt() % 10}s" else "${"%.1f".format(java.util.Locale.US, age)}s"
-        }
-}
-
 data class FuturesTickerData(
     val symbol: String,
     val lastPrice: Double?,
