@@ -205,10 +205,15 @@ fun SignalsScreen(
 
     val isBullish = activeCoin.change24h >= 0
     val daysAfterAth = activeCoin.calculatedAthDaysAgo
-    val cycleProfile = remember(activeCoin.symbol) { com.example.util.CoinCycleHistoryManager.getProfile(activeCoin) }
-    val typicalDays = cycleProfile.typicalCorrectionDays
-    val isBottomReached = daysAfterAth >= typicalDays
-    val daysToBottom = if (!isBottomReached) (typicalDays - daysAfterAth).coerceAtLeast(0) else 0
+    // Computed from this coin's own real daily closes (see CoinCycleHistoryManager).
+    // null while loading, or for a coin without enough real history — never a guess.
+    var cycleProfile by remember(activeCoin.symbol) { mutableStateOf<com.example.util.CoinCycleProfile?>(null) }
+    LaunchedEffect(activeCoin.symbol) {
+        cycleProfile = com.example.util.CoinCycleHistoryManager.computeProfile(activeCoin.symbol)
+    }
+    val typicalDays = cycleProfile?.typicalCorrectionDays ?: 0
+    val isBottomReached = typicalDays > 0 && daysAfterAth >= typicalDays
+    val daysToBottom = if (typicalDays > 0 && !isBottomReached) (typicalDays - daysAfterAth).coerceAtLeast(0) else 0
     val cycleProgressRatio = if (typicalDays > 0) (daysAfterAth.toFloat() / typicalDays.toFloat()).coerceIn(0.05f, 1f) else 0.5f
 
     LazyColumn(
@@ -1009,8 +1014,8 @@ fun SignalsScreen(
             )
         }
 
-        // Big Main Card: FROM THE HIGH TO A POSSIBLE LOW (Dynamically calculated for active coin)
-        item {
+        // Big Main Card: FROM THE HIGH TO A POSSIBLE LOW (real past corrections only; hidden until loaded)
+        if (cycleProfile != null) item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1125,8 +1130,9 @@ fun SignalsScreen(
             }
         }
 
-        // Section: THIS CYCLE VS THE LAST ONES
-        item {
+        // Section: THIS CYCLE VS THE LAST ONES (real past corrections only; hidden until loaded)
+        if (cycleProfile != null) item {
+            val profile = cycleProfile ?: return@item
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1160,7 +1166,7 @@ fun SignalsScreen(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         CycleBarRow(label = strings.nowLabel, days = daysAfterAth, progress = cycleProgressRatio, isCurrent = true)
-                        cycleProfile.pastCorrectionRows.forEach { row ->
+                        profile.pastCorrectionRows.forEach { row ->
                             CycleBarRow(label = row.label, days = row.days, progress = row.progress)
                         }
                     }
@@ -1182,7 +1188,7 @@ fun SignalsScreen(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        cycleProfile.pastRiseRows.forEach { row ->
+                        profile.pastRiseRows.forEach { row ->
                             HistoricRiseRow(label = row.label, days = row.days)
                         }
                     }
@@ -1197,7 +1203,7 @@ fun SignalsScreen(
             val cardBadge = if (isBtc) "~2028 (Block 1,050,000)" else "ATH: ${activeCoin.athDate.ifBlank { "N/A" }}"
             val box1Val = if (isBtc) halvingCountdown.totalDaysString else activeCoin.calculatedAthDaysAgo.toString()
             val box1Lbl = if (isBtc) strings.halvingDaysLabel else "Days Post-Token-ATH"
-            val box2Val = if (isBtc) halvingCountdown.hoursString else "~$typicalDays"
+            val box2Val = if (isBtc) halvingCountdown.hoursString else if (typicalDays > 0) "~$typicalDays" else "—"
             val box2Lbl = if (isBtc) strings.halvingHoursLabel else if (isGreek) "Ημέρες παλιών διορθώσεων" else "Past corrections (days)"
             val subTickerText = if (isBtc) "Live Ticker: ${halvingCountdown.minutesString}m ${halvingCountdown.secondsString}s" else "Macro Anchor: ATH $${activeCoin.athUsd}"
             val rightTagText = if (isBtc) "Post-Halving Day ${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}" else "Rel. BTC Halving D${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}"
