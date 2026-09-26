@@ -111,7 +111,7 @@ fun WhereWeAreCard(
             )
             Column(modifier = Modifier.padding(bottom = 10.dp)) {
                 Text(
-                    text = if (greek) "ημέρα" else "day",
+                    text = if (greek) "ημέρες" else "days",
                     fontFamily = SpaceGroteskFont,
                     fontSize = 16.sp,
                     color = QuantumCyan
@@ -132,9 +132,9 @@ fun WhereWeAreCard(
         )
         Text(
             text = if (greek) {
-                "φορές την τιμή της ημέρας του halving"
+                "την τιμή της ημέρας του halving"
             } else {
-                "times the halving-day price"
+                "the halving-day price"
             },
             fontSize = 13.sp,
             color = palette.textSecondary

@@ -462,7 +462,7 @@ fun MarketsScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
                         Text(
-                            text = if (catalogMode) "CAP · VOL" else "CHART",
+                            text = if (catalogMode) "CAP · BINANCE VOL" else "CHART",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,

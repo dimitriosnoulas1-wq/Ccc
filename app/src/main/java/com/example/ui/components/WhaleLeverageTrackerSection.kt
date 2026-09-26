@@ -180,7 +180,7 @@ fun WhaleLeverageTrackerSection(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (positions.isNotEmpty()) "LIVE OI / LIQS" else "SYNCING",
+                                    text = if (positions.isNotEmpty()) "LIVE OI / LIQS" else "NO DATA",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = NeonEmerald
@@ -229,7 +229,8 @@ fun WhaleLeverageTrackerSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Longs volume
+                // Longs volume (dashes, not zeros, while there are no positions)
+                val hasPositions = positions.isNotEmpty()
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.TrendingUp,
@@ -239,14 +240,14 @@ fun WhaleLeverageTrackerSection(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Whale Longs: ${String.format("%.1f", summary.longRatioPercent)}%",
+                        text = "Whale Longs: " + if (hasPositions) String.format(java.util.Locale.US, "%.1f%%", summary.longRatioPercent) else "—",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = GainGreen
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "(${formatMillionValue(summary.totalLongVolumeUsd * currency.rateToUsd, currency.symbol)})",
+                        text = if (hasPositions) "(${formatMillionValue(summary.totalLongVolumeUsd * currency.rateToUsd, currency.symbol)})" else "",
                         fontSize = 10.sp,
                         color = TextMuted
                     )
@@ -255,13 +256,13 @@ fun WhaleLeverageTrackerSection(
                 // Shorts volume
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "(${formatMillionValue(summary.totalShortVolumeUsd * currency.rateToUsd, currency.symbol)})",
+                        text = if (hasPositions) "(${formatMillionValue(summary.totalShortVolumeUsd * currency.rateToUsd, currency.symbol)})" else "",
                         fontSize = 10.sp,
                         color = TextMuted
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${String.format("%.1f", summary.shortRatioPercent)}% Shorts",
+                        text = (if (hasPositions) String.format(java.util.Locale.US, "%.1f%%", summary.shortRatioPercent) else "—") + " Shorts",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = DrawdownRed
@@ -278,9 +279,13 @@ fun WhaleLeverageTrackerSection(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Visual Long / Short Ratio Bar
-            val longFraction = (summary.longRatioPercent / 100.0).toFloat().coerceIn(0.05f, 0.95f)
-            Row(
+            // Visual Long / Short Ratio Bar (neutral until there is data)
+            val longFraction = if (positions.isNotEmpty()) {
+                (summary.longRatioPercent / 100.0).toFloat().coerceIn(0.05f, 0.95f)
+            } else {
+                0.5f
+            }
+            if (positions.isNotEmpty()) Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

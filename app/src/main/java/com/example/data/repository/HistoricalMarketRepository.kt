@@ -46,7 +46,8 @@ object HistoricalMarketRepository {
         val key = "${coinId.lowercase()}|${symbol.uppercase()}|HALVING"
         val now = System.currentTimeMillis()
         cache[key]?.let { (at, data) ->
-            if (now - at < TTL_MS) return@withContext data
+            val sameDay = !data.usesHalving || data.currentDay == HalvingCycleUtils.getDaysSince4thHalving().coerceAtMost(data.axisDays)
+            if (now - at < TTL_MS && sameDay) return@withContext data
         }
         val candles = fetchDailyHistory(symbol) ?: return@withContext null
         if (candles.size < 30) return@withContext null

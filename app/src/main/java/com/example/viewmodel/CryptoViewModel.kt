@@ -687,6 +687,13 @@ class CryptoViewModel @JvmOverloads constructor(
                     val p1 = launch(Dispatchers.IO) { repository.refreshLivePrices() }
                     val p2 = launch(Dispatchers.IO) { futuresRepository.refresh() }
                     val p3 = launch(Dispatchers.IO) { refreshDerivativesAndMacro() }
+                    // The day count (and same-day multiples) must roll over while the app stays open.
+                    val shown = _btcCycleReading.value
+                    if (shown != null &&
+                        shown.currentDay != com.example.util.HalvingCycleUtils.getDaysSince4thHalving().coerceAtMost(shown.axisDays)
+                    ) {
+                        launch(Dispatchers.IO) { refreshCycleHome() }
+                    }
                     joinAll(pBtc, p1, p2, p3)
                 } catch (t: Throwable) {
                     android.util.Log.w("CryptoViewModel", "Sync background fetch warning", t)

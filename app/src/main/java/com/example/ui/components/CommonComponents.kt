@@ -511,39 +511,25 @@ fun CryptoCoinRow(
         label = "comet_pulse"
     )
 
-    val borderBrush = if (flashAlpha.value > 0.02f) {
-        Brush.horizontalGradient(
-            listOf(
-                flashColor.copy(alpha = flashAlpha.value),
-                flashColor.copy(alpha = flashAlpha.value * 0.5f),
-                flashColor.copy(alpha = flashAlpha.value)
-            )
-        )
-    } else {
-        Brush.horizontalGradient(
-            colors = listOf(
-                palette.border.copy(alpha = 0.5f),
-                if (isGain) Color(0xFF00F5FF).copy(alpha = 0.35f) else Color(0xFFFF1744).copy(alpha = 0.28f),
-                palette.border.copy(alpha = 0.5f)
-            ),
-            startX = shimmerPhase * 350f,
-            endX = shimmerPhase * 350f + 250f
-        )
-    }
+    // The card always shows the 24h direction; the last tick only flashes the price text,
+    // so a +3% coin never shows a red card because its latest print was a down-tick.
+    val borderBrush = Brush.horizontalGradient(
+        colors = listOf(
+            palette.border.copy(alpha = 0.5f),
+            if (isGain) Color(0xFF00F5FF).copy(alpha = 0.35f) else Color(0xFFFF1744).copy(alpha = 0.28f),
+            palette.border.copy(alpha = 0.5f)
+        ),
+        startX = shimmerPhase * 350f,
+        endX = shimmerPhase * 350f + 250f
+    )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (flashAlpha.value > 0.05f) {
-                    flashColor.copy(alpha = flashAlpha.value * 0.16f)
-                } else {
-                    Color(0xFF0A1324).copy(alpha = 0.78f)
-                }
-            )
+            .background(Color(0xFF0A1324).copy(alpha = 0.78f))
             .border(
-                width = if (flashAlpha.value > 0.05f) 1.6.dp else 1.dp,
+                width = 1.dp,
                 brush = borderBrush,
                 shape = RoundedCornerShape(12.dp)
             )
@@ -786,7 +772,11 @@ fun CryptoCoinRow(
                 fontSize = if (coin.quoteState == com.example.data.model.QuoteState.LIVE) 14.5.sp else 12.sp,
                 fontFamily = JetBrainsMonoFont,
                 fontWeight = FontWeight.Bold,
-                color = if (coin.isLivePrice) palette.textPrimary else QuantumCyan,
+                color = when {
+                    !coin.isLivePrice -> QuantumCyan
+                    flashAlpha.value > 0.05f -> androidx.compose.ui.graphics.lerp(palette.textPrimary, flashColor, flashAlpha.value)
+                    else -> palette.textPrimary
+                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.graphicsLayer(alpha = staleAlpha)
