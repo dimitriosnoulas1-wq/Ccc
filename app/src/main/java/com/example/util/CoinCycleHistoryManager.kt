@@ -88,8 +88,7 @@ object CoinCycleHistoryManager {
                 typicalCorrectionDays = 384,
                 pastCorrectionRows = listOf(
                     CycleHistoricalBar("2021 high ($1.96→$0.29)", 424, 1.0f),
-                    CycleHistoricalBar("2018 high ($3.84→$0.29)", 345, 0.81f),
-                    CycleHistoricalBar("2014 initial cycle", 380, 0.90f)
+                    CycleHistoricalBar("2018 high ($3.84→$0.29)", 345, 0.81f)
                 ),
                 pastRiseRows = listOf(
                     CycleHistoricalRise("2020 low → 2021 peak", 410),

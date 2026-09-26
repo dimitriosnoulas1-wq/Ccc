@@ -45,7 +45,7 @@ class WhereWeAreReadingTest {
         assertFalse(text.contains("sell", ignoreCase = true))
         assertFalse(text.contains("target", ignoreCase = true))
         assertFalse(text.contains("unwind", ignoreCase = true))
-        assertEquals("Calm", view.familyEn)
+        assertEquals("Live", view.familyEn)
     }
 
     @Test

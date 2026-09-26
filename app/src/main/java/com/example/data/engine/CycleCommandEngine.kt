@@ -68,13 +68,11 @@ object CycleCommandEngine {
             score.coerceIn(10, 95)
         }
 
-        val rainbowBand = when {
-            btcPrice <= 0.0 -> "Waiting for live price"
-            btcPrice < 48000 -> "Historically deep floor band"
-            btcPrice < 68000 -> "Historically lower band"
-            btcPrice < 90000 -> "Historically mid band"
-            btcPrice < 120000 -> "Historically upper band"
-            else -> "Historically top band"
+        val rainbowBand = if (btcPrice <= 0.0) {
+            "Waiting for live price"
+        } else {
+            val band = com.example.ui.rainbow.RainbowModel.bandIndex(com.example.ui.rainbow.DateUtil.today(), btcPrice)
+            com.example.ui.rainbow.RainbowModel.BANDS[band].name
         }
 
         val dayLine = "Day $halvingDays of $totalDays since the 4th halving."

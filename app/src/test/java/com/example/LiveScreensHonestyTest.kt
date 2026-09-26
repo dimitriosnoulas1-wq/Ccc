@@ -99,7 +99,8 @@ class LiveScreensHonestyTest {
         assertFalse(state.keyStanceSummaryEn.contains("recommended", ignoreCase = true))
         assertFalse(state.keyStanceSummaryEl.contains("κατοχύρωση", ignoreCase = true))
         assertTrue(state.keyStanceSummaryEn.contains("No trade call"))
-        assertTrue(state.rainbowBandName.contains("Historically", ignoreCase = true))
+        val band = com.example.ui.rainbow.RainbowModel.bandIndex(com.example.ui.rainbow.DateUtil.today(), 95_000.0)
+        assertEquals(com.example.ui.rainbow.RainbowModel.BANDS[band].name, state.rainbowBandName)
     }
 
     @Test

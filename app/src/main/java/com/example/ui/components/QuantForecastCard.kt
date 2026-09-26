@@ -89,7 +89,7 @@ fun QuantForecastCard(
             ) {
                 Column {
                     Text(
-                        text = "REGIME",
+                        text = "DAILY TREND (EMA20/50, RSI)",
                         color = Color(0xFF64748B),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold

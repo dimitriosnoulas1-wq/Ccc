@@ -1412,9 +1412,9 @@ fun SignalsScreen(
                     WhyWeSayThisPoint(
                         number = 3,
                         text = if (isGreek) {
-                            "Η τρέχουσα φάση είναι ${signal.cycleClockPhase} με live δείκτη κύκλου ${signal.riskScore}/100."
+                            "Κλίμα αγοράς (F&G, funding, ETF, stablecoins): ${signal.cycleClockPhase}, σκορ ${signal.riskScore}/100. Μείγμα αυτών των δεδομένων, όχι θέση στον κύκλο."
                         } else {
-                            "Current phase is ${signal.cycleClockPhase} with live cycle score ${signal.riskScore}/100."
+                            "Market mood (F&G, funding, ETF, stablecoins): ${signal.cycleClockPhase}, score ${signal.riskScore}/100. A mix of these inputs, not a cycle position."
                         }
                     )
                 }

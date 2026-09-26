@@ -20,29 +20,29 @@ enum class MarketRegime(
     val zoneNumber: Int
 ) {
     ACCUMULATION(
-        titleEn = "Zone 1: Early cycle",
-        titleEl = "Ζώνη 1: Αρχή κύκλου",
+        titleEn = "Zone 1: Fear",
+        titleEl = "Ζώνη 1: Φόβος",
         actionEn = "HISTORY",
         actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 1
     ),
     CYCLE_EXPANSION(
-        titleEn = "Zone 2: Mid cycle",
-        titleEl = "Ζώνη 2: Μέση κύκλου",
+        titleEn = "Zone 2: Neutral mood",
+        titleEl = "Ζώνη 2: Ουδέτερο κλίμα",
         actionEn = "HISTORY",
         actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 2
     ),
     LEVERAGE_DISTRIBUTION(
-        titleEn = "Zone 3: Late cycle",
-        titleEl = "Ζώνη 3: Τέλος κύκλου",
+        titleEn = "Zone 3: Hot funding",
+        titleEl = "Ζώνη 3: Ζεστό funding",
         actionEn = "HISTORY",
         actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 3
     ),
     CYCLE_PEAK_EXIT(
-        titleEn = "Zone 4: Prior peak window",
-        titleEl = "Ζώνη 4: Παλιά ζώνη κορυφής",
+        titleEn = "Zone 4: Extreme greed or funding",
+        titleEl = "Ζώνη 4: Ακραία απληστία ή funding",
         actionEn = "HISTORY",
         actionEl = "ΙΣΤΟΡΙΚΟ",
         zoneNumber = 4
