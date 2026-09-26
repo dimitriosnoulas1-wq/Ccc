@@ -51,15 +51,16 @@ android {
 
   signingConfigs {
     create("release") {
-      val uploadKey = file("${rootDir}/my-upload-key.jks")
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      val targetFile = if (uploadKey.exists()) uploadKey else file(keystorePath)
-      // Do not fail configuration when the upload key is missing (AI Studio debug preview).
-      if (targetFile.exists()) {
+      // The keystore is never committed; it comes from KEYSTORE_PATH or a local, gitignored file.
+      val targetFile = file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks")
+      val storePass = System.getenv("STORE_PASSWORD").orEmpty()
+      val keyPass = System.getenv("KEY_PASSWORD").orEmpty()
+      // Without key + passwords the release stays unsigned; debug builds (AI Studio preview) are unaffected.
+      if (targetFile.exists() && storePass.isNotEmpty() && keyPass.isNotEmpty()) {
         storeFile = targetFile
-        storePassword = System.getenv("STORE_PASSWORD") ?: "android"
-        keyAlias = "upload"
-        keyPassword = System.getenv("KEY_PASSWORD") ?: "android"
+        storePassword = storePass
+        keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
+        keyPassword = keyPass
       }
     }
   }
