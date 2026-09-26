@@ -88,9 +88,8 @@ fun WhaleLeverageTrackerSection(
     val isGreek = strings.language.code == "el"
 
     var selectedSideFilter by remember { mutableStateOf<LeveragePositionSide?>(null) }
-    var minLeverageFilter by remember { mutableStateOf(0) }
+    var kindFilter by remember { mutableStateOf<String?>(null) }
     var isExpanded by remember { mutableStateOf(true) }
-    var expandedPositionId by remember { mutableStateOf<String?>(null) }
 
     // Live glowing pulse animation
     val infiniteTransition = rememberInfiniteTransition(label = "whale_perp_pulse")
@@ -106,7 +105,7 @@ fun WhaleLeverageTrackerSection(
 
     val filteredPositions = positions.filter { pos ->
         (selectedSideFilter == null || pos.side == selectedSideFilter) &&
-                (pos.leverage >= minLeverageFilter)
+                (kindFilter == null || pos.statusText == kindFilter)
     }
 
     val displayPositions = if (!isProUnlocked) {
@@ -115,9 +114,10 @@ fun WhaleLeverageTrackerSection(
         filteredPositions
     }
 
-    val topMegaIds = remember(positions) {
-        positions.filter { it.isMegaWhale }.sortedByDescending { it.notionalUsd }.take(3).map { it.id }.toSet()
-    }
+    val symbol = positions.firstOrNull { it.statusText == OI_KIND }?.coinSymbol
+        ?: positions.firstOrNull()?.coinSymbol.orEmpty()
+    val venueCount = positions.count { it.statusText == OI_KIND }
+    val liqCount = positions.count { it.statusText == LIQ_KIND }
 
     Column(
         modifier = modifier
@@ -150,7 +150,7 @@ fun WhaleLeverageTrackerSection(
                         .border(1.dp, NeonEmerald.copy(alpha = 0.6f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "🐋", fontSize = 16.sp)
+                    Text(text = "📊", fontSize = 16.sp)
                 }
 
                 Spacer(modifier = Modifier.width(10.dp))
@@ -158,7 +158,8 @@ fun WhaleLeverageTrackerSection(
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = if (isGreek) "Super Whale Leverage Radar" else "Whale Leverage Radar",
+                            text = (if (isGreek) "Open interest & εκκαθαρίσεις" else "Open interest & liquidations") +
+                                if (symbol.isNotBlank()) " · $symbol" else "",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
@@ -240,14 +241,15 @@ fun WhaleLeverageTrackerSection(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Whale Longs: " + if (hasPositions) String.format(java.util.Locale.US, "%.1f%%", summary.longRatioPercent) else "—",
+                        text = (if (isGreek) "Λογαριασμοί long: " else "Long accounts: ") +
+                            if (hasPositions && summary.longRatioPercent > 0.0) String.format(java.util.Locale.US, "%.1f%%", summary.longRatioPercent) else "—",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = GainGreen
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (hasPositions) "(${formatMillionValue(summary.totalLongVolumeUsd * currency.rateToUsd, currency.symbol)})" else "",
+                        text = "",
                         fontSize = 10.sp,
                         color = TextMuted
                     )
@@ -256,13 +258,14 @@ fun WhaleLeverageTrackerSection(
                 // Shorts volume
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (hasPositions) "(${formatMillionValue(summary.totalShortVolumeUsd * currency.rateToUsd, currency.symbol)})" else "",
+                        text = "",
                         fontSize = 10.sp,
                         color = TextMuted
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = (if (hasPositions) String.format(java.util.Locale.US, "%.1f%%", summary.shortRatioPercent) else "—") + " Shorts",
+                        text = (if (hasPositions && summary.shortRatioPercent > 0.0) String.format(java.util.Locale.US, "%.1f%%", summary.shortRatioPercent) else "—") +
+                            if (isGreek) " short" else " short",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = DrawdownRed
@@ -327,15 +330,18 @@ fun WhaleLeverageTrackerSection(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = if (isGreek) "Μεγαλύτερο Position: ${formatMillionValue(summary.largestPositionUsd * currency.rateToUsd, currency.symbol)}"
-                    else "Largest Whale: ${formatMillionValue(summary.largestPositionUsd * currency.rateToUsd, currency.symbol)}",
+                    text = run {
+                        val totalOi = summary.totalLongVolumeUsd + summary.totalShortVolumeUsd
+                        val value = if (totalOi > 0.0) formatMillionValue(totalOi * currency.rateToUsd, currency.symbol) else "—"
+                        if (isGreek) "Συνολικό OI: $value" else "Total OI: $value"
+                    },
                     fontSize = 10.sp,
                     color = NeonAmber,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = if (isGreek) "Ενεργά Mega Orders: ${summary.activeMegaPositionsCount}"
-                    else "Active Mega Orders: ${summary.activeMegaPositionsCount}",
+                    text = if (isGreek) "Ανταλλακτήρια: $venueCount · Εκκαθαρίσεις: $liqCount"
+                    else "Venues: $venueCount · Liquidations: $liqCount",
                     fontSize = 10.sp,
                     color = TextMuted
                 )
@@ -351,63 +357,39 @@ fun WhaleLeverageTrackerSection(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // All filter
                     FilterPill(
                         label = if (isGreek) "Όλα" else "All",
-                        isSelected = selectedSideFilter == null && minLeverageFilter == 0,
+                        isSelected = selectedSideFilter == null && kindFilter == null,
                         onClick = {
                             selectedSideFilter = null
-                            minLeverageFilter = 0
+                            kindFilter = null
                         }
                     )
-
-                    // Longs only
                     FilterPill(
-                        label = if (isGreek) "🟢 Longs Μόνο" else "🟢 Longs Only",
+                        label = "Open interest",
+                        isSelected = kindFilter == OI_KIND,
+                        onClick = { kindFilter = if (kindFilter == OI_KIND) null else OI_KIND }
+                    )
+                    FilterPill(
+                        label = if (isGreek) "Εκκαθαρίσεις" else "Liquidations",
+                        isSelected = kindFilter == LIQ_KIND,
+                        selectedColor = NeonAmber,
+                        onClick = { kindFilter = if (kindFilter == LIQ_KIND) null else LIQ_KIND }
+                    )
+                    FilterPill(
+                        label = if (isGreek) "🟢 Long" else "🟢 Long",
                         isSelected = selectedSideFilter == LeveragePositionSide.LONG,
                         selectedColor = GainGreen,
                         onClick = {
                             selectedSideFilter = if (selectedSideFilter == LeveragePositionSide.LONG) null else LeveragePositionSide.LONG
                         }
                     )
-
-                    // Shorts only
                     FilterPill(
-                        label = if (isGreek) "🔴 Shorts Μόνο" else "🔴 Shorts Only",
+                        label = if (isGreek) "🔴 Short" else "🔴 Short",
                         isSelected = selectedSideFilter == LeveragePositionSide.SHORT,
                         selectedColor = DrawdownRed,
                         onClick = {
                             selectedSideFilter = if (selectedSideFilter == LeveragePositionSide.SHORT) null else LeveragePositionSide.SHORT
-                        }
-                    )
-
-                    // Leverage 5x+
-                    FilterPill(
-                        label = "⚡ 5x+",
-                        isSelected = minLeverageFilter == 5,
-                        selectedColor = NeonAmber,
-                        onClick = {
-                            minLeverageFilter = if (minLeverageFilter == 5) 0 else 5
-                        }
-                    )
-
-                    // Leverage 10x+
-                    FilterPill(
-                        label = "⚡ 10x+",
-                        isSelected = minLeverageFilter == 10,
-                        selectedColor = NeonAmber,
-                        onClick = {
-                            minLeverageFilter = if (minLeverageFilter == 10) 0 else 10
-                        }
-                    )
-
-                    // Leverage 20x+
-                    FilterPill(
-                        label = "🔥 20x+ Degen",
-                        isSelected = minLeverageFilter == 20,
-                        selectedColor = NeonPurple,
-                        onClick = {
-                            minLeverageFilter = if (minLeverageFilter == 20) 0 else 20
                         }
                     )
                 }
@@ -416,16 +398,18 @@ fun WhaleLeverageTrackerSection(
 
                 // List of Whale Positions
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (displayPositions.isEmpty()) {
+                        Text(
+                            text = if (isGreek) "Δεν υπάρχουν δεδομένα για αυτό το φίλτρο." else "Nothing for this filter right now.",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
                     displayPositions.forEach { pos ->
-                        val isDetailsExpanded = expandedPositionId == pos.id
                         WhaleLeverageCard(
                             position = pos,
                             currency = currency,
-                            isMegaWhale = topMegaIds.contains(pos.id),
-                            isExpanded = isDetailsExpanded,
-                            onToggleExpand = {
-                                expandedPositionId = if (isDetailsExpanded) null else pos.id
-                            }
+                            isGreek = isGreek
                         )
                     }
                 }
@@ -460,8 +444,8 @@ fun WhaleLeverageTrackerSection(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (isGreek) "Ξεκλειδώστε όλο το Whale Leverage Stream (15+ Θέσεις)"
-                                    else "Unlock Full Whale Leverage Stream (15+ Positions)",
+                                    text = if (isGreek) "Ξεκλείδωσε όλα τα ανταλλακτήρια και τις εκκαθαρίσεις"
+                                    else "Unlock all venues and liquidations",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = NeonEmerald
@@ -469,8 +453,8 @@ fun WhaleLeverageTrackerSection(
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = if (isGreek) "Δείτε σε πραγματικό χρόνο εντολές 2x-50x άνω των $1M στο Binance USDT-M Futures"
-                                else "Stream real-time 2x-50x orders >$1M on Binance USDT-M Futures",
+                                text = if (isGreek) "Open interest από Binance, Bybit, OKX και εκκαθαρίσεις από $50K στη Binance"
+                                else "Open interest from Binance, Bybit and OKX, and Binance liquidations from $50K",
                                 fontSize = 11.sp,
                                 color = TextSecondary
                             )
@@ -510,17 +494,26 @@ private fun FilterPill(
     }
 }
 
+private const val OI_KIND = "LIVE OI"
+private const val LIQ_KIND = "LIQUIDATED"
+
+/**
+ * One row of real data: either a venue's aggregate open interest or a single liquidation.
+ * Individual traders' positions are not public, so no entry price, leverage or PnL is shown.
+ */
 @Composable
 private fun WhaleLeverageCard(
     position: WhaleLeveragePosition,
     currency: Currency,
-    isMegaWhale: Boolean,
-    isExpanded: Boolean,
-    onToggleExpand: () -> Unit
+    isGreek: Boolean
 ) {
     val isLong = position.side == LeveragePositionSide.LONG
-    val themeColor = if (isLong) GainGreen else DrawdownRed
-    val pnlColor = if (position.pnlUsd >= 0) GainGreen else DrawdownRed
+    val isLiq = position.statusText == LIQ_KIND
+    val themeColor = when {
+        isLiq -> NeonAmber
+        isLong -> GainGreen
+        else -> DrawdownRed
+    }
 
     Column(
         modifier = Modifier
@@ -528,40 +521,18 @@ private fun WhaleLeverageCard(
             .clip(RoundedCornerShape(14.dp))
             .background(Color(0xFF070D18))
             .border(1.dp, themeColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
-            .clickable { onToggleExpand() }
             .padding(12.dp)
     ) {
-        // Top Row: Coin Symbol + Side Badge + Leverage Badge + Time
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Coin Avatar + Badge
-                CoinAvatar(
-                    symbol = position.coinSymbol,
-                    modifier = Modifier.size(20.dp)
-                )
+                CoinAvatar(symbol = position.coinSymbol, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF111C30))
-                        .border(1.dp, Color(0xFF1E2E4A), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 7.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = position.coinSymbol,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                }
-
+                Text(text = position.coinSymbol, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                 Spacer(modifier = Modifier.width(6.dp))
-
-                // Side & Leverage Pill
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
@@ -569,194 +540,93 @@ private fun WhaleLeverageCard(
                         .border(0.5.dp, themeColor, RoundedCornerShape(8.dp))
                         .padding(horizontal = 7.dp, vertical = 3.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = if (isLong) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
-                            contentDescription = null,
-                            tint = themeColor,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Text(
-                            text = "${position.leverage}x ${position.side.shortLabel}",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = themeColor
-                        )
-                    }
-                }
-
-                if (isMegaWhale) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(NeonAmber.copy(alpha = 0.2f))
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "🔥 MEGA",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NeonAmber
-                        )
-                    }
+                    Text(
+                        text = when {
+                            isLiq && isLong -> if (isGreek) "LONG ΕΚΚΑΘΑΡΙΣΗ" else "LONG LIQUIDATED"
+                            isLiq -> if (isGreek) "SHORT ΕΚΚΑΘΑΡΙΣΗ" else "SHORT LIQUIDATED"
+                            else -> "OPEN INTEREST"
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = themeColor
+                    )
                 }
             }
-
-            // Time & Exchange Tag
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = position.exchange.displayName,
-                    fontSize = 10.sp,
-                    color = TextMuted
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "· ${position.timeAgo}",
-                    fontSize = 10.sp,
-                    color = TextSecondary
-                )
-            }
+            Text(
+                text = position.exchange.displayName,
+                fontSize = 10.sp,
+                color = TextMuted
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Middle Row: Total Position Size vs Live Unrealized PnL
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
+        if (isLiq) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LabeledValue(if (isGreek) "Μέγεθος" else "Size", formatMillionValue(position.notionalUsd * currency.rateToUsd, currency.symbol))
+                LabeledValue(if (isGreek) "Τιμή" else "Price", formatPriceFormatted(position.liquidationPrice * currency.rateToUsd, currency.symbol))
+                LabeledValue(
+                    if (isGreek) "Ώρα" else "Time",
+                    if (position.timestampMillis > 0L) {
+                        java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(position.timestampMillis))
+                    } else "—",
+                    alignEnd = true
+                )
+            }
+        } else {
+            val oi = position.collateralUsd
+            val longPct = if (oi > 0.0) {
+                val share = position.notionalUsd / oi * 100.0
+                if (isLong) share else 100.0 - share
+            } else null
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LabeledValue("Open interest", formatMillionValue(oi * currency.rateToUsd, currency.symbol))
+                LabeledValue(
+                    if (isGreek) "Λογαρ. long/short" else "Accounts long/short",
+                    longPct?.let { String.format(java.util.Locale.US, "%.0f%% / %.0f%%", it, 100.0 - it) } ?: "—"
+                )
+                LabeledValue(
+                    "Funding (8h)",
+                    String.format(java.util.Locale.US, "%+.4f%%", position.fundingRate),
+                    alignEnd = true
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
-                    text = "Position Size (Notional)",
+                    text = (if (isGreek) "24ω: " else "24h: ") + String.format(java.util.Locale.US, "%+.1f%%", position.pnlPercent),
                     fontSize = 10.sp,
-                    color = TextMuted
+                    color = if (position.pnlPercent >= 0) GainGreen else DrawdownRed
                 )
-                Text(
-                    text = formatMillionValue(position.notionalUsd * currency.rateToUsd, currency.symbol),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = TextPrimary
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "Unrealized PnL",
-                    fontSize = 10.sp,
-                    color = TextMuted
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                if (position.pnlUsd > 0.0) {
                     Text(
-                        text = "${if (position.pnlUsd >= 0) "+" else ""}${formatPriceFormatted(position.pnlUsd * currency.rateToUsd, currency.symbol)}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = pnlColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "(${if (position.pnlPercent >= 0) "+" else ""}${String.format("%.1f", position.pnlPercent)}%)",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = pnlColor
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Price Milestones: Entry -> Current -> Liquidation Price Meter
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF0C1424))
-                .padding(horizontal = 10.dp, vertical = 7.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(text = "Entry Price", fontSize = 9.sp, color = TextMuted)
-                Text(
-                    text = formatPriceFormatted(position.entryPrice * currency.rateToUsd, currency.symbol),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextSecondary
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Current Mark", fontSize = 9.sp, color = TextMuted)
-                Text(
-                    text = formatPriceFormatted(position.currentPrice * currency.rateToUsd, currency.symbol),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = NeonCyan
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Shield,
-                        contentDescription = null,
-                        tint = DrawdownRed,
-                        modifier = Modifier.size(10.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(text = "Est. Liq Price", fontSize = 9.sp, color = DrawdownRed)
-                }
-                Text(
-                    text = formatPriceFormatted(position.liquidationPrice * currency.rateToUsd, currency.symbol),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DrawdownRed
-                )
-            }
-        }
-
-        // Expanded Details (Trader ID, Margin, Funding Rate)
-        AnimatedVisibility(visible = isExpanded) {
-            Column(modifier = Modifier.padding(top = 8.dp)) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Trader: ${position.traderLabel}",
-                        fontSize = 10.sp,
-                        color = NeonAmber,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "Margin: ${formatMillionValue(position.collateralUsd * currency.rateToUsd, currency.symbol)}",
-                        fontSize = 10.sp,
-                        color = TextMuted
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val liqDistPct = abs((position.currentPrice - position.liquidationPrice) / position.currentPrice) * 100.0
-                    Text(
-                        text = "Liquidation Distance: ${String.format("%.1f", liqDistPct)}% safe buffer",
-                        fontSize = 10.sp,
-                        color = if (liqDistPct > 10.0) GainGreen else DrawdownRed
-                    )
-                    Text(
-                        text = "Funding (8h): +${String.format("%.3f", position.fundingRate)}%",
+                        text = (if (isGreek) "Long εκκαθαρίσεις: " else "Long liquidations: ") +
+                            formatMillionValue(position.pnlUsd * currency.rateToUsd, currency.symbol),
                         fontSize = 10.sp,
                         color = TextMuted
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LabeledValue(label: String, value: String, alignEnd: Boolean = false) {
+    Column(horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start) {
+        Text(text = label, fontSize = 10.sp, color = TextMuted)
+        Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
     }
 }
 

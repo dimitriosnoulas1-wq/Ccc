@@ -763,6 +763,14 @@ class CryptoViewModel @JvmOverloads constructor(
 
     fun selectSignalCoin(coinId: String) {
         _selectedSignalCoinId.value = coinId
+        // The Tape tab's open interest, order flow and large prints follow the coin picked here.
+        val coin = repository.coins.value.firstOrNull { it.id == coinId } ?: return
+        val contract = "${coin.symbol.uppercase()}USDT"
+        if (activeFuturesSymbol.value.equals(contract, ignoreCase = true)) return
+        selectFuturesSymbol(contract)
+        viewModelScope.launch(Dispatchers.IO) {
+            _derivativesSnapshot.value = DerivativesRepository.fetch(contract)
+        }
     }
 
     fun toggleFavorite(coinId: String) {

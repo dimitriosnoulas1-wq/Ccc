@@ -49,6 +49,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -198,6 +199,9 @@ fun SignalsScreen(
         }
         return
     }
+
+    // Keep the futures feeds (open interest, order flow, prints) on the coin this screen shows.
+    LaunchedEffect(activeCoin.id) { onSelectCoin(activeCoin) }
 
     val isBullish = activeCoin.change24h >= 0
     val daysAfterAth = activeCoin.calculatedAthDaysAgo
