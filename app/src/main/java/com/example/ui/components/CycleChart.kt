@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -160,6 +161,12 @@ fun HistoricalCycleChart(
         return
     }
     val fractalData = chartData
+    // Sweeps the chart in left-to-right whenever a new coin's history lands.
+    val revealProgress = remember(coinId, coinSymbol) { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(fractalData) {
+        revealProgress.snapTo(0f)
+        revealProgress.animateTo(1f, animationSpec = tween(900, easing = FastOutSlowInEasing))
+    }
     val axisMax = fractalData.axisDays.coerceAtLeast(1)
     val hasProjection = fractalData.projectedPoints.isNotEmpty()
 
@@ -456,6 +463,8 @@ fun HistoricalCycleChart(
                 val padX = 14f
                 val chartW = w - (padX * 2)
                 val chartH = h - (padY * 2)
+                val revealX = padX + chartW * revealProgress.value.coerceIn(0f, 1f)
+                clipRect(right = revealX) {
 
                 // Coordinate mapping lambda
                 fun mapPoint(day: Int, normVal: Float): Offset {
@@ -623,10 +632,15 @@ fun HistoricalCycleChart(
                         style = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
 
-                    // Sharp core line
+                    // Sharp core line — a comet tail: dimmer where the price history starts,
+                    // brightest at today's live point, so the eye reads direction of travel.
                     drawPath(
                         path = curvePath,
-                        color = QuantumCyan,
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(QuantumCyan.copy(alpha = 0.55f), QuantumCyan, Color.White),
+                            startX = firstPt.x,
+                            endX = lastPt.x
+                        ),
                         style = Stroke(width = 2.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
 
@@ -677,6 +691,7 @@ fun HistoricalCycleChart(
                         )
                     }
                 }
+                } // end reveal clipRect
             }
         }
 
