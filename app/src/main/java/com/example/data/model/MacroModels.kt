@@ -1,6 +1,5 @@
 package com.example.data.model
 
-
 data class AltcoinSeasonData(
     val score: Int = 0,
     val previousMonthScore: Int = 0,
@@ -39,7 +38,6 @@ data class FearAndGreedData(
     val lastMonthScore: Int = 0,
     val isLive: Boolean = false
 ) {
-    fun localizedSentiment(isGreek: Boolean): String = if (isGreek) sentimentEl else sentiment
 }
 
 data class PiCycleData(

@@ -102,7 +102,6 @@ class BinanceFuturesSocketManager(
         val liveCoin = liveCoinsMap[clean] ?: liveCoinsMap[currentSym.uppercase()]
     }
 
-
     private var reconnectDelayMs = 1000L
     private var isManualDisconnect = false
     private var lastWsMessageTime = 0L
@@ -132,14 +131,6 @@ class BinanceFuturesSocketManager(
      * Mirrors CryptoRepository.extractBaseSymbolAndMultiplier.
      */
     fun contractMultiplierFor(symbol: String): Double = SymbolMath.canonical(symbol).second
-
-    /** Returns a price in the quoting convention of [sym], not the per-token price. */
-    fun getFallbackPriceForSymbol(sym: String): Double {
-        val (base, multiplier) = SymbolMath.canonical(sym)
-        val live = liveCoinsMap[base] ?: liveCoinsMap[sym.uppercase()]
-        val unit = live?.takeIf { it.quoteState == QuoteState.LIVE && it.priceUsd > 0.0 }?.priceUsd ?: 0.0
-        return unit * multiplier
-    }
 
     fun formatSpotSymbol(symbol: String): String {
         // Spot is the 1:1 USDT pair after canonicalization. RAYSOLUSDT is futures-only;
@@ -735,20 +726,6 @@ class BinanceFuturesSocketManager(
             if (webSocket == null || !_connectionStatus.value.isConnected) {
                 connectSocket(sym)
             }
-        }
-    }
-
-    /**
-     * Forces immediate reconnection and snapshot refresh if connection dropped or stale.
-     */
-    fun checkConnectionAndRefresh() {
-        val now = System.currentTimeMillis()
-        val isWsDead = (webSocket == null || !_connectionStatus.value.isConnected)
-        val isStale = (now - lastWsMessageTime > 15_000L) // > 15 seconds without message
-
-        if (isWsDead || isStale) {
-            android.util.Log.d("BinanceSocket", "Connection stale or dead. Triggering automatic reconnect & refresh.")
-            forceRefresh()
         }
     }
 

@@ -44,10 +44,6 @@ object DateUtil {
         return "$d ${(if (greek) MONTHS_EL else MONTHS)[m - 1]} $y"
     }
 
-    fun monthYear(day: Long): String {
-        val (y, m, _) = civil(day)
-        return "${MONTHS[m - 1]} $y"
-    }
 }
 
 fun usd(p: Double): String =

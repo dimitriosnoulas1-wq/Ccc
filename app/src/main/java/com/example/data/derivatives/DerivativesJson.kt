@@ -218,24 +218,6 @@ object DerivativesJson {
         )
     }
 
-    fun hubPayload(snapshot: AggregatedDerivativesSnapshot): JSONObject {
-        val venues = JSONArray()
-        snapshot.venues.forEach { venues.put(venueJson(it)) }
-        return JSONObject()
-            .put("ok", snapshot.venues.any { it.ok })
-            .put("symbol", snapshot.symbol)
-            .put("asOfMs", snapshot.asOfMs)
-            .put("freshness", snapshot.freshness.name)
-            .put("sourceLabel", snapshot.sourceLabel)
-            .put("venues", venues)
-            .put("aggregated", metricsJson(snapshot.aggregated))
-            .put("score", JSONObject()
-                .put("value", snapshot.score.value ?: JSONObject.NULL)
-                .put("redistributed", snapshot.score.redistributed)
-                .put("formula", snapshot.score.formula)
-            )
-    }
-
     private fun venueJson(venue: VenueDerivativesSnapshot): JSONObject {
         return JSONObject()
             .put("venue", venue.venue)

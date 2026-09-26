@@ -719,11 +719,6 @@ class CryptoViewModel @JvmOverloads constructor(
         _selectedTab.value = MainTab.COINS
     }
 
-    fun hideCoinsCatalog() {
-        _showCoinsCatalog.value = false
-        _searchQuery.value = ""
-    }
-
     fun openCycleChart() {
         val btc = allCoins.value.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
         _showCoinsCatalog.value = false
@@ -838,7 +833,6 @@ class CryptoViewModel @JvmOverloads constructor(
     fun setNotifyFunding(enabled: Boolean) {
         whaleRepository.setNotifyFunding(enabled)
     }
-
 
     fun setCurrency(currency: Currency) {
         repository.setCurrency(currency)

@@ -123,18 +123,6 @@ fun CoinAvatar(
     )
 }
 
-@Composable
-fun LiveBeaconPill(
-    modifier: Modifier = Modifier
-) {
-    DataFreshnessBadge(
-        status = DataFreshnessStatus.LIVE,
-        timeAgo = "1.2s",
-        source = "Binance",
-        modifier = modifier
-    )
-}
-
 enum class DataFreshnessStatus {
     LIVE,
     DELAYED,
@@ -205,43 +193,6 @@ fun DataFreshnessBadge(
             fontWeight = FontWeight.Medium,
             color = palette.textSecondary
         )
-    }
-}
-
-@Composable
-fun ExplainMetricBadge(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(NeonCyan.copy(alpha = 0.12f))
-            .border(0.8.dp, NeonCyan.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
-            .clickable {
-                com.example.util.AppSoundManager.playTechClick()
-                onClick()
-            }
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
-        ) {
-            Text(
-                text = label,
-                fontSize = 9.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = NeonCyan
-            )
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = NeonCyan,
-                modifier = Modifier.size(10.dp)
-            )
-        }
     }
 }
 
@@ -864,58 +815,6 @@ fun MetricExplainerBox(
                 color = palette.textMuted,
                 lineHeight = 14.sp
             )
-        }
-    }
-}
-
-@Composable
-fun EmptyStateMessage(
-    title: String,
-    subtitle: String,
-    onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    val palette = LocalAppColors.current
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(palette.surface)
-            .border(1.dp, palette.border, RoundedCornerShape(16.dp))
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = palette.textPrimary,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Text(
-                text = subtitle,
-                fontSize = 12.5.sp,
-                color = palette.textSecondary,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                lineHeight = 18.sp
-            )
-            if (onRetry != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                androidx.compose.material3.Button(
-                    onClick = onRetry,
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = palette.primary.copy(alpha = 0.2f),
-                        contentColor = palette.primary
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(text = "Retry Connection", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
         }
     }
 }

@@ -341,15 +341,6 @@ data class PriceBusState(
     val liveTicks: Map<String, PriceTick> = emptyMap(),
     val lastUpdatedTimestamp: Long = System.currentTimeMillis()
 ) {
-    fun getTickForSymbol(symbol: String): PriceTick? {
-        val clean = symbol.uppercase().removeSuffix("USDT").removePrefix("1000000").removePrefix("1000")
-        return liveTicks[clean] ?: when (clean) {
-            "BTC" -> if (btcPerp.price > 0.0) btcPerp else btcSpot
-            "ETH" -> if (ethPerp.price > 0.0) ethPerp else ethSpot
-            "SOL" -> solSpot
-            else -> null
-        }
-    }
 }
 
 data class CentralizedPriceState(
@@ -365,7 +356,4 @@ data class CentralizedPriceState(
     val spreadBasisUsd: Double get() = btcPerpPrice - btcSpotPrice
     val spreadBasisPercent: Double get() = if (btcSpotPrice > 0) ((btcPerpPrice - btcSpotPrice) / btcSpotPrice) * 100.0 else 0.0
 }
-
-
-
 

@@ -106,11 +106,6 @@ object AlertHistoryManager {
         saveAlerts(updated)
     }
 
-    fun clearAll() {
-        _alerts.value = emptyList()
-        saveAlerts(emptyList())
-    }
-
     private fun saveAlerts(list: List<AlertHistoryItem>) {
         try {
             val array = JSONArray()

@@ -183,33 +183,6 @@ fun Modifier.cosmicBento(
     .border(borderWidth, stitchHorizonBrush(startAlpha = 0.60f, endAlpha = 0.45f), shape)
 
 @Composable
-fun HolographicCard(
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(18.dp),
-    glowColor: Color = QuantumCyan,
-    pulseColor: Color = MauveAurora,
-    baseContainerColor: Color = Color(0xFF0D0A1D),
-    borderWidth: Dp = 1.2.dp,
-    showCornerReticles: Boolean = false,
-    content: @Composable BoxScope.() -> Unit
-) {
-    Box(
-        modifier = modifier.holographicCard(
-            shape = shape,
-            glowColor = glowColor,
-            pulseColor = pulseColor,
-            baseContainerColor = baseContainerColor,
-            borderWidth = borderWidth
-        )
-    ) {
-        if (showCornerReticles) {
-            QuantumCornerReticleOverlay(color = glowColor.copy(alpha = 0.6f))
-        }
-        content()
-    }
-}
-
-@Composable
 fun QuantumCornerReticleOverlay(
     color: Color = QuantumCyan.copy(alpha = 0.5f),
     lineLength: Dp = 8.dp,
@@ -237,26 +210,4 @@ fun QuantumCornerReticleOverlay(
         drawLine(color, Offset(size.width - pad, size.height - pad), Offset(size.width - pad, size.height - pad - len), sw)
     }
 }
-
-@Composable
-fun BentoGlassCard(
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(18.dp),
-    borderColor: Color = CosmicBorder,
-    borderWidth: Dp = 1.2.dp,
-    containerColor: Color = Color(0xFF0D0A1D),
-    content: @Composable BoxScope.() -> Unit
-) {
-    Box(
-        modifier = modifier.cosmicBento(
-            shape = shape,
-            borderColor = borderColor,
-            borderWidth = borderWidth,
-            containerColor = containerColor
-        ),
-        content = content
-    )
-}
-
-
 

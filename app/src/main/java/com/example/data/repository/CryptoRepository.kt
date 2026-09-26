@@ -359,35 +359,6 @@ class CryptoRepository(context: android.content.Context? = null) {
         }
     }
 
-    fun updateBtcPriceUnified(
-        price: Double,
-        change24h: Double,
-        high24h: Double? = null,
-        low24h: Double? = null,
-        volumeQuote: Double? = null,
-        source: String = "Binance"
-    ) {
-        if (price <= 0.0) return
-        val kind = if (source.contains("Futures", ignoreCase = true) || source.contains("fapi", ignoreCase = true)) {
-            PriceKind.PERP
-        } else {
-            PriceKind.SPOT
-        }
-        val tick = PriceTick(
-            symbol = "BTCUSDT",
-            venue = "Binance",
-            kind = kind,
-            price = price,
-            change24h = change24h,
-            high24h = high24h,
-            low24h = low24h,
-            volumeQuote = volumeQuote,
-            tsMillis = System.currentTimeMillis(),
-            source = if (kind == PriceKind.PERP) "https://fapi.binance.com" else "https://api.binance.com"
-        )
-        updatePriceTick(tick)
-    }
-
     private fun syncCentralizedBtcPrice() {
         val btc = _coins.value.firstOrNull { it.symbol.equals("BTC", ignoreCase = true) }
         val bus = _priceBus.value
@@ -403,21 +374,6 @@ class CryptoRepository(context: android.content.Context? = null) {
             isLiveConnected = _isLiveConnected.value,
             primarySource = _priceSource.value
         )
-    }
-
-    fun updatePerpPrice(perpPrice: Double, perpChange: Double) {
-        if (perpPrice > 0.0) {
-            val tick = PriceTick(
-                symbol = "BTCUSDT",
-                venue = "Binance Futures",
-                kind = PriceKind.PERP,
-                price = perpPrice,
-                change24h = perpChange,
-                tsMillis = System.currentTimeMillis(),
-                source = "https://fapi.binance.com"
-            )
-            updatePriceTick(tick)
-        }
     }
 
     suspend fun fetchBinanceBtcTickerDirect(): Boolean = withContext(Dispatchers.IO) {
@@ -502,7 +458,6 @@ class CryptoRepository(context: android.content.Context? = null) {
 
         anySuccess
     }
-
 
     fun setProUnlocked(unlocked: Boolean) {
         _isProUnlocked.value = unlocked

@@ -153,37 +153,3 @@ val Typography = Typography(
     )
 )
 
-// Telemetry & Numeric Data Helpers
-val CosmicHeaderHeadline = TextStyle(
-    fontFamily = SpaceGroteskFont,
-    fontWeight = FontWeight.Bold,
-    fontSize = 16.sp,
-    letterSpacing = 0.5.sp,
-    color = TextPrimary
-)
-
-val CosmicHeaderSerif = TextStyle(
-    fontFamily = SpaceGroteskFont,
-    fontWeight = FontWeight.Bold,
-    fontSize = 16.sp,
-    letterSpacing = 0.8.sp,
-    color = TextPrimary
-)
-
-val CosmicDataMono = TextStyle(
-    fontFamily = JetBrainsMonoFont,
-    fontWeight = FontWeight.Bold,
-    fontSize = 14.sp,
-    letterSpacing = 0.3.sp,
-    color = TextPrimary
-)
-
-val QuantumScoreFont = TextStyle(
-    fontFamily = SyneFont,
-    fontWeight = FontWeight.ExtraBold,
-    fontSize = 28.sp,
-    letterSpacing = 0.5.sp,
-    color = QuantumCyan
-)
-
-

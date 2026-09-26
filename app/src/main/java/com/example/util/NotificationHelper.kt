@@ -38,14 +38,6 @@ object NotificationHelper {
     private val _history = mutableListOf<FiredAlertRecord>()
     val history: List<FiredAlertRecord> get() = synchronized(_history) { _history.toList() }
 
-    fun initNotificationChannels(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationScope.launch {
-                createChannelsInternal(context.applicationContext)
-            }
-        }
-    }
-
     private fun createChannelsInternal(appContext: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {

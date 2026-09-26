@@ -40,11 +40,6 @@ object ExchangeDirectory {
 
     fun futuresPairs(): Set<String> = futuresPairs
 
-    fun listingFor(symbol: String): SymbolMath.Listing? {
-        ensureLoaded()
-        return SymbolMath.spotFirstListing(symbol, spotPairs, futuresPairs)
-    }
-
     fun futuresSymbolFor(symbol: String): String {
         ensureLoaded()
         return SymbolMath.futuresPair(symbol, futuresPairs)
