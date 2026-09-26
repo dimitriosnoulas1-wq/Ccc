@@ -171,17 +171,6 @@ fun Modifier.holographicCard(
     return modifier.border(borderWidth, borderBrush, shape)
 }
 
-fun Modifier.cosmicBento(
-    shape: Shape = RoundedCornerShape(18.dp),
-    borderColor: Color = CosmicBorder,
-    borderWidth: Dp = 1.2.dp,
-    containerColor: Color = Color(0xFF0D0A1D)
-): Modifier = this
-    .clip(shape)
-    .background(containerColor)
-    .background(stitchHorizonWash(startAlpha = 0.16f, endAlpha = 0.12f))
-    .border(borderWidth, stitchHorizonBrush(startAlpha = 0.60f, endAlpha = 0.45f), shape)
-
 @Composable
 fun QuantumCornerReticleOverlay(
     color: Color = QuantumCyan.copy(alpha = 0.5f),

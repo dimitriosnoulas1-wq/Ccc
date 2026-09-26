@@ -277,7 +277,6 @@ data class PriceTick(
     val source: String = "https://api.binance.com"
 ) {
     val isStale: Boolean get() = tsMillis <= 0L || (System.currentTimeMillis() - tsMillis) > 120_000L
-    val ageSeconds: Long get() = ((System.currentTimeMillis() - tsMillis) / 1000L).coerceAtLeast(0L)
 }
 
 data class PriceBusState(

@@ -314,20 +314,6 @@ private fun HolderFact(label: String, value: String, valueColor: androidx.compos
 }
 
 @Composable
-private fun MetricBlock(label: String, value: String, alignEnd: Boolean = false) {
-    Column(horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start) {
-        Text(text = label, fontSize = 11.sp, color = LocalAppColors.current.textMuted)
-        Text(
-            text = value,
-            fontFamily = JetBrainsMonoFont,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = LocalAppColors.current.textPrimary
-        )
-    }
-}
-
-@Composable
 private fun DailyCycleLogCard(
     logs: List<DailyCycleLogEntry>,
     latestPriceUsd: Double,

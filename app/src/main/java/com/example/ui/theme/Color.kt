@@ -9,11 +9,9 @@ import androidx.compose.ui.graphics.Color
 
 // Deep Space Surfaces (4D Quantum Terminal Canvas)
 val CosmicVoidBg = Color(0xFF05050F)
-val CosmicNavyGlow = Color(0xFF0D0924)
 val CosmicVoidSurface = Color(0xFF0D0A1D)
 val CosmicVoidSurfaceElevated = Color(0xFF140D2E)
 val CosmicVoidGlass = Color(0xBF0D0A1D)
-val CosmicVoidGlassElevated = Color(0xD9140D2E)
 val ChronoNavBg = Color(0xFF080614)
 
 // Quantum Violet & Mauve — 4D Chrono tension, secondary highlights
@@ -31,12 +29,9 @@ val TachyonMintBright = Color(0xFFD4FFE9)
 val QuantumCyan = Color(0xFF00F5FF)          // Holographic Quantum Cyan
 val QuantumCyanBright = Color(0xFFE0FFFF)
 val QuantumBlue = Color(0xFF00D2FF)
-val QuantumCyanMuted = Color(0x2600F5FF)
 
 val SoftEmerald = Color(0xFF00FF88)
-val SoftEmeraldGlow = Color(0x3300FF88)
 val SoftCrimson = Color(0xFFF43F5E)          // Neon Coral / Red
-val SoftCrimsonGlow = Color(0x33F43F5E)
 
 val TextPureWhite = Color(0xFFFFFFFF)
 val TextCyanSlate = Color(0xFFCBD5E1)
