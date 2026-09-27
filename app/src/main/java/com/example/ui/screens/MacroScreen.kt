@@ -92,7 +92,6 @@ import com.example.ui.components.BitcoinEtfFlowsCard
 import com.example.ui.components.DefiLlamaStablecoinsCard
 import com.example.ui.components.ForwardAuditTrailCard
 import com.example.ui.components.AltcoinSeasonIndexCard
-import com.example.ui.components.CycleDayComparisonCard
 import com.example.ui.components.FearAndGreedIndexCard
 import com.example.ui.components.MacroProGatekeeper
 import com.example.ui.components.MetricExplainerBox
@@ -111,7 +110,6 @@ import com.example.util.LocalAppStrings
 
 enum class MacroSectionFilter(val titleEn: String, val titleEl: String) {
     ALL("All Macro", "Όλοι οι Δείκτες"),
-    CYCLE_DAYS_ANALOG("⏳ Cycle Days & Analog", "⏳ Ημέρες Κύκλου & Αναλογία"),
     RISK_BACKDROP("🌐 DXY, 10Y Yields", "🌐 DXY, 10Y"),
     RAINBOW("🌈 Rainbow Chart", "🌈 Rainbow Chart"),
     ALT_SEASON("⚡ Alt Season", "⚡ Alt Season"),
@@ -152,7 +150,6 @@ fun MacroScreen(
     var selectedFilter by remember { mutableStateOf(MacroSectionFilter.ALL) }
 
     // Collapsible section state for compact layout
-    var cycleDaysExpanded by remember { mutableStateOf(true) }
     var riskBackdropExpanded by remember { mutableStateOf(true) }
     var rainbowExpanded by remember { mutableStateOf(true) }
     var altSeasonExpanded by remember { mutableStateOf(true) }
@@ -469,24 +466,9 @@ fun MacroScreen(
             )
         }
 
-        // 1. Cycle Days & Historical Bear Market Analog
-        if (selectedFilter == MacroSectionFilter.ALL || selectedFilter == MacroSectionFilter.CYCLE_DAYS_ANALOG) {
-            item {
-                CollapsibleCardContainer(
-                    title = if (isGreek) "⏳ Ημέρες Κύκλου & Ιστορικό Ανάλογο" else "⏳ Cycle Days & Bear Market Analog",
-                    subtitle = if (isGreek) "Σύγκριση ημερών από το ATH, ιστορικός πυθμένας 1 έτους & γεγονότα κραχ" else "Days post-ATH vs past cycles, 1-year bottom window & crash dossier",
-                    badge = "CYCLE CLOCK",
-                    badgeColor = NeonCyan,
-                    isExpanded = cycleDaysExpanded,
-                    onToggle = { cycleDaysExpanded = !cycleDaysExpanded }
-                ) {
-                    CycleDayComparisonCard(
-                        currentBtcPrice = btcPriceUsd,
-                        onOpenAiAnalysis = { prompt -> onOpenAiAssistant(prompt) }
-                    )
-                }
-            }
-        }
+        // The "Cycle Days & Bear Market Analog" card was removed: it printed step-function
+        // price estimates as if they were real closes. The Rainbow cycle cards show the same
+        // same-day comparison from real daily prices.
 
         // 2b. Global Risk Backdrop: DXY & US 10Y Yield
         if (selectedFilter == MacroSectionFilter.ALL || selectedFilter == MacroSectionFilter.RISK_BACKDROP) {
