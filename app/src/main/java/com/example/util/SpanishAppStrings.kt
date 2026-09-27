@@ -135,12 +135,12 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val useCasesLabel: String = "Casos de Uso Principales del Ecosistema"
 
     // Cycle Analysis Deep Dive
-    override val weekOfFallTitle: String = "Semana coincidente históricamente bajista (Muestra: n=2 ciclos)"
+    override val weekOfFallTitle: String = "Tiempo desde el máximo histórico"
     override val weekOfFallSub: String = "semana 46 · típicamente 16 sem."
     override val cycleAnalysisHeader: String = "Análisis del ciclo"
     override val fromHighToLowTitle: String = "DEL MÁXIMO A UN POSIBLE MÍNIMO"
     override val daysAfterAthLabel: String = "días después del máximo histórico"
-    override val daysToBottomLabel: String = "días hasta un posible mínimo"
+    override val daysToBottomLabel: String = "duración media de correcciones pasadas (días)"
     override val highMarker: String = "Alto"
     override val typical383dMarker: String = "típico 383d"
     override val lowMarker: String = "Bajo"
@@ -152,7 +152,7 @@ class SpanishAppStrings : AppStrings(AppLanguage.SPANISH) {
     override val daysAfterHighSub: String = "Estamos a 319 días del máximo. Las caídas pasadas al suelo duraron unos 383 días."
     override val nowLabel: String = "Ahora"
     override val daysOfRiseTitle: String = "Días de subida, históricamente"
-    override val daysOfRiseSub: String = "Las subidas pasadas desde el suelo al siguiente máximo duraron unos 1059 días."
+    override val daysOfRiseSub: String = "Desde cada suelo de ciclo pasado hasta el siguiente máximo, con los precios diarios de esta moneda."
     override val halvingTitle: String = "BITCOIN HALVING"
     override val halvingDaysLabel: String = "días hasta el próximo halving"
     override val halvingHoursLabel: String = "horas restantes"

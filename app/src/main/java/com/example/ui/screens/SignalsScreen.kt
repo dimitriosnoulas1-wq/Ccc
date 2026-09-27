@@ -204,13 +204,23 @@ fun SignalsScreen(
     LaunchedEffect(activeCoin.id) { onSelectCoin(activeCoin) }
 
     val isBullish = activeCoin.change24h >= 0
-    val daysAfterAth = activeCoin.calculatedAthDaysAgo
     // Computed from this coin's own real daily closes (see CoinCycleHistoryManager).
     // null while loading, or for a coin without enough real history — never a guess.
     var cycleProfile by remember(activeCoin.symbol) { mutableStateOf<com.example.util.CoinCycleProfile?>(null) }
     LaunchedEffect(activeCoin.symbol) {
         cycleProfile = com.example.util.CoinCycleHistoryManager.computeProfile(activeCoin.symbol)
     }
+    // The catalog ATH can be stale (a seed from years ago). The coin's own daily history
+    // wins when it shows a higher real print, with the real day it happened.
+    val athCoin = run {
+        val profile = cycleProfile
+        if (profile != null && profile.athUsd > activeCoin.athUsd && profile.athDate.isNotBlank()) {
+            activeCoin.copy(athUsd = profile.athUsd, athDate = profile.athDate)
+        } else {
+            activeCoin
+        }
+    }
+    val daysAfterAth = athCoin.calculatedAthDaysAgo
     val typicalDays = cycleProfile?.typicalCorrectionDays ?: 0
     val isBottomReached = typicalDays > 0 && daysAfterAth >= typicalDays
     val daysToBottom = if (typicalDays > 0 && !isBottomReached) (typicalDays - daysAfterAth).coerceAtLeast(0) else 0
@@ -813,7 +823,7 @@ fun SignalsScreen(
                         if (activeCoin.volume24h > 0.0) {
                             add("Vol" to NeonCyan)
                         }
-                        if (activeCoin.athUsd > 0.0 && activeCoin.priceUsd > 0.0) {
+                        if (athCoin.athUsd > 0.0 && activeCoin.priceUsd > 0.0) {
                             add("ATH" to TextMuted)
                         }
                     }
@@ -1102,7 +1112,7 @@ fun SignalsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = com.example.util.CoinLocalization.getFromHighToLowNarrative(
-                                coin = activeCoin,
+                                coin = athCoin,
                                 daysAfterAth = daysAfterAth,
                                 daysToBottom = daysToBottom,
                                 typicalDays = typicalDays,
@@ -1114,9 +1124,9 @@ fun SignalsScreen(
                             lineHeight = 20.sp,
                             color = TextPrimary
                         )
-                        val ddFormatted = com.example.util.AppNumberFormatter.formatPercent(activeCoin.drawdownPercent, includeSign = true, decimals = 1)
+                        val ddFormatted = com.example.util.AppNumberFormatter.formatPercent(athCoin.drawdownPercent, includeSign = true, decimals = 1)
                         Text(
-                            text = "${activeCoin.athDate} · ${activeCoin.formattedAth(currency)} · $ddFormatted from peak",
+                            text = "${athCoin.athDate} · ${athCoin.formattedAth(currency)} · $ddFormatted from peak",
                             fontSize = 12.sp,
                             color = TextMuted
                         )
@@ -1200,12 +1210,12 @@ fun SignalsScreen(
         item {
             val isBtc = activeCoin.symbol == "BTC"
             val cardTitle = if (isBtc) strings.halvingTitle else "${activeCoin.symbol} Macro Cycle Milestones"
-            val cardBadge = if (isBtc) "~2028 (Block 1,050,000)" else "ATH: ${activeCoin.athDate.ifBlank { "N/A" }}"
-            val box1Val = if (isBtc) halvingCountdown.totalDaysString else activeCoin.calculatedAthDaysAgo.toString()
+            val cardBadge = if (isBtc) "~2028 (Block 1,050,000)" else "ATH: ${athCoin.athDate.ifBlank { "N/A" }}"
+            val box1Val = if (isBtc) halvingCountdown.totalDaysString else athCoin.calculatedAthDaysAgo.toString()
             val box1Lbl = if (isBtc) strings.halvingDaysLabel else "Days Post-Token-ATH"
             val box2Val = if (isBtc) halvingCountdown.hoursString else if (typicalDays > 0) "~$typicalDays" else "—"
             val box2Lbl = if (isBtc) strings.halvingHoursLabel else if (isGreek) "Ημέρες παλιών διορθώσεων" else "Past corrections (days)"
-            val subTickerText = if (isBtc) "Live Ticker: ${halvingCountdown.minutesString}m ${halvingCountdown.secondsString}s" else "Macro Anchor: ATH $${activeCoin.athUsd}"
+            val subTickerText = if (isBtc) "Live Ticker: ${halvingCountdown.minutesString}m ${halvingCountdown.secondsString}s" else "Macro Anchor: ATH $${athCoin.athUsd}"
             val rightTagText = if (isBtc) "Post-Halving Day ${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}" else "Rel. BTC Halving D${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}"
 
             Box(
@@ -1482,13 +1492,13 @@ fun SignalsScreen(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = activeCoin.displayPrice(currency), fontSize = if (activeCoin.quoteState == com.example.data.model.QuoteState.LIVE) 13.sp else 11.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            val ddPctStr = com.example.util.AppNumberFormatter.formatPercent(activeCoin.drawdownPercent, includeSign = true, decimals = 1)
-                            Text(text = ddPctStr, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = if (activeCoin.drawdownPercent < 0) Color(0xFFFB7185) else GainGreen)
+                            val ddPctStr = com.example.util.AppNumberFormatter.formatPercent(athCoin.drawdownPercent, includeSign = true, decimals = 1)
+                            Text(text = ddPctStr, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = if (athCoin.drawdownPercent < 0) Color(0xFFFB7185) else GainGreen)
                         }
 
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(text = activeCoin.formattedAth(currency), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text(text = activeCoin.athDate, fontSize = 10.sp, color = TextMuted)
+                            Text(text = athCoin.formattedAth(currency), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Text(text = athCoin.athDate, fontSize = 10.sp, color = TextMuted)
                         }
                     }
                 }
@@ -1504,8 +1514,8 @@ fun SignalsScreen(
                 ) {
                     KeyMetricCard(
                         title = strings.allTimeHighMetric,
-                        primaryValue = activeCoin.formattedAth(currency),
-                        subValue = activeCoin.athDate,
+                        primaryValue = athCoin.formattedAth(currency),
+                        subValue = athCoin.athDate,
                         modifier = Modifier.weight(1f)
                     )
                     KeyMetricCard(
@@ -1526,7 +1536,7 @@ fun SignalsScreen(
                         subValue = "Founder: ${activeCoin.founderOrCreator}",
                         modifier = Modifier.weight(1f)
                     )
-                    val ddAthStr = com.example.util.AppNumberFormatter.formatPercent(activeCoin.drawdownPercent, includeSign = true, decimals = 1)
+                    val ddAthStr = com.example.util.AppNumberFormatter.formatPercent(athCoin.drawdownPercent, includeSign = true, decimals = 1)
                     KeyMetricCard(
                         title = strings.daysSinceHighMetric,
                         primaryValue = "$daysAfterAth",

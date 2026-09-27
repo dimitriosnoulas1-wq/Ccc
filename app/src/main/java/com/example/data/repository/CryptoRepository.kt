@@ -27,6 +27,7 @@ class CryptoRepository(context: android.content.Context? = null) {
     private companion object {
         /** Keeps the /simple/price query string well inside CoinGecko's URL length limit. */
         const val COINGECKO_ID_BATCH_SIZE = 60
+        const val ATH_REFRESH_MS = 30 * 60 * 1000L
     }
 
     private val _coins = MutableStateFlow<List<CryptoCoin>>(
@@ -48,6 +49,7 @@ class CryptoRepository(context: android.content.Context? = null) {
     private var miniTickerWebSocket: okhttp3.WebSocket? = null
     private var miniTickerHostIndex = 0
     private var lastMarketCapRefreshMs = 0L
+    private var lastAthRefreshMs = 0L
     private val miniTickerHosts = listOf(
         "wss://data-stream.binance.vision/ws/!miniTicker@arr",
         "wss://stream.binance.com:9443/ws/!miniTicker@arr"
@@ -601,6 +603,10 @@ class CryptoRepository(context: android.content.Context? = null) {
                         if (ids.isNotEmpty() && fetchCoinGeckoSimplePrices(ids, asPrimarySource = false) && dueForCaps) {
                             lastMarketCapRefreshMs = now
                         }
+                        // The catalog ships a seed ATH that goes stale; Binance has no ATH at all.
+                        if (now - lastAthRefreshMs > ATH_REFRESH_MS && refreshAllTimeHighs()) {
+                            lastAthRefreshMs = now
+                        }
                     }
             } catch (_: Exception) {
                 // Ignore and try fallback
@@ -745,6 +751,50 @@ class CryptoRepository(context: android.content.Context? = null) {
     }
 
     /**
+     * Real all-time high and its date from CoinGecko's market list (one call covers the
+     * catalog). Only the ATH fields change; prices stay with the live feed. A live price
+     * above CoinGecko's ATH is itself the new high, dated today.
+     */
+    private suspend fun refreshAllTimeHighs(): Boolean = withContext(Dispatchers.IO) {
+        val athById = mutableMapOf<String, Pair<Double, String>>()
+        try {
+            val response = MarketDataClient.getText(
+                "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1",
+                attempts = 2
+            ) ?: return@withContext false
+            val arr = org.json.JSONArray(response)
+            val iso = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ENGLISH)
+            val out = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH)
+            for (i in 0 until arr.length()) {
+                val item = arr.optJSONObject(i) ?: continue
+                val id = item.optString("id").lowercase()
+                val ath = item.optDouble("ath", 0.0)
+                val rawDate = item.optString("ath_date", "")
+                if (id.isBlank() || ath <= 0.0 || rawDate.length < 10) continue
+                val date = try {
+                    iso.parse(rawDate.substring(0, 10))?.let { out.format(it) }
+                } catch (_: Exception) {
+                    null
+                } ?: continue
+                athById[id] = ath to date
+            }
+        } catch (_: Exception) {
+            return@withContext false
+        }
+        if (athById.isEmpty()) return@withContext false
+        val todayStr = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH).format(java.util.Date())
+        _coins.value = _coins.value.map { coin ->
+            val (ath, date) = athById[coin.id.lowercase()] ?: return@map coin
+            if (coin.priceUsd > ath) {
+                coin.copy(athUsd = coin.priceUsd, athDate = todayStr)
+            } else {
+                coin.copy(athUsd = ath, athDate = date)
+            }
+        }
+        true
+    }
+
+    /**
      * Looks prices up by CoinGecko id in batches. Returns true if at least one coin was updated.
      */
     private suspend fun fetchCoinGeckoSimplePrices(
@@ -794,7 +844,12 @@ class CryptoRepository(context: android.content.Context? = null) {
                         change24h = if (keepExisting) coin.change24h else change,
                         volume24h = if (keepExisting) coin.volume24h else if (vol > 0) vol else coin.volume24h,
                         marketCap = if (mcap > 0) mcap else coin.marketCap,
-                        athUsd = if (price > coin.athUsd) price else coin.athUsd
+                        athUsd = if (price > coin.athUsd) price else coin.athUsd,
+                        athDate = if (price > coin.athUsd) {
+                            java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH).format(java.util.Date(nowMs))
+                        } else {
+                            coin.athDate
+                        }
                     ),
                     nowMs
                 )

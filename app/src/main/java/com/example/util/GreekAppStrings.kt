@@ -163,12 +163,12 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val useCasesLabel: String = "Κύριες Χρήσεις Οικοσυστήματος"
 
     // Cycle Analysis Deep Dive
-    override val weekOfFallTitle: String = "Ιστορικά πτωτική αντίστοιχη εβδομάδα (Δείγμα: n=2 κύκλοι)"
+    override val weekOfFallTitle: String = "Χρόνος από το ιστορικό υψηλό"
     override val weekOfFallSub: String = "εβδομάδες από το ATH σύμφωνα με την καταγεγραμμένη ημερομηνία"
     override val cycleAnalysisHeader: String = "Ανάλυση κύκλου"
     override val fromHighToLowTitle: String = "ΑΠΟ ΤΟ ΥΨΗΛΟ ΣΕ ΕΝΑ ΠΙΘΑΝΟ ΧΑΜΗΛΟ"
     override val daysAfterAthLabel: String = "ημέρες μετά το ιστορικό υψηλό"
-    override val daysToBottomLabel: String = "ημέρες μέχρι πιθανό χαμηλό"
+    override val daysToBottomLabel: String = "μέση διάρκεια παλιών διορθώσεων (ημ.)"
     override val highMarker: String = "Υψηλό"
     override val typical383dMarker: String = "τυπικά 383ημ"
     override val lowMarker: String = "Χαμηλό"
@@ -180,7 +180,7 @@ class GreekAppStrings : AppStrings(AppLanguage.GREEK) {
     override val daysAfterHighSub: String = "Είμαστε 319 ημέρες μετά το υψηλό. Οι παλαιότερες πτώσεις προς τον πάτο διήρκεσαν περίπου 383 ημέρες."
     override val nowLabel: String = "Τώρα"
     override val daysOfRiseTitle: String = "Ημέρες ανόδου, ιστορικά"
-    override val daysOfRiseSub: String = "Οι παλαιότερες άνοδοι από τον πάτο στο επόμενο υψηλό διήρκεσαν περίπου 1059 ημέρες."
+    override val daysOfRiseSub: String = "Από κάθε παλιό πάτο κύκλου μέχρι την επόμενη κορυφή, με τις ημερήσιες τιμές αυτού του νομίσματος."
     override val halvingTitle: String = "BITCOIN HALVING"
     override val halvingDaysLabel: String = "ημέρες μέχρι το επόμενο halving"
     override val halvingHoursLabel: String = "ώρες απομένουν"
