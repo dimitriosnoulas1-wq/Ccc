@@ -221,6 +221,8 @@ fun SignalsScreen(
         }
     }
     val daysAfterAth = athCoin.calculatedAthDaysAgo
+    // Nothing about "days after the high" is shown until a real ATH with its date is known.
+    val athKnown = athCoin.athUsd > 0.0 && athCoin.athDate.isNotBlank()
     val typicalDays = cycleProfile?.typicalCorrectionDays ?: 0
     val isBottomReached = typicalDays > 0 && daysAfterAth >= typicalDays
     val daysToBottom = if (typicalDays > 0 && !isBottomReached) (typicalDays - daysAfterAth).coerceAtLeast(0) else 0
@@ -694,7 +696,7 @@ fun SignalsScreen(
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = "Rank #${activeCoin.rank}",
+                                text = "Rank ${activeCoin.displayRank}",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = NeonCyan
@@ -922,7 +924,7 @@ fun SignalsScreen(
         }
 
         // Hero Cycle Progress Card (Sleek, Compact, Futuristic Gauge)
-        item {
+        if (athKnown) item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1025,7 +1027,7 @@ fun SignalsScreen(
         }
 
         // Big Main Card: FROM THE HIGH TO A POSSIBLE LOW (real past corrections only; hidden until loaded)
-        if (cycleProfile != null) item {
+        if (cycleProfile != null && athKnown) item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1141,7 +1143,7 @@ fun SignalsScreen(
         }
 
         // Section: THIS CYCLE VS THE LAST ONES (real past corrections only; hidden until loaded)
-        if (cycleProfile != null) item {
+        if (cycleProfile != null && athKnown) item {
             val profile = cycleProfile ?: return@item
             Box(
                 modifier = Modifier
@@ -1211,11 +1213,11 @@ fun SignalsScreen(
             val isBtc = activeCoin.symbol == "BTC"
             val cardTitle = if (isBtc) strings.halvingTitle else "${activeCoin.symbol} Macro Cycle Milestones"
             val cardBadge = if (isBtc) "~2028 (Block 1,050,000)" else "ATH: ${athCoin.athDate.ifBlank { "N/A" }}"
-            val box1Val = if (isBtc) halvingCountdown.totalDaysString else athCoin.calculatedAthDaysAgo.toString()
+            val box1Val = if (isBtc) halvingCountdown.totalDaysString else if (athKnown) athCoin.calculatedAthDaysAgo.toString() else "—"
             val box1Lbl = if (isBtc) strings.halvingDaysLabel else "Days Post-Token-ATH"
             val box2Val = if (isBtc) halvingCountdown.hoursString else if (typicalDays > 0) "~$typicalDays" else "—"
             val box2Lbl = if (isBtc) strings.halvingHoursLabel else if (isGreek) "Ημέρες παλιών διορθώσεων" else "Past corrections (days)"
-            val subTickerText = if (isBtc) "Live Ticker: ${halvingCountdown.minutesString}m ${halvingCountdown.secondsString}s" else "Macro Anchor: ATH $${athCoin.athUsd}"
+            val subTickerText = if (isBtc) "Live Ticker: ${halvingCountdown.minutesString}m ${halvingCountdown.secondsString}s" else "Macro Anchor: ATH ${athCoin.formattedAth(currency)}"
             val rightTagText = if (isBtc) "Post-Halving Day ${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}" else "Rel. BTC Halving D${com.example.util.HalvingCycleUtils.getDaysSince4thHalving()}"
 
             Box(
@@ -1487,7 +1489,7 @@ fun SignalsScreen(
                     ) {
                         Column {
                             Text(text = activeCoin.formattedAtl(currency), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text(text = activeCoin.atlDate, fontSize = 10.sp, color = TextMuted)
+                            Text(text = activeCoin.atlDate.ifBlank { "—" }, fontSize = 10.sp, color = TextMuted)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1498,7 +1500,7 @@ fun SignalsScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(text = athCoin.formattedAth(currency), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text(text = athCoin.athDate, fontSize = 10.sp, color = TextMuted)
+                            Text(text = athCoin.athDate.ifBlank { "—" }, fontSize = 10.sp, color = TextMuted)
                         }
                     }
                 }
@@ -1515,13 +1517,13 @@ fun SignalsScreen(
                     KeyMetricCard(
                         title = strings.allTimeHighMetric,
                         primaryValue = athCoin.formattedAth(currency),
-                        subValue = athCoin.athDate,
+                        subValue = athCoin.athDate.ifBlank { "—" },
                         modifier = Modifier.weight(1f)
                     )
                     KeyMetricCard(
                         title = strings.allTimeLowMetric,
                         primaryValue = activeCoin.formattedAtl(currency),
-                        subValue = activeCoin.atlDate,
+                        subValue = activeCoin.atlDate.ifBlank { "—" },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -1532,16 +1534,16 @@ fun SignalsScreen(
                 ) {
                     KeyMetricCard(
                         title = strings.startMetric,
-                        primaryValue = activeCoin.genesisDate,
-                        subValue = "Founder: ${activeCoin.founderOrCreator}",
+                        primaryValue = activeCoin.genesisDate.ifBlank { "—" },
+                        subValue = if (activeCoin.founderOrCreator.isNotBlank()) "Founder: ${activeCoin.founderOrCreator}" else "—",
                         modifier = Modifier.weight(1f)
                     )
                     val ddAthStr = com.example.util.AppNumberFormatter.formatPercent(athCoin.drawdownPercent, includeSign = true, decimals = 1)
                     KeyMetricCard(
                         title = strings.daysSinceHighMetric,
-                        primaryValue = "$daysAfterAth",
+                        primaryValue = if (athKnown) "$daysAfterAth" else "—",
                         primaryValueColor = Color(0xFFFB7185),
-                        subValue = "$ddAthStr from ATH",
+                        subValue = if (athKnown) "$ddAthStr from ATH" else "—",
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -1774,7 +1776,7 @@ fun SignalsScreen(
                                             }
                                         }
                                         Text(
-                                            text = "${coinItem.symbol} • Rank #${coinItem.rank}",
+                                            text = "${coinItem.symbol} • Rank ${coinItem.displayRank}",
                                             fontSize = 11.sp,
                                             color = TextMuted,
                                             maxLines = 1,

@@ -80,8 +80,24 @@ data class CryptoCoin(
     val useCases: List<String>,
     /** Wall-clock time a live source last wrote this price. 0 means it is still seed data. */
     val priceUpdatedAtMs: Long = 0L,
-    val quoteState: QuoteState = QuoteState.PENDING
+    val quoteState: QuoteState = QuoteState.PENDING,
+    /**
+     * When a live market source last wrote rank, ATH/ATL and supply. 0 means those fields
+     * have not been loaded yet and are blank — the catalog never supplies them.
+     */
+    val metaUpdatedAtMs: Long = 0L
 ) {
+    val hasLiveMeta: Boolean
+        get() = metaUpdatedAtMs > 0L
+
+    /** "#5" once a live market rank is loaded; the catalog order is not a rank. */
+    val displayRank: String
+        get() = if (hasLiveMeta && rank > 0) "#$rank" else "—"
+
+    /** "14 Mar 2024 (927d)", or "—" while the real ATH has not loaded. */
+    val athDateWithDays: String
+        get() = if (athUsd > 0.0 && athDate.isNotBlank()) "$athDate (${calculatedAthDaysAgo}d)" else "—"
+
     /**
      * Derived from [priceUpdatedAtMs] rather than stored, so a price cannot stay flagged as live
      * once the feed behind it has gone quiet.
@@ -101,13 +117,24 @@ data class CryptoCoin(
         marketCap = 0.0,
         sparkline = emptyList(),
         priceUpdatedAtMs = 0L,
-        quoteState = QuoteState.PENDING)
+        quoteState = QuoteState.PENDING,
+        // Market facts go stale in a catalog; they are loaded live (see CryptoRepository).
+        athUsd = 0.0,
+        athDaysAgo = 0,
+        athDate = "",
+        atlUsd = 0.0,
+        atlDate = "",
+        circulatingSupply = 0.0,
+        totalSupply = 0.0,
+        maxSupply = null,
+        metaUpdatedAtMs = 0L)
 
     val calculatedAthDaysAgo: Int
         get() = com.example.util.HalvingCycleUtils.parseAthDaysAgo(athDate, athDaysAgo)
 
     val circulatingPercentage: Float
         get() {
+            if (circulatingSupply <= 0.0) return 0f
             val total = maxSupply ?: totalSupply
             return if (total > 0) ((circulatingSupply / total) * 100f).toFloat().coerceIn(0f, 100f) else 100f
         }
@@ -127,6 +154,7 @@ data class CryptoCoin(
     }
 
     fun formattedAth(currency: Currency, language: AppLanguage? = null): String {
+        if (athUsd <= 0.0) return "—"
         return com.example.util.AppNumberFormatter.formatPrice(
             price = athUsd,
             currency = currency,
@@ -135,6 +163,7 @@ data class CryptoCoin(
     }
 
     fun formattedAtl(currency: Currency, language: AppLanguage? = null): String {
+        if (atlUsd <= 0.0) return "—"
         return com.example.util.AppNumberFormatter.formatPrice(
             price = atlUsd,
             currency = currency,
@@ -143,6 +172,7 @@ data class CryptoCoin(
     }
 
     fun formattedMarketCap(currency: Currency, language: AppLanguage? = null): String {
+        if (marketCap <= 0.0) return "—"
         return com.example.util.AppNumberFormatter.formatCompactCurrency(
             amountUsd = marketCap,
             currency = currency,
@@ -151,6 +181,7 @@ data class CryptoCoin(
     }
 
     fun formattedVolume(currency: Currency, language: AppLanguage? = null): String {
+        if (volume24h <= 0.0) return "—"
         return com.example.util.AppNumberFormatter.formatCompactCurrency(
             amountUsd = volume24h,
             currency = currency,
@@ -161,6 +192,7 @@ data class CryptoCoin(
     fun formattedFdv(currency: Currency, language: AppLanguage? = null): String {
         val maxOrTotal = maxSupply ?: totalSupply
         val fdv = maxOrTotal * priceUsd
+        if (fdv <= 0.0) return "—"
         return com.example.util.AppNumberFormatter.formatCompactCurrency(
             amountUsd = fdv,
             currency = currency,
@@ -169,6 +201,7 @@ data class CryptoCoin(
     }
 
     fun formattedSupply(amount: Double, language: AppLanguage? = null): String {
+        if (amount <= 0.0) return "—"
         val lang = language ?: com.example.util.AppNumberFormatter.currentLanguage
         val formatted = com.example.util.AppNumberFormatter.formatCompactNumber(amount, lang)
         return "$formatted $supplyUnit"

@@ -37,7 +37,7 @@ object CoinDataRegistry {
             consensusMechanism = "Proof of Stake (Gasper / Casper-FFG)",
             whitepaperSummary = "Το Ethereum είναι ένας παγκόσμιος αποκεντρωμένος υπολογιστής ανοιχτού κώδικα για την εκτέλεση Smart Contracts και αποκεντρωμένων εφαρμογών (DApps).",
             technologyDetails = "EVM (Ethereum Virtual Machine), Danksharding / EIP-4844 Blobs, 12-sec slot time, Layer 2 Rollup-centric scaling roadmap.",
-            tokenomicsDetails = "EIP-1559 Base fee burn. Δυναμικό supply με αποπληθωριστική τάση σε υψηλή χρήση δικτύου, Staking yield ~3.4% APR.",
+            tokenomicsDetails = "EIP-1559 Base fee burn. Δυναμικό supply με αποπληθωριστική τάση σε υψηλή χρήση δικτύου.",
             useCases = listOf("Smart Contracts & DApps", "DeFi Collateral & Settlement", "Layer 2 Security Base Layer", "NFT & Token issuance standard (ERC-20/721/1155)")
         ),
         // 3. SOLANA

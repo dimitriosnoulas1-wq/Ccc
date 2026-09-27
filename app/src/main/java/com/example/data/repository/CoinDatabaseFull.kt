@@ -157,7 +157,7 @@ object CoinDatabaseFull {
         }
 
         // 11 - 25: AI, Layer 1 & 2
-        addCoin("near", "NEAR", "NEAR Protocol", 11, 5.85, 20.42, "16 Jan 2022", 0.52, "04 Nov 2020", +7.4, 580000000.0, 7100000000.0, 1210000000.0, 1210000000.0, null, "NEAR", CoinCategory.AI_INFRA, "04 Feb 2021", "28 Mar 2017", 258, 650.0, 1900.0, 24.0, 2.8, "22 Apr 2020", "Illia Polosukhin & Alex Skidanov", "Nightshade PoS + AI Compute", "Layer 1 sharded blockchain εστιασμένο στην υποδομή User-Owned AI και Chain Abstraction.", "Dynamic Sharding (Nightshade 2.0), FastAuth, Aurora EVM, AI Agent orchestration.", "5% ετήσιος πληθωρισμός, 70% των transaction fees καίγονται.", listOf("AI Agent Smart Contracts", "Chain Abstraction layer", "Data Availability (NEAR DA)", "Consumer Web3 Apps"))
+        addCoin("near", "NEAR", "NEAR Protocol", 11, 5.85, 20.42, "16 Jan 2022", 0.52, "04 Nov 2020", +7.4, 580000000.0, 7100000000.0, 1210000000.0, 1210000000.0, null, "NEAR", CoinCategory.AI_INFRA, "04 Feb 2021", "28 Mar 2017", 258, 650.0, 1900.0, 24.0, 2.8, "22 Apr 2020", "Illia Polosukhin & Alex Skidanov", "Nightshade PoS + AI Compute", "Layer 1 sharded blockchain εστιασμένο στην υποδομή User-Owned AI και Chain Abstraction.", "Dynamic Sharding (Nightshade 2.0), FastAuth, Aurora EVM, AI Agent orchestration.", "Πληθωρισμός από staking rewards, 70% των transaction fees καίγονται.", listOf("AI Agent Smart Contracts", "Chain Abstraction layer", "Data Availability (NEAR DA)", "Consumer Web3 Apps"))
         addCoin("render-token", "RENDER", "Render Network", 12, 7.15, 13.60, "17 Mar 2024", 0.036, "16 Jun 2020", +4.8, 420000000.0, 3700000000.0, 518000000.0, 532000000.0, 536000000.0, "RENDER", CoinCategory.AI_INFRA, "10 Jan 2021", "05 Mar 2017", 242, 780.0, 2200.0, 32.0, 3.5, "24 Jun 2017", "Jules Urbach (OTOY)", "Burn-and-Mint Equilibrium (BME) on Solana", "Αποκεντρωμένο δίκτυο GPU rendering και AI cloud computing για δημιουργούς και μοντέλα μηχανικής μάθησης.", "Solana high-speed settlement, OctaneRender engine, Distributed GPU worker nodes.", "BME οικονομικό μοντέλο όπου τα RENDER καίγονται για αγορά render credits (RNDR).", listOf("AI Model Inference & Training", "3D VFX & Motion Graphics Rendering", "Spatial Computing (Apple Vision Pro)", "Decentralized GPU Compute Marketplace"))
         addCoin("injective-protocol", "INJ", "Injective", 13, 24.50, 52.75, "14 Mar 2024", 0.65, "03 Nov 2020", +6.2, 240000000.0, 2450000000.0, 100000000.0, 100000000.0, 100000000.0, "INJ", CoinCategory.DEFI, "22 Dec 2020", "08 Feb 2017", 232, 920.0, 2600.0, 95.0, 12.0, "19 Oct 2020", "Eric Chen & Albert Chon", "Tendermint PoS (Cosmos SDK)", "Layer 1 blockchain βελτιστοποιημένο αποκλειστικά για αποκεντρωμένα χρηματοοικονομικά, orderbooks και παράγωγα.", "In-chain frequent batch auction orderbook, CosmWasm smart contracts, Inter-Blockchain Communication (IBC).", "Εβδομαδιαίο Token Burn Auction όπου το 60% όλων των dApp protocol fees καίγεται.", listOf("On-chain Derivatives & Spot DEXs", "Structured DeFi Products", "Cross-chain RWA trading", "Staking validator security"))
         addCoin("kaspa", "KAS", "Kaspa", 14, 0.165, 0.207, "01 Aug 2024", 0.00017, "26 May 2022", +3.85, 130000000.0, 4100000000.0, 24800000000.0, 24800000000.0, 28700000000.0, "KAS", CoinCategory.LAYER1, "30 Oct 2020", "25 Nov 2016", 195, 1240.0, 2900.0, 0.85, 0.08, "07 Nov 2021", "Yonatan Sompolinsky", "GHOSTDAG / BlockDAG PoW (kHeavyHash)", "Το ταχύτερο και πιο κλιμακώσιμο Proof-of-Work Layer 1 engine στον κόσμο με blockDAG consensus.", "10 blocks ανά δευτερόλεπτο (μετάβαση σε 100 bps Rust rewrite), zero orphan rate, sub-second confirmations.", "Χρωματικός μουσικός πληθωριστικός ρυθμός (Chromatic phase halving) με ετήσια μείωση εκπομπών.", listOf("High-speed PoW Settlement", "Decentralized P2P payments", "Layer 2 Rollup base layer", "MEV-resistant mining"))
@@ -172,10 +172,10 @@ object CoinDatabaseFull {
 
         // 21 - 35: High Momentum Layer 1s, AI, DePIN
         addCoin("fetch-ai", "FET", "Artificial Superintelligence Alliance", 21, 0.155, 3.45, "28 Mar 2024", 0.008, "13 Mar 2020", -1.8, 95000000.0, 395000000.0, 2520000000.0, 2710000000.0, 2710000000.0, "FET", CoinCategory.AI_INFRA, "08 Jan 2021", "20 Feb 2017", 236, 950.0, 2400.0, 7.80, 0.70, "01 Mar 2019", "Humayun Sheikh & ASI Alliance", "Autonomous Economic Agents (uAgents)", "Συμμαχία Τεχνητής Γενικής Νοημοσύνης (ASI) ενώνοντας Fetch.ai, SingularityNET και Ocean Protocol.", "uAgents micro-agent framework, DeltaV conversational AI search, Agentverse cloud hosting.", "Ενοποιημένο token FET/ASI για πληρωμές AI queries, compute reservation, agent staking.", listOf("Autonomous AI Economic Agents", "Decentralized Machine Learning", "Smart City & Supply Chain automation", "Data Monetization via Ocean"))
-        addCoin("pepe", "PEPE", "Pepe", 22, 0.0000105, 0.0000171, "27 May 2024", 0.000000055, "18 Apr 2023", +12.4, 1200000000.0, 4420000000.0, 420690000000000.0, 420690000000000.0, 420690000000000.0, "PEPE", CoinCategory.MEME, "25 Jan 2021", "12 Apr 2017", 255, 3400.0, 6800.0, 0.000065, 0.000004, "14 Apr 2023", "Anonymous (Pepe community)", "ERC-20 Zero Tax Deflationary Contract", "Το δημοφιλέστερο meme coin της σύγχρονης εποχής βασισμένο στο εμβληματικό Pepe the Frog meme.", "No taxes, liquidity pool LP burned, contract ownership fully renounced, pure community cult.", "Σταθερό supply 420.69 τρις tokens με αυτόματη καύση σε κάθε transaction.", listOf("Meme Culture Currency", "Community Liquidity Trading", "Decentralized Social tipping", "Speculative High-Beta momentum"))
+        addCoin("pepe", "PEPE", "Pepe", 22, 0.0000105, 0.0000171, "27 May 2024", 0.000000055, "18 Apr 2023", +12.4, 1200000000.0, 4420000000.0, 420690000000000.0, 420690000000000.0, 420690000000000.0, "PEPE", CoinCategory.MEME, "25 Jan 2021", "12 Apr 2017", 255, 3400.0, 6800.0, 0.000065, 0.000004, "14 Apr 2023", "Anonymous (Pepe community)", "ERC-20 token on Ethereum", "Το δημοφιλέστερο meme coin της σύγχρονης εποχής βασισμένο στο εμβληματικό Pepe the Frog meme.", "No taxes, liquidity pool LP burned, contract ownership fully renounced, pure community cult.", "Σταθερό supply 420,69 τρισ. tokens, χωρίς φόρο συναλλαγών.", listOf("Meme Culture Currency", "Community Liquidity Trading", "Decentralized Social tipping", "Speculative High-Beta momentum"))
         addCoin("celestia", "TIA", "Celestia", 23, 5.20, 20.85, "10 Feb 2024", 2.08, "31 Oct 2023", +4.6, 160000000.0, 1150000000.0, 221000000.0, 1070000000.0, null, "TIA", CoinCategory.LAYER1, "04 Jan 2021", "15 Feb 2017", 230, 840.0, 2100.0, 28.0, 2.50, "31 Oct 2023", "Mustafa Al-Bassam & Ismail Khoffi", "Tendermint Data Availability Sampling (DAS)", "Το πρώτο Modular Data Availability (DA) blockchain που μειώνει δραστικά το κόστος αποθήκευσης των Rollups.", "Data Availability Sampling (DAS), Namespaced Merkle Trees (NMTs), Light node verification.", "Inflationary staking token για πληρωμές blob space από rollups (Arbitrum, OP, Starknet).", listOf("Rollup Data Availability layer", "Modular blockchain deployment", "Validator Proof-of-Stake security", "Gas fee payment for DA blobs"))
         addCoin("aptos", "APT", "Aptos", 24, 8.90, 19.92, "26 Jan 2023", 3.08, "29 Dec 2022", +5.4, 230000000.0, 450000000.0, 505000000.0, 1120000000.0, null, "APT", CoinCategory.LAYER1, "12 Jan 2021", "05 Mar 2017", 242, 920.0, 2400.0, 42.0, 4.50, "17 Oct 2022", "Mo Shaikh & Avery Ching (Aptos Labs)", "AptosBFT (Diem legacy) + Block-STM", "Layer 1 blockchain σχεδιασμένο από πρώην μηχανικούς της Meta (Facebook Diem) με γλώσσα Move.", "Block-STM parallel execution engine (160.000+ TPS potential), Move safe memory model.", "Staking rewards, gas fee burn, ecosystem developer grants.", listOf("Enterprise Web3 applications", "Parallelized DeFi protocols", "Social & Gaming dApps", "On-chain identity authentication"))
-        addCoin("polkadot", "DOT", "Polkadot", 25, 7.80, 54.98, "04 Nov 2021", 2.70, "20 Aug 2020", +3.1, 310000000.0, 11200000000.0, 1435000000.0, 1500000000.0, null, "DOT", CoinCategory.LAYER1, "20 Dec 2020", "12 Feb 2017", 225, 450.0, 1200.0, 24.0, 4.20, "26 May 2020", "Dr. Gavin Wood (Co-founder of Ethereum)", "Nominated Proof of Stake (NPoS)", "Multi-chain framework (Polkadot 2.0) που συνδέει ανεξάρτητα parachains με κοινό security layer.", "Polkadot 2.0 Coretime architecture, XCM (Cross-Consensus Messaging), Substrate framework.", "Δυναμικό Coretime allocation, staking rewards (~10-12% APR), OpenGov decentralization.", listOf("Interoperability Hub", "Custom Substrate Parachains", "Decentralized OpenGov voting", "Cross-chain data passing (XCM)"))
+        addCoin("polkadot", "DOT", "Polkadot", 25, 7.80, 54.98, "04 Nov 2021", 2.70, "20 Aug 2020", +3.1, 310000000.0, 11200000000.0, 1435000000.0, 1500000000.0, null, "DOT", CoinCategory.LAYER1, "20 Dec 2020", "12 Feb 2017", 225, 450.0, 1200.0, 24.0, 4.20, "26 May 2020", "Dr. Gavin Wood (Co-founder of Ethereum)", "Nominated Proof of Stake (NPoS)", "Multi-chain framework (Polkadot 2.0) που συνδέει ανεξάρτητα parachains με κοινό security layer.", "Polkadot 2.0 Coretime architecture, XCM (Cross-Consensus Messaging), Substrate framework.", "Δυναμικό Coretime allocation, staking rewards, OpenGov decentralization.", listOf("Interoperability Hub", "Custom Substrate Parachains", "Decentralized OpenGov voting", "Cross-chain data passing (XCM)"))
 
         // 26 - 105: Rich additions across Layer 1/2, AI, DePIN, DeFi, RWA, Memes
         val tokenCatalog = listOf(
@@ -261,30 +261,20 @@ object CoinDatabaseFull {
             val priceVal = priceStr.toDoubleOrNull() ?: 1.0
             val rankNum = 26 + index
 
+            // Only identity and category are known here. Rank, ATH/ATL and supply load live;
+            // there is no hand-written profile for these coins, so none is shown.
             addCoin(
                 id = id, sym = sym, name = name, rank = rankNum,
                 price = priceVal,
-                ath = priceVal * 3.8,
-                athDate = "15 Nov 2021",
-                atl = priceVal * 0.05,
-                atlDate = "12 Mar 2020",
-                change = ((index * 7) % 15 - 4.5),
-                vol = (rankNum * 12500000.0),
-                mcap = (100 - rankNum).coerceAtLeast(5) * 120000000.0,
-                circ = 100000000.0 * (rankNum % 10 + 1),
-                total = 120000000.0 * (rankNum % 10 + 1),
-                max = 150000000.0 * (rankNum % 10 + 1),
+                ath = 0.0, athDate = "", atl = 0.0, atlDate = "",
+                change = 0.0, vol = 0.0, mcap = 0.0,
+                circ = 0.0, total = 0.0, max = null,
                 unit = sym,
                 cat = cat,
-                date2020 = "15 Jan 2021", date2016 = "10 Mar 2017", day = 240 + (index % 30),
-                g2020 = 550.0 + (index * 20), g2016 = 1400.0 + (index * 40),
-                peak = priceVal * 4.2, bottom = priceVal * 0.35,
-                genDate = "15 Oct 2020", founder = "$name Core Team & DAO",
-                consensus = "Proof of Stake / Smart Contract Engine",
-                wpSummary = "Το $name ($sym) αποτελεί κομβικό στοιχείο του οικοσυστήματος $name, προσφέροντας αποκεντρωμένες λύσεις για ${cat.displayName}.",
-                tech = "High throughput runtime, EVM/CosmWasm integration, advanced cryptographic validation.",
-                tokenomics = "Staking incentives, deflationary burn mechanism, governance voting rights.",
-                uses = listOf("Network Transaction Fees", "Protocol Governance", "Staking & Security", "Ecosystem Utility")
+                date2020 = "", date2016 = "", day = 0,
+                g2020 = 0.0, g2016 = 0.0, peak = 0.0, bottom = 0.0,
+                genDate = "", founder = "", consensus = "",
+                wpSummary = "", tech = "", tokenomics = "", uses = emptyList()
             )
         }
 

@@ -264,7 +264,7 @@ object HistoricalMarketRepository {
         val currentDay = if (nowMs <= HalvingCycleUtils.HALVING_4TH_TIMESTAMP) {
             0
         } else {
-            ((nowMs - HalvingCycleUtils.HALVING_4TH_TIMESTAMP) / DAY_MS).toInt().coerceIn(0, axisDays)
+            HalvingCycleUtils.calendarDaysBetween(HalvingCycleUtils.HALVING_4TH_TIMESTAMP, nowMs).coerceIn(0, axisDays)
         }
         val change = if (cycleNow.size >= 2) (cycleNow.last().multiple - 1.0) * 100.0 else 0.0
         return CycleFractalData(
@@ -311,7 +311,9 @@ object HistoricalMarketRepository {
         if (endMs <= startMs) return emptyList()
         val anchor = candles.minByOrNull { abs(it.timeMs - startMs) } ?: return emptyList()
         if (abs(anchor.timeMs - startMs) > ANCHOR_MS || anchor.close <= 0.0) return emptyList()
-        val series = candles.filter { it.timeMs in startMs..endMs }
+        // Day 0 is the halving's calendar day (UTC), so a close at 00:00 that day counts.
+        val startDayMs = Math.floorDiv(startMs, DAY_MS) * DAY_MS
+        val series = candles.filter { it.timeMs in startDayMs..endMs }
         if (series.size < 8) return emptyList()
         val sampled = series.filterIndexed { index, _ -> index % 7 == 0 }.toMutableList()
         if (sampled.last().timeMs != series.last().timeMs) sampled += series.last()
@@ -319,7 +321,7 @@ object HistoricalMarketRepository {
             sampled.add(0, anchor)
         }
         return sampled.map { candle ->
-            val day = ((candle.timeMs - startMs) / DAY_MS).toInt().coerceIn(0, axisDays)
+            val day = HalvingCycleUtils.calendarDaysBetween(startMs, candle.timeMs).coerceIn(0, axisDays)
             CycleDraft(
                 day = day,
                 multiple = candle.close / anchor.close,
