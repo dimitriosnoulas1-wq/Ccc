@@ -142,7 +142,7 @@ fun LearnBlockchainScreen(
         // Neon Gothic Citadel Wallpaper (Only in Learn: Gothic Spires, Moon, Water Reflections & Neon Light Beams)
         NeonGothicCitadelBackground(
             modifier = Modifier.fillMaxSize(),
-            dimRatio = 0.72f
+            dimRatio = 0.42f
         )
 
         Column(
@@ -557,9 +557,9 @@ private fun ParagraphsSection(content: String) {
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0D1117).copy(alpha = 0.92f),
-                        Color(0xFF0B0F18).copy(alpha = 0.96f),
-                        Color(0xFF0D1117).copy(alpha = 0.92f)
+                        Color(0xFF0A0F1C).copy(alpha = 0.82f),
+                        Color(0xFF080D18).copy(alpha = 0.88f),
+                        Color(0xFF0A0F1C).copy(alpha = 0.82f)
                     )
                 )
             )
@@ -567,9 +567,9 @@ private fun ParagraphsSection(content: String) {
                 width = 1.dp,
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF38BDF8).copy(alpha = 0.12f),
-                        Color(0xFF334155).copy(alpha = 0.30f),
-                        Color(0xFF38BDF8).copy(alpha = 0.08f)
+                        Color(0xFF38BDF8).copy(alpha = 0.45f),
+                        Color(0xFF334155).copy(alpha = 0.50f),
+                        Color(0xFF38BDF8).copy(alpha = 0.30f)
                     )
                 ),
                 shape = RoundedCornerShape(16.dp)
