@@ -53,7 +53,11 @@ object MarketDataClient {
                 .build()
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
-                    response.body?.string()?.takeIf { it.isNotBlank() }
+                    try {
+                        response.body?.string()?.takeIf { it.isNotBlank() }
+                    } catch (_: OutOfMemoryError) {
+                        null
+                    }
                 } else {
                     null
                 }
