@@ -315,9 +315,10 @@ fun NeonGothicCitadelBackground(
                 drawRect(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF090D14).copy(alpha = dimRatio * 0.70f),
-                            Color(0xFF090D14).copy(alpha = dimRatio * 1.15f), // Darkest in middle reading zone
-                            Color(0xFF090D14).copy(alpha = dimRatio * 0.85f)
+                            Color(0xFF090D14).copy(alpha = dimRatio * 0.55f),  // Header — keep art visible
+                            Color(0xFF090D14).copy(alpha = dimRatio * 1.10f),  // Middle reading zone — darkest
+                            Color(0xFF090D14).copy(alpha = dimRatio * 1.20f),  // Deep text area
+                            Color(0xFF090D14).copy(alpha = dimRatio * 0.80f)   // Footer — softer
                         )
                     ),
                     topLeft = Offset.Zero,
