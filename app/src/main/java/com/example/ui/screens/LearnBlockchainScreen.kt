@@ -142,7 +142,7 @@ fun LearnBlockchainScreen(
         // Neon Gothic Citadel Wallpaper (Only in Learn: Gothic Spires, Moon, Water Reflections & Neon Light Beams)
         NeonGothicCitadelBackground(
             modifier = Modifier.fillMaxSize(),
-            dimRatio = 0.55f
+            dimRatio = 0.72f
         )
 
         Column(
@@ -550,18 +550,45 @@ private fun ChapterHeaderTitle(
 private fun ParagraphsSection(content: String) {
     val paragraphs = content.split("\n\n").filter { it.isNotBlank() }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        paragraphs.forEach { paragraph ->
-            Text(
-                text = paragraph.trim(),
-                fontSize = 16.5.sp,
-                color = TextPrimaryHighContrast,
-                lineHeight = 27.5.sp,
-                letterSpacing = 0.2.sp
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0D1117).copy(alpha = 0.92f),
+                        Color(0xFF0B0F18).copy(alpha = 0.96f),
+                        Color(0xFF0D1117).copy(alpha = 0.92f)
+                    )
+                )
             )
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF38BDF8).copy(alpha = 0.12f),
+                        Color(0xFF334155).copy(alpha = 0.30f),
+                        Color(0xFF38BDF8).copy(alpha = 0.08f)
+                    )
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 18.dp, vertical = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            paragraphs.forEach { paragraph ->
+                Text(
+                    text = paragraph.trim(),
+                    fontSize = 16.5.sp,
+                    color = TextPrimaryHighContrast,
+                    lineHeight = 28.sp,
+                    letterSpacing = 0.15.sp
+                )
+            }
         }
     }
 }
@@ -580,57 +607,73 @@ private fun ExampleCard(
         AppLanguage.ENGLISH -> "Example"
     }
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(LearnExampleBg)
-            .border(1.dp, LearnExampleBorder, RoundedCornerShape(12.dp))
-            .height(IntrinsicSize.Min)
-    ) {
-        // Soft Cyan vertical accent bar on the left edge
-        Box(
-            modifier = Modifier
-                .width(3.5.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(CyanAccent, CyanAccent.copy(alpha = 0.60f))
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0F1E2E).copy(alpha = 0.97f),
+                        Color(0xFF0C1A28).copy(alpha = 0.99f)
                     )
                 )
-        )
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        CyanAccent.copy(alpha = 0.55f),
+                        CyanAccent.copy(alpha = 0.20f)
+                    )
+                ),
+                shape = RoundedCornerShape(14.dp)
+            )
+    ) {
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            // Cyan glow accent bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(CyanAccent, CyanAccent.copy(alpha = 0.40f))
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Lightbulb,
-                    contentDescription = null,
-                    tint = CyanAccent,
-                    modifier = Modifier.size(16.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Lightbulb,
+                        contentDescription = null,
+                        tint = CyanAccent,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Text(
+                        text = headerTitle.uppercase(),
+                        fontSize = 11.sp,
+                        fontFamily = JetBrainsMonoFont,
+                        fontWeight = FontWeight.Bold,
+                        color = CyanAccent,
+                        letterSpacing = 0.8.sp
+                    )
+                }
                 Text(
-                    text = headerTitle,
-                    fontSize = 13.5.sp,
-                    fontFamily = SpaceGroteskFont,
-                    fontWeight = FontWeight.Bold,
-                    color = CyanAccent
+                    text = example,
+                    fontSize = 15.5.sp,
+                    color = TextPrimaryHighContrast,
+                    lineHeight = 25.sp
                 )
             }
-
-            Text(
-                text = example,
-                fontSize = 15.sp,
-                color = TextSecondaryComfort,
-                lineHeight = 24.sp
-            )
         }
     }
 }
@@ -649,57 +692,73 @@ private fun CommonMistakeCard(
         AppLanguage.ENGLISH -> "Common mistake"
     }
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(LearnMistakeBg)
-            .border(1.dp, LearnMistakeBorder, RoundedCornerShape(12.dp))
-            .height(IntrinsicSize.Min)
-    ) {
-        // Soft Crimson vertical accent bar on the left edge
-        Box(
-            modifier = Modifier
-                .width(3.5.dp)
-                .fillMaxHeight()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(CrimsonAccent, CrimsonAccent.copy(alpha = 0.60f))
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1A0F14).copy(alpha = 0.97f),
+                        Color(0xFF160C12).copy(alpha = 0.99f)
                     )
                 )
-        )
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        CrimsonAccent.copy(alpha = 0.55f),
+                        CrimsonAccent.copy(alpha = 0.20f)
+                    )
+                ),
+                shape = RoundedCornerShape(14.dp)
+            )
+    ) {
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            // Crimson glow accent bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(CrimsonAccent, CrimsonAccent.copy(alpha = 0.40f))
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.ErrorOutline,
-                    contentDescription = null,
-                    tint = CrimsonAccent,
-                    modifier = Modifier.size(16.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.ErrorOutline,
+                        contentDescription = null,
+                        tint = CrimsonAccent,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Text(
+                        text = headerTitle.uppercase(),
+                        fontSize = 11.sp,
+                        fontFamily = JetBrainsMonoFont,
+                        fontWeight = FontWeight.Bold,
+                        color = CrimsonAccent,
+                        letterSpacing = 0.8.sp
+                    )
+                }
                 Text(
-                    text = headerTitle,
-                    fontSize = 13.5.sp,
-                    fontFamily = SpaceGroteskFont,
-                    fontWeight = FontWeight.Bold,
-                    color = CrimsonAccent
+                    text = mistake,
+                    fontSize = 15.5.sp,
+                    color = TextPrimaryHighContrast,
+                    lineHeight = 25.sp
                 )
             }
-
-            Text(
-                text = mistake,
-                fontSize = 15.sp,
-                color = TextSecondaryComfort,
-                lineHeight = 24.sp
-            )
         }
     }
 }
