@@ -148,7 +148,7 @@ fun CoinDetailSheet(
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "#${coin.rank}",
+                                    text = coin.displayRank,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = QuantumCyan
@@ -703,7 +703,7 @@ private fun OverviewTabContent(
                             color = TextSecondary
                         )
                         Text(
-                            text = com.example.util.AppNumberFormatter.formatPercent(coin.circulatingPercentage, includeSign = false, decimals = 1),
+                            text = if (coin.circulatingSupply > 0.0) com.example.util.AppNumberFormatter.formatPercent(coin.circulatingPercentage, includeSign = false, decimals = 1) else "—",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = QuantumCyan
@@ -739,7 +739,10 @@ private fun OverviewTabContent(
                             color = TextMuted
                         )
                         Text(
-                            text = "Max: ${coin.maxSupply?.let { coin.formattedSupply(it) } ?: strings.infiniteDeflationary}",
+                            text = "Max: ${when {
+                                coin.circulatingSupply <= 0.0 -> "—"
+                                else -> coin.maxSupply?.let { coin.formattedSupply(it) } ?: strings.infiniteDeflationary
+                            }}",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -755,7 +758,7 @@ private fun OverviewTabContent(
                 MiniStat(
                     title = strings.marketCapMetric,
                     value = coin.formattedMarketCap(currency),
-                    sub = "${strings.rankPrefix} #${coin.rank}",
+                    sub = "${strings.rankPrefix} ${coin.displayRank}",
                     modifier = Modifier.weight(1f)
                 )
                 MiniStat(
@@ -779,7 +782,7 @@ private fun OverviewTabContent(
                 MiniStat(
                     title = strings.athMetric,
                     value = coin.formattedAth(currency),
-                    sub = "${coin.athDate} (${coin.calculatedAthDaysAgo}d)",
+                    sub = coin.athDateWithDays,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -791,13 +794,15 @@ private fun OverviewTabContent(
                 MiniStat(
                     title = strings.atlMetric,
                     value = coin.formattedAtl(currency),
-                    sub = coin.atlDate,
+                    sub = coin.atlDate.ifBlank { "—" },
                     modifier = Modifier.weight(1f)
                 )
                 val dd = coin.drawdownPercent
                 MiniStat(
                     title = strings.drawdownAthMetric,
-                    value = com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1),
+                    value = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0)
+                        com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)
+                    else "—",
                     sub = strings.fromPeakSub,
                     valueColor = if (dd < 0) SoftCrimson else TachyonMint,
                     modifier = Modifier.weight(1f)
@@ -982,7 +987,9 @@ private fun AnalyticsTabContent(
                     value = if (coin.athUsd > 0.0 && coin.priceUsd > 0.0)
                         com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)
                     else "—",
-                    sub = "${coin.calculatedAthDaysAgo}d ${if (isGreek) "από το ATH" else "since ATH"}",
+                    sub = if (coin.athUsd > 0.0 && coin.athDate.isNotBlank())
+                        "${coin.calculatedAthDaysAgo}d ${if (isGreek) "από το ATH" else "since ATH"}"
+                    else "—",
                     valueColor = if (dd < 0) SoftCrimson else TachyonMint,
                     modifier = Modifier.weight(1f)
                 )
@@ -1010,13 +1017,14 @@ private fun OnChainTabContent(
     val isGreek = selectedLanguage == com.example.data.model.AppLanguage.GREEK
     val onChainMetrics = getEstimatedOnChainMetrics(coin)
 
-    // 1. Consensus & Architecture
-    SectionContainer(
+    // 1. Consensus & Architecture — only when this coin has a written profile
+    val techText = CoinLocalization.getTechnologyDetails(coin, selectedLanguage)
+    if (coin.consensusMechanism.isNotBlank() || techText.isNotBlank()) SectionContainer(
         title = strings.onChainNetworkHeader,
         icon = Icons.Default.AccountBalance
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(
+            if (coin.consensusMechanism.isNotBlank()) Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -1042,8 +1050,8 @@ private fun OnChainTabContent(
                 }
             }
 
-            Text(
-                text = CoinLocalization.getTechnologyDetails(coin, selectedLanguage),
+            if (techText.isNotBlank()) Text(
+                text = techText,
                 fontSize = 12.5.sp,
                 lineHeight = 18.sp,
                 color = TextPrimary
@@ -1057,8 +1065,9 @@ private fun OnChainTabContent(
         icon = Icons.Default.AutoAwesome
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(
-                text = CoinLocalization.getTokenomicsDetails(coin, selectedLanguage),
+            val tokenomicsText = CoinLocalization.getTokenomicsDetails(coin, selectedLanguage)
+            if (tokenomicsText.isNotBlank()) Text(
+                text = tokenomicsText,
                 fontSize = 12.5.sp,
                 lineHeight = 18.sp,
                 color = TextPrimary
@@ -1080,7 +1089,7 @@ private fun OnChainTabContent(
                     ) {
                         Text(text = strings.circulatingSupplyTitle, fontSize = 11.5.sp, color = TextSecondary)
                         Text(
-                            text = com.example.util.AppNumberFormatter.formatPercent(coin.circulatingPercentage, includeSign = false, decimals = 1),
+                            text = if (coin.circulatingSupply > 0.0) com.example.util.AppNumberFormatter.formatPercent(coin.circulatingPercentage, includeSign = false, decimals = 1) else "—",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = QuantumCyan
@@ -1110,7 +1119,10 @@ private fun OnChainTabContent(
                             color = TextMuted
                         )
                         Text(
-                            text = "Max: ${coin.maxSupply?.let { coin.formattedSupply(it) } ?: strings.infiniteDeflationary}",
+                            text = "Max: ${when {
+                                coin.circulatingSupply <= 0.0 -> "—"
+                                else -> coin.maxSupply?.let { coin.formattedSupply(it) } ?: strings.infiniteDeflationary
+                            }}",
                             fontSize = 10.5.sp,
                             color = TextMuted
                         )
@@ -1181,8 +1193,8 @@ private fun OnChainTabContent(
         }
     }
 
-    // 4. Genesis & Founder Heritage
-    SectionContainer(
+    // 4. Genesis & Founder Heritage — only when written down for this coin
+    if (coin.founderOrCreator.isNotBlank() || coin.genesisDate.isNotBlank()) SectionContainer(
         title = if (isGreek) "Ιστορικό & Δημιουργία" else "Genesis & Heritage",
         icon = Icons.Default.CheckCircle
     ) {
@@ -1198,11 +1210,11 @@ private fun OnChainTabContent(
         ) {
             Column {
                 Text(text = strings.founderLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted)
-                Text(text = coin.founderOrCreator, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(text = coin.founderOrCreator.ifBlank { "—" }, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(text = strings.genesisDateLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted)
-                Text(text = coin.genesisDate, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = QuantumCyan)
+                Text(text = coin.genesisDate.ifBlank { "—" }, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = QuantumCyan)
             }
         }
     }
@@ -1217,8 +1229,8 @@ private fun EventsTabContent(
     val isGreek = selectedLanguage == com.example.data.model.AppLanguage.GREEK
     val milestones = getMilestonesForCoin(coin, isGreek)
 
-    // 1. Protocol Milestones & Catalysts
-    SectionContainer(
+    // 1. Protocol Milestones & Catalysts — dated, already-happened events only
+    if (milestones.isNotEmpty()) SectionContainer(
         title = strings.eventsMilestonesHeader,
         icon = Icons.Default.CheckCircle
     ) {
@@ -1287,12 +1299,28 @@ private fun EventsTabContent(
     }
 
     // 2. Whitepaper & Real-World Use Cases
-    SectionContainer(
+    val profileSummary = CoinLocalization.getWhitepaperSummary(coin, selectedLanguage)
+    val profileUses = CoinLocalization.getUseCases(coin, selectedLanguage)
+    val hasProfile = coin.founderOrCreator.isNotBlank() || coin.genesisDate.isNotBlank() ||
+        profileSummary.isNotBlank() || profileUses.isNotEmpty()
+    if (!hasProfile && milestones.isEmpty()) {
+        Text(
+            text = if (isGreek) {
+                "Δεν υπάρχει ακόμη γραπτό προφίλ για το ${coin.name}. Τιμή, ATH/ATL και προσφορά έρχονται ζωντανά."
+            } else {
+                "No written profile for ${coin.name} yet. Price, ATH/ATL and supply are live."
+            },
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+            color = TextMuted
+        )
+    }
+    if (hasProfile) SectionContainer(
         title = strings.whitepaperSectionHeader,
         icon = Icons.AutoMirrored.Filled.MenuBook
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(
+            if (coin.founderOrCreator.isNotBlank() || coin.genesisDate.isNotBlank()) Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
@@ -1304,15 +1332,16 @@ private fun EventsTabContent(
             ) {
                 Column {
                     Text(text = strings.founderLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted)
-                    Text(text = coin.founderOrCreator, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text(text = coin.founderOrCreator.ifBlank { "—" }, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(text = strings.genesisDateLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextMuted)
-                    Text(text = coin.genesisDate, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = QuantumCyan)
+                    Text(text = coin.genesisDate.ifBlank { "—" }, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = QuantumCyan)
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            val summary = profileSummary
+            if (summary.isNotBlank()) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "📖 ${strings.whatCoinDoesLabel}:",
                     fontSize = 13.sp,
@@ -1320,21 +1349,22 @@ private fun EventsTabContent(
                     color = PhotonGold
                 )
                 Text(
-                    text = CoinLocalization.getWhitepaperSummary(coin, selectedLanguage),
+                    text = summary,
                     fontSize = 13.sp,
                     lineHeight = 19.sp,
                     color = TextPrimary
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val useCases = profileUses
+            if (useCases.isNotEmpty()) Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "🎯 ${strings.useCasesLabel}:",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = TachyonMint
                 )
-                CoinLocalization.getUseCases(coin, selectedLanguage).forEach { useCase ->
+                useCases.forEach { useCase ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top
@@ -1404,149 +1434,150 @@ private data class ProtocolMilestone(
 )
 
 private fun getMilestonesForCoin(coin: CryptoCoin, isGreek: Boolean): List<ProtocolMilestone> {
+    // Dated events that already happened (plus Bitcoin's protocol-scheduled halving).
+    // No generic roadmap for coins without a verified list.
     return when (coin.symbol.uppercase()) {
         "BTC" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "4ο Bitcoin Halving (Block 840,000)" else "4th Bitcoin Halving (Block 840,000)",
+                title = if (isGreek) "Ενεργοποίηση Taproot" else "Taproot activation",
+                timeline = if (isGreek) "Νοέμβριος 2021" else "November 2021",
+                status = "COMPLETED",
+                description = if (isGreek) "Αναβάθμιση Schnorr υπογραφών και πιο ιδιωτικών/φθηνών scripts." else "Schnorr signatures and cheaper, more private scripts."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "Spot Bitcoin ETF στις ΗΠΑ" else "US spot Bitcoin ETFs",
+                timeline = if (isGreek) "Ιανουάριος 2024" else "January 2024",
+                status = "COMPLETED",
+                description = if (isGreek) "Η SEC ενέκρινε τα πρώτα spot Bitcoin ETF." else "The SEC approved the first US spot Bitcoin ETFs."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "4ο Bitcoin Halving (Block 840.000)" else "4th Bitcoin Halving (Block 840,000)",
                 timeline = if (isGreek) "Απρίλιος 2024" else "April 2024",
                 status = "COMPLETED",
-                description = if (isGreek) "Μείωση ανταμοιβής εξόρυξης από 6.25 σε 3.125 BTC ανά μπλοκ." else "Mining block subsidy cut from 6.25 to 3.125 BTC per block."
+                description = if (isGreek) "Η ανταμοιβή μπλοκ μειώθηκε από 6,25 σε 3,125 BTC." else "Block subsidy cut from 6.25 to 3.125 BTC."
             ),
             ProtocolMilestone(
-                title = if (isGreek) "Spot ETF & Θεσμική Υιοθέτηση" else "Spot ETF & Institutional Adoption",
-                timeline = if (isGreek) "Σε εξέλιξη" else "Ongoing",
-                status = "ACTIVE",
-                description = if (isGreek) "Σταθερές καθαρές εισροές και συσσώρευση από θεσμικά ταμεία και εταιρικά ταμεία." else "Sustained net inflows and custody accumulation across asset managers."
-            ),
-            ProtocolMilestone(
-                title = if (isGreek) "BitVM & Layer 2 Programmability" else "BitVM & Layer 2 Programmability",
-                timeline = if (isGreek) "2025 - 2026" else "2025 - 2026",
+                title = if (isGreek) "5ο Bitcoin Halving (Block 1.050.000)" else "5th Bitcoin Halving (Block 1,050,000)",
+                timeline = if (isGreek) "Εκτίμηση 2028" else "Est. 2028",
                 status = "UPCOMING",
-                description = if (isGreek) "Υλοποίηση smart contracts και zero-knowledge rollups πάνω στο ασφαλές L1 του Bitcoin." else "Zero-knowledge rollups and expressive contracts secured by Bitcoin L1."
-            ),
-            ProtocolMilestone(
-                title = if (isGreek) "5ο Bitcoin Halving (Block 1,050,000)" else "5th Bitcoin Halving (Block 1,050,000)",
-                timeline = if (isGreek) "Εκτίμηση Απρίλιος 2028" else "Est. April 2028",
-                status = "UPCOMING",
-                description = if (isGreek) "Περαιτέρω μείωση του ρυθμού έκδοσης στα 1.5625 BTC ανά μπλοκ." else "Block subsidy drops to 1.5625 BTC per block."
+                description = if (isGreek) "Ορίζεται από το πρωτόκολλο: η ανταμοιβή πέφτει στα 1,5625 BTC. Η ημερομηνία εξαρτάται από τον ρυθμό των μπλοκ." else "Set by the protocol: subsidy drops to 1.5625 BTC. The date depends on block times."
             )
         )
         "ETH" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "Dencun Upgrade (EIP-4844)" else "Dencun Upgrade (EIP-4844)",
+                title = if (isGreek) "The Merge" else "The Merge",
+                timeline = if (isGreek) "Σεπτέμβριος 2022" else "September 2022",
+                status = "COMPLETED",
+                description = if (isGreek) "Μετάβαση από Proof of Work σε Proof of Stake." else "Switch from Proof of Work to Proof of Stake."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "Shapella" else "Shapella",
+                timeline = if (isGreek) "Απρίλιος 2023" else "April 2023",
+                status = "COMPLETED",
+                description = if (isGreek) "Ενεργοποίηση αναλήψεων staking." else "Staking withdrawals enabled."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "Dencun (EIP-4844)" else "Dencun (EIP-4844)",
                 timeline = if (isGreek) "Μάρτιος 2024" else "March 2024",
                 status = "COMPLETED",
-                description = if (isGreek) "Εισαγωγή Proto-Danksharding blobs που μείωσε τα fees των Layer 2 κατά 90%." else "Proto-Danksharding blobs reducing Layer 2 transaction fees by over 90%."
+                description = if (isGreek) "Blob συναλλαγές που μείωσαν το κόστος των Layer 2." else "Blob transactions that cut Layer 2 data costs."
             ),
             ProtocolMilestone(
-                title = if (isGreek) "Pectra Hard Fork" else "Pectra Hard Fork",
-                timeline = if (isGreek) "Εκτίμηση 2025" else "Est. 2025",
-                status = "UPCOMING",
-                description = if (isGreek) "Account Abstraction (EIP-7702) και αύξηση μέγιστου υπολοίπου validator σε 2048 ETH." else "Account Abstraction (EIP-7702) and max validator balance raised to 2,048 ETH."
-            ),
-            ProtocolMilestone(
-                title = if (isGreek) "EIP-1559 Μηχανισμός Καύσης" else "EIP-1559 Fee Burn Mechanism",
-                timeline = if (isGreek) "Συνεχές" else "Continuous",
-                status = "ACTIVE",
-                description = if (isGreek) "Αυτόματη καύση του base fee κατά περιόδους υψηλής χρήσης του δικτύου." else "Automated base gas fee burning during high network congestion periods."
+                title = if (isGreek) "Pectra" else "Pectra",
+                timeline = if (isGreek) "Μάιος 2025" else "May 2025",
+                status = "COMPLETED",
+                description = if (isGreek) "EIP-7702 για λογαριασμούς και μέγιστο υπόλοιπο validator 2.048 ETH." else "EIP-7702 account features and a 2,048 ETH max validator balance."
             )
         )
         "SOL" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "Firedancer Validator Client" else "Firedancer Validator Client",
-                timeline = if (isGreek) "Εκτίμηση 2025" else "Est. 2025",
-                status = "UPCOMING",
-                description = if (isGreek) "Ανεξάρτητος C++ client από την Jump Crypto με στόχο 1.000.000+ TPS." else "Independent C++ validator client by Jump Crypto targeting 1,000,000+ TPS."
-            ),
-            ProtocolMilestone(
-                title = if (isGreek) "Token Extensions & Institutional Standard" else "Token Extensions & Institutional Standard",
-                timeline = if (isGreek) "Ολοκληρώθηκε" else "Completed",
+                title = if (isGreek) "Mainnet Beta" else "Mainnet Beta",
+                timeline = if (isGreek) "Μάρτιος 2020" else "March 2020",
                 status = "COMPLETED",
-                description = if (isGreek) "Εγγενή χαρακτηριστικά συμμόρφωσης, εμπιστευτικές μεταφορές και προσαρμοσμένα hooks." else "Native enterprise compliance features, confidential transfers and metadata hooks."
+                description = if (isGreek) "Έναρξη του κύριου δικτύου Solana." else "Solana mainnet beta goes live."
             ),
             ProtocolMilestone(
                 title = if (isGreek) "Solana Actions & Blinks" else "Solana Actions & Blinks",
-                timeline = if (isGreek) "Ενεργό" else "Active",
-                status = "ACTIVE",
-                description = if (isGreek) "Δυνατότητα εκτέλεσης συναλλαγών απευθείας μέσα από social media και websites." else "Execute on-chain transactions directly within social feeds and websites."
+                timeline = if (isGreek) "Ιούνιος 2024" else "June 2024",
+                status = "COMPLETED",
+                description = if (isGreek) "Συναλλαγές on-chain μέσα από συνδέσμους σε websites και social media." else "On-chain transactions from links on websites and social feeds."
             )
         )
         "XRP" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "Ripple RLUSD Stablecoin" else "Ripple RLUSD Stablecoin",
-                timeline = if (isGreek) "2024 - 2025" else "2024 - 2025",
-                status = "UPCOMING",
-                description = if (isGreek) "Ρυθμιζόμενο enterprise stablecoin για διατραπεζικές διασυνοριακές πληρωμές." else "Regulated enterprise stablecoin for institutional cross-border settlement."
+                title = if (isGreek) "Έναρξη XRP Ledger" else "XRP Ledger launch",
+                timeline = if (isGreek) "Ιούνιος 2012" else "June 2012",
+                status = "COMPLETED",
+                description = if (isGreek) "Το XRP Ledger ξεκινά με 100 δισ. XRP." else "The XRP Ledger launches with 100 billion XRP."
             ),
             ProtocolMilestone(
-                title = if (isGreek) "XLS-30D Automated Market Maker (AMM)" else "XLS-30D Automated Market Maker (AMM)",
-                timeline = if (isGreek) "Ολοκληρώθηκε" else "Completed",
+                title = if (isGreek) "XLS-30 AMM" else "XLS-30 AMM",
+                timeline = if (isGreek) "Μάρτιος 2024" else "March 2024",
                 status = "COMPLETED",
-                description = if (isGreek) "Ενσωμάτωση native DEX AMM δεξαμενών ρευστότητας στο XRPL." else "Native on-chain AMM pools and continuous auction mechanism on XRPL."
+                description = if (isGreek) "Εγγενείς δεξαμενές ρευστότητας AMM στο XRPL." else "Native AMM liquidity pools on the XRPL."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "Stablecoin RLUSD" else "RLUSD stablecoin",
+                timeline = if (isGreek) "Δεκέμβριος 2024" else "December 2024",
+                status = "COMPLETED",
+                description = if (isGreek) "Η Ripple κυκλοφορεί το ρυθμιζόμενο stablecoin RLUSD." else "Ripple launches its regulated RLUSD stablecoin."
             )
         )
         "BNB" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "BEP-336 Blob Transactions" else "BEP-336 Blob Transactions",
-                timeline = if (isGreek) "Ολοκληρώθηκε" else "Completed",
+                title = if (isGreek) "BEP-95 καύση σε πραγματικό χρόνο" else "BEP-95 real-time burn",
+                timeline = if (isGreek) "Νοέμβριος 2021" else "November 2021",
                 status = "COMPLETED",
-                description = if (isGreek) "Βελτιστοποίηση Layer 2 rollups στο BNB Chain με δραστική μείωση gas fees." else "Blob transaction support delivering massive gas reductions for opBNB rollups."
+                description = if (isGreek) "Μέρος των gas fees καίγεται σε κάθε μπλοκ." else "A share of gas fees is burned in every block."
             ),
             ProtocolMilestone(
                 title = if (isGreek) "Τριμηνιαίο Auto-Burn" else "Quarterly Auto-Burn",
-                timeline = if (isGreek) "Σε εξέλιξη" else "Ongoing",
+                timeline = if (isGreek) "Από Δεκέμβριο 2021" else "Since December 2021",
                 status = "ACTIVE",
-                description = if (isGreek) "Αυτόματη φόρμουλα καύσης BNB έως ότου η συνολική προσφορά φτάσει τα 100M tokens." else "Formulaic token burning program until circulating supply contracts to 100M BNB."
+                description = if (isGreek) "Καύση με τύπο έως ότου η προσφορά φτάσει τα 100 εκατ. BNB." else "Formula-based burns until supply reaches 100 million BNB."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "Haber (BEP-336 blobs)" else "Haber (BEP-336 blobs)",
+                timeline = if (isGreek) "Ιούνιος 2024" else "June 2024",
+                status = "COMPLETED",
+                description = if (isGreek) "Blob συναλλαγές για φθηνότερα Layer 2 στο BNB Chain." else "Blob transactions for cheaper Layer 2s on BNB Chain."
             )
         )
         "ADA" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "Chang Hard Fork (Voltaire Era)" else "Chang Hard Fork (Voltaire Era)",
-                timeline = if (isGreek) "Ολοκληρώθηκε" else "Completed",
+                title = if (isGreek) "Alonzo (smart contracts)" else "Alonzo (smart contracts)",
+                timeline = if (isGreek) "Σεπτέμβριος 2021" else "September 2021",
                 status = "COMPLETED",
-                description = if (isGreek) "Μετάβαση σε πλήρη on-chain δημοκρατική διακυβέρνηση και διαχείριση ταμείου κοινότητας." else "Full on-chain democratic governance, delegate representatives and treasury voting."
+                description = if (isGreek) "Plutus smart contracts στο mainnet." else "Plutus smart contracts on mainnet."
             ),
             ProtocolMilestone(
-                title = if (isGreek) "Hydra Layer 2 Scaling" else "Hydra Layer 2 Scaling",
-                timeline = if (isGreek) "Σε εξέλιξη" else "Ongoing",
-                status = "ACTIVE",
-                description = if (isGreek) "Κανάλια κατάστασης για άμεσες συναλλαγές χαμηλού κόστους σε κλίμακα χιλιάδων TPS." else "State channels enabling isomorphic high-throughput micro-transactions."
+                title = if (isGreek) "Chang hard fork" else "Chang hard fork",
+                timeline = if (isGreek) "Σεπτέμβριος 2024" else "September 2024",
+                status = "COMPLETED",
+                description = if (isGreek) "Αρχή της on-chain διακυβέρνησης (Voltaire)." else "Start of on-chain governance (Voltaire)."
+            ),
+            ProtocolMilestone(
+                title = if (isGreek) "Plomin hard fork" else "Plomin hard fork",
+                timeline = if (isGreek) "Ιανουάριος 2025" else "January 2025",
+                status = "COMPLETED",
+                description = if (isGreek) "Πλήρης on-chain διακυβέρνηση και ψηφοφορίες ταμείου." else "Full on-chain governance and treasury voting."
             )
         )
         "SUI" -> listOf(
             ProtocolMilestone(
-                title = if (isGreek) "Mysticeti Consensus Engine" else "Mysticeti Consensus Engine",
-                timeline = if (isGreek) "Ολοκληρώθηκε" else "Completed",
+                title = if (isGreek) "Mainnet" else "Mainnet",
+                timeline = if (isGreek) "Μάιος 2023" else "May 2023",
                 status = "COMPLETED",
-                description = if (isGreek) "Υπερταχεία οριστικότητα συναλλαγών κάτω από 400ms σε παράλληλη εκτέλεση." else "Sub-400ms transaction consensus latency under Byzantine fault tolerance."
+                description = if (isGreek) "Έναρξη του κύριου δικτύου Sui." else "Sui mainnet goes live."
             ),
             ProtocolMilestone(
-                title = if (isGreek) "SuiPlay0X1 Web3 Gaming Device" else "SuiPlay0X1 Web3 Gaming Device",
-                timeline = if (isGreek) "2025" else "2025",
-                status = "UPCOMING",
-                description = if (isGreek) "Κονσόλα χειρός Web3 με ενσωματωμένη ασφάλεια πορτοφολιού και native gaming τίτλους." else "First handheld Web3 gaming console with hardware key management."
+                title = if (isGreek) "Mysticeti" else "Mysticeti",
+                timeline = if (isGreek) "Αύγουστος 2024" else "August 2024",
+                status = "COMPLETED",
+                description = if (isGreek) "Νέος μηχανισμός συναίνεσης με χαμηλότερη καθυστέρηση." else "New consensus engine with lower latency."
             )
         )
-        else -> listOf(
-            ProtocolMilestone(
-                title = if (isGreek) "Αναβάθμιση Κόμβων & Διακυβέρνηση" else "Core Node Upgrades & Governance",
-                timeline = if (isGreek) "Συνεχές" else "Continuous",
-                status = "ACTIVE",
-                description = if (isGreek) "Συνεχής βελτίωση απόδοσης δικτύου, ασφάλειας επικυρωτών και παραμέτρων πρωτοκόλλου." else "Ongoing validator throughput enhancements, client security, and protocol parameters."
-            ),
-            ProtocolMilestone(
-                title = if (isGreek) "Προγράμματα Κινήτρων Οικοσυστήματος" else "Ecosystem & Staking Expansion",
-                timeline = if (isGreek) "Σε εξέλιξη" else "Ongoing",
-                status = "ACTIVE",
-                description = if (isGreek) "Ενίσχυση ρευστότητας, staking rewards και επέκταση κοινότητας προγραμματιστών." else "Liquidity incentives, staking yield stabilization, and developer ecosystem grants."
-            ),
-            ProtocolMilestone(
-                title = if (isGreek) "Διασυνδεσιμότητα & Cross-Chain Bridges" else "Cross-Chain Interoperability & Bridges",
-                timeline = if (isGreek) "Εκτίμηση 2025" else "Est. 2025",
-                status = "UPCOMING",
-                description = if (isGreek) "Επέκταση γεφυρών ρευστότητας και πρωτοκόλλων επικοινωνίας μεταξύ πολλαπλών αλυσίδων." else "Deployment of trust-minimized interoperability bridges across major L1/L2 networks."
-            )
-        )
+        else -> emptyList()
     }
 }
 

@@ -228,9 +228,7 @@ class GeminiAiService(
         language: AppLanguage
     ): String {
         val now = System.currentTimeMillis()
-        val halvingTimestamp = 1713571200000L // April 20, 2024
-
-        val daysSinceHalvingCalc = ((now - halvingTimestamp) / (1000L * 60 * 60 * 24)).coerceAtLeast(1)
+        val daysSinceHalvingCalc = com.example.util.HalvingCycleUtils.getDaysSince4thHalving().toLong().coerceAtLeast(1)
 
         val btcPriceFormatted = if (snapshot.btcPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.btcPrice, language = language) else "—"
         val ethPriceFormatted = if (snapshot.ethPrice > 0) com.example.util.AppNumberFormatter.formatPrice(snapshot.ethPrice, language = language) else "—"

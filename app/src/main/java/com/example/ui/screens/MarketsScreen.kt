@@ -1163,7 +1163,9 @@ fun HeroCoinCard(
                     )
                     val dd = hero.drawdownPercent
                     val ddColor = if (dd < 0) palette.lossColor else TachyonMint
-                    val formattedDd = com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)
+                    val formattedDd = if (hero.athUsd > 0.0 && hero.priceUsd > 0.0)
+                        com.example.util.AppNumberFormatter.formatPercent(dd, includeSign = true, decimals = 1)
+                    else "—"
                     Text(
                         text = "$formattedDd ATH",
                         fontSize = 12.5.sp,

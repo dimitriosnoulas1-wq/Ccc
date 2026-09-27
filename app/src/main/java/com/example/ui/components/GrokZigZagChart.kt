@@ -465,7 +465,7 @@ fun GrokZigZagChart(
                     val halvingDays = com.example.util.HalvingCycleUtils.getDaysSince4thHalving()
                     val athDays = coin.calculatedAthDaysAgo
                     Text(
-                        text = if (coin.symbol == "BTC") "Post-Halving Day $halvingDays" else "${coin.symbol} · Day $athDays after ATH",
+                        text = if (coin.symbol == "BTC") "Post-Halving Day $halvingDays" else if (coin.athUsd > 0.0 && coin.athDate.isNotBlank()) "${coin.symbol} · Day $athDays after ATH" else coin.symbol,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary

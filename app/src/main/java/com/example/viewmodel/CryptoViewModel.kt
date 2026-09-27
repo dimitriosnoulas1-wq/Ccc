@@ -433,7 +433,7 @@ class CryptoViewModel @JvmOverloads constructor(
                 val formattedMcap = com.example.util.AppNumberFormatter.formatCompactCurrency(coin.marketCap, language = lang)
                 val formattedAth = com.example.util.AppNumberFormatter.formatPrice(coin.athUsd, language = lang)
                 val pctFromAth = com.example.util.AppNumberFormatter.formatPercent(if (coin.athUsd > 0) ((coin.priceUsd - coin.athUsd) / coin.athUsd) * 100.0 else 0.0, includeSign = false, language = lang).removeSuffix("%")
-                "• COIN: ${coin.name} (${coin.symbol.uppercase()})\n  - Live Spot Price: $formattedPrice USD\n  - 24h Change: $sign$formattedChange%\n  - 24h Volume: $formattedVol USD\n  - Market Cap: $formattedMcap USD\n  - All-Time High (ATH): $formattedAth ($pctFromAth% from ATH)"
+                "• COIN: ${coin.name} (${coin.symbol.uppercase()})\n  - Live Spot Price: $formattedPrice USD\n  - 24h Change: $sign$formattedChange%\n  - 24h Volume: $formattedVol USD\n  - Market Cap: $formattedMcap USD\n  - All-Time High (ATH): ${if (coin.athUsd > 0.0) "$formattedAth ($pctFromAth% from ATH, ${coin.athDate})" else "not loaded"}"
             }
         } else null
 

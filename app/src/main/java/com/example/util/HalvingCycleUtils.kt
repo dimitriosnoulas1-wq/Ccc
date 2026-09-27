@@ -29,10 +29,16 @@ object HalvingCycleUtils {
         val blockProgressPercent: Float
     )
 
-    fun getDaysSince4thHalving(): Int {
-        val now = System.currentTimeMillis()
-        val diff = now - HALVING_4TH_TIMESTAMP
-        return (diff / (1000L * 60 * 60 * 24)).toInt().coerceAtLeast(0)
+    /**
+     * Calendar days (UTC) since the halving day — the same count the Rainbow cards use.
+     * Counting elapsed 24h periods from the halving minute (00:09 UTC) would lag the
+     * calendar by one day in the first minutes after midnight.
+     */
+    fun getDaysSince4thHalving(): Int = calendarDaysBetween(HALVING_4TH_TIMESTAMP, System.currentTimeMillis())
+
+    fun calendarDaysBetween(fromMs: Long, toMs: Long): Int {
+        val day = 86_400_000L
+        return (Math.floorDiv(toMs, day) - Math.floorDiv(fromMs, day)).toInt().coerceAtLeast(0)
     }
 
     fun getLiveHalvingCountdown(): HalvingCountdownState {

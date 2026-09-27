@@ -27,12 +27,15 @@ class CryptoRepository(context: android.content.Context? = null) {
     private companion object {
         /** Keeps the /simple/price query string well inside CoinGecko's URL length limit. */
         const val COINGECKO_ID_BATCH_SIZE = 60
+        const val ATH_REFRESH_MS = 30 * 60 * 1000L
     }
 
     private val _coins = MutableStateFlow<List<CryptoCoin>>(
         if (context != null) {
             com.example.util.PriceCacheManager.init(context)
-            com.example.util.PriceCacheManager.applyCachedPrices(CoinDatabaseFull.get100Coins())
+            com.example.util.PriceCacheManager.applyCachedMeta(
+                com.example.util.PriceCacheManager.applyCachedPrices(CoinDatabaseFull.get100Coins())
+            )
         } else {
             CoinDatabaseFull.get100Coins()
         }
@@ -48,6 +51,7 @@ class CryptoRepository(context: android.content.Context? = null) {
     private var miniTickerWebSocket: okhttp3.WebSocket? = null
     private var miniTickerHostIndex = 0
     private var lastMarketCapRefreshMs = 0L
+    private var lastAthRefreshMs = 0L
     private val miniTickerHosts = listOf(
         "wss://data-stream.binance.vision/ws/!miniTicker@arr",
         "wss://stream.binance.com:9443/ws/!miniTicker@arr"
@@ -112,7 +116,7 @@ class CryptoRepository(context: android.content.Context? = null) {
                             val (price, change, quoteVol) = quote
                             if (price <= 0.0) return@map coin
                             updated = true
-                            val isNewAth = price > coin.athUsd
+                            val isNewAth = coin.athUsd > 0.0 && price > coin.athUsd
                             stampLive(
                                 coin,
                                 coin.copy(
@@ -285,7 +289,7 @@ class CryptoRepository(context: android.content.Context? = null) {
                 if (coinMatchesBaseSymbol(coin, baseSymbol)) {
                     coinUpdated = true
                     val ch = if (tick.change24h != 0.0) tick.change24h else coin.change24h
-                    val isNewAth = unitPrice > coin.athUsd
+                    val isNewAth = coin.athUsd > 0.0 && unitPrice > coin.athUsd
                     stampLive(
                         coin,
                         coin.copy(
@@ -334,7 +338,7 @@ class CryptoRepository(context: android.content.Context? = null) {
         val newCoins = _coins.value.map { coin ->
             if (coinMatchesBaseSymbol(coin, baseSymbol)) {
                 coinUpdated = true
-                val isNewAth = unitPrice > coin.athUsd
+                val isNewAth = coin.athUsd > 0.0 && unitPrice > coin.athUsd
                 stampLive(
                     coin,
                     coin.copy(
@@ -565,7 +569,7 @@ class CryptoRepository(context: android.content.Context? = null) {
                                     live.second
                                 }
                                 val newVolume = quotedVolume(symKey, volumeMap) ?: coin.volume24h
-                                val isNewAth = newPrice > coin.athUsd
+                                val isNewAth = coin.athUsd > 0.0 && newPrice > coin.athUsd
                                 val updatedAth = if (isNewAth) newPrice else coin.athUsd
                                 val updatedAthDate = if (isNewAth) todayStr else coin.athDate
                                 stampLive(
@@ -600,6 +604,10 @@ class CryptoRepository(context: android.content.Context? = null) {
                         }
                         if (ids.isNotEmpty() && fetchCoinGeckoSimplePrices(ids, asPrimarySource = false) && dueForCaps) {
                             lastMarketCapRefreshMs = now
+                        }
+                        // Binance has no rank, ATH/ATL or supply; the catalog no longer supplies them.
+                        if (now - lastAthRefreshMs > ATH_REFRESH_MS && refreshMarketMetadata()) {
+                            lastAthRefreshMs = now
                         }
                     }
             } catch (_: Exception) {
@@ -693,6 +701,10 @@ class CryptoRepository(context: android.content.Context? = null) {
                         _isLiveConnected.value = true
                         _priceSource.value = "CoinGecko / Binance"
                         success = true
+                        val metaNow = System.currentTimeMillis()
+                        if (metaNow - lastAthRefreshMs > ATH_REFRESH_MS && refreshMarketMetadata()) {
+                            lastAthRefreshMs = metaNow
+                        }
                     }
                 } catch (_: Exception) {
                     // Ignore and fall through to the per-id lookup
@@ -745,6 +757,76 @@ class CryptoRepository(context: android.content.Context? = null) {
     }
 
     /**
+     * Rank, all-time high/low with their dates, and supply for every catalog coin, from
+     * CoinGecko's market list queried by id. Prices stay with the live feed. A live price
+     * above CoinGecko's ATH is itself the new high, dated today.
+     */
+    private suspend fun refreshMarketMetadata(): Boolean = withContext(Dispatchers.IO) {
+        val ids = _coins.value.map { it.id.lowercase() }.filter { it.isNotBlank() }.distinct()
+        if (ids.isEmpty()) return@withContext false
+        val byId = mutableMapOf<String, JSONObject>()
+        for (batch in ids.chunked(COINGECKO_ID_BATCH_SIZE)) {
+            try {
+                val joined = batch.joinToString(",") { java.net.URLEncoder.encode(it, "UTF-8") }
+                val response = MarketDataClient.getText(
+                    "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=$joined&per_page=250&page=1",
+                    attempts = 2
+                ) ?: continue
+                val arr = org.json.JSONArray(response)
+                for (i in 0 until arr.length()) {
+                    val item = arr.optJSONObject(i) ?: continue
+                    val id = item.optString("id").lowercase()
+                    if (id.isNotBlank()) byId[id] = item
+                }
+            } catch (_: Exception) {
+                // Keep whatever the other batch returned
+            }
+        }
+        if (byId.isEmpty()) return@withContext false
+
+        val iso = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ENGLISH)
+        val out = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH)
+        fun day(raw: String): String? = if (raw.length < 10) null else try {
+            iso.parse(raw.substring(0, 10))?.let { out.format(it) }
+        } catch (_: Exception) {
+            null
+        }
+        fun positive(item: JSONObject, key: String): Double? =
+            if (item.isNull(key)) null else item.optDouble(key, 0.0).takeIf { it > 0.0 }
+
+        val nowMs = System.currentTimeMillis()
+        val todayStr = out.format(java.util.Date(nowMs))
+        _coins.value = _coins.value.map { coin ->
+            val item = byId[coin.id.lowercase()] ?: return@map coin
+            val ath = positive(item, "ath")
+            val athDay = day(item.optString("ath_date", ""))
+            val atl = positive(item, "atl")
+            val atlDay = day(item.optString("atl_date", ""))
+            val circ = positive(item, "circulating_supply")
+            val rank = if (item.isNull("market_cap_rank")) 0 else item.optInt("market_cap_rank", 0)
+            val (finalAth, finalAthDate) = when {
+                ath == null || athDay == null -> coin.athUsd to coin.athDate
+                coin.priceUsd > ath -> coin.priceUsd to todayStr
+                else -> ath to athDay
+            }
+            coin.copy(
+                rank = if (rank > 0) rank else coin.rank,
+                athUsd = finalAth,
+                athDate = finalAthDate,
+                atlUsd = if (atl != null && atlDay != null) atl else coin.atlUsd,
+                atlDate = if (atl != null && atlDay != null) atlDay else coin.atlDate,
+                circulatingSupply = circ ?: coin.circulatingSupply,
+                totalSupply = positive(item, "total_supply") ?: coin.totalSupply,
+                // CoinGecko reports null for an uncapped supply.
+                maxSupply = if (circ != null) positive(item, "max_supply") else coin.maxSupply,
+                metaUpdatedAtMs = nowMs
+            )
+        }
+        com.example.util.PriceCacheManager.saveMeta(_coins.value)
+        true
+    }
+
+    /**
      * Looks prices up by CoinGecko id in batches. Returns true if at least one coin was updated.
      */
     private suspend fun fetchCoinGeckoSimplePrices(
@@ -794,7 +876,12 @@ class CryptoRepository(context: android.content.Context? = null) {
                         change24h = if (keepExisting) coin.change24h else change,
                         volume24h = if (keepExisting) coin.volume24h else if (vol > 0) vol else coin.volume24h,
                         marketCap = if (mcap > 0) mcap else coin.marketCap,
-                        athUsd = if (price > coin.athUsd) price else coin.athUsd
+                        athUsd = if (coin.athUsd > 0.0 && price > coin.athUsd) price else coin.athUsd,
+                        athDate = if (coin.athUsd > 0.0 && price > coin.athUsd) {
+                            java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH).format(java.util.Date(nowMs))
+                        } else {
+                            coin.athDate
+                        }
                     ),
                     nowMs
                 )
@@ -836,7 +923,7 @@ class CryptoRepository(context: android.content.Context? = null) {
             if (liveTick != null && liveTick.price > 0.0 && !liveTick.isStale) {
                 val p = liveTick.price
                 val ch = if (liveTick.change24h != 0.0) liveTick.change24h else coin.change24h
-                val isNewAth = p > coin.athUsd
+                val isNewAth = coin.athUsd > 0.0 && p > coin.athUsd
                 stampLive(
                     coin,
                     coin.copy(

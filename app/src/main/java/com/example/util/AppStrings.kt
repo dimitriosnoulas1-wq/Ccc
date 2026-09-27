@@ -167,12 +167,12 @@ open class AppStrings(
     open val useCasesLabel: String = "Core Ecosystem Use Cases"
 
     // Cycle Analysis Deep Dive
-    open val weekOfFallTitle: String = "Historically bearish matching week (Sample: n=2 cycles)"
+    open val weekOfFallTitle: String = "Time since the all-time high"
     open val weekOfFallSub: String = "weeks since ATH from the listed ATH date"
     open val cycleAnalysisHeader: String = "Cycle analysis"
     open val fromHighToLowTitle: String = "FROM THE HIGH TO A POSSIBLE LOW"
     open val daysAfterAthLabel: String = "days after the all-time high"
-    open val daysToBottomLabel: String = "days to a possible bottom"
+    open val daysToBottomLabel: String = "avg. length of past corrections (days)"
     open val highMarker: String = "High"
     open val typical383dMarker: String = "typical 383d"
     open val lowMarker: String = "Low"
@@ -184,7 +184,7 @@ open class AppStrings(
     open val daysAfterHighSub: String = "We are 319 days after the high. Past falls to a bottom lasted about 383 days."
     open val nowLabel: String = "Now"
     open val daysOfRiseTitle: String = "Days of a rise, historically"
-    open val daysOfRiseSub: String = "Past rises from a low to the next high lasted about 1059 days."
+    open val daysOfRiseSub: String = "From each past cycle low to the next cycle top, on this coin's own daily prices."
     open val halvingTitle: String = "BITCOIN HALVING"
     open val halvingDaysLabel: String = "days to next halving"
     open val halvingHoursLabel: String = "hours remaining"

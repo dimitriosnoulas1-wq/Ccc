@@ -7,7 +7,7 @@ import org.json.JSONObject
 
 object PriceCacheManager {
     private const val PREFS_NAME = "crypto_cycles_price_cache"
-    private const val CACHE_VERSION = 2
+    private const val CACHE_VERSION = 3
     private const val SAVE_MIN_INTERVAL_MS = 15_000L
     private var prefs: SharedPreferences? = null
     @Volatile private var lastSaveMs = 0L
@@ -42,7 +42,6 @@ object PriceCacheManager {
                 coinObj.put("price", coin.priceUsd)
                 coinObj.put("change", coin.change24h)
                 coinObj.put("volume", coin.volume24h)
-                coinObj.put("ath", coin.athUsd)
                 json.put(coin.symbol.uppercase(), coinObj)
             }
             p.edit()
@@ -71,12 +70,10 @@ object PriceCacheManager {
                     val price = coinObj.optDouble("price", coin.priceUsd)
                     val change = coinObj.optDouble("change", coin.change24h)
                     val volume = coinObj.optDouble("volume", coin.volume24h)
-                    val ath = coinObj.optDouble("ath", coin.athUsd)
                     coin.copy(
                         priceUsd = if (price > 0.0) price else coin.priceUsd,
                         change24h = change,
                         volume24h = if (volume > 0.0) volume else coin.volume24h,
-                        athUsd = if (ath > 0.0) ath else coin.athUsd,
                         priceUpdatedAtMs = cachedAtMs,
                         quoteState = com.example.data.model.QuoteState.LIVE
                     )
@@ -86,6 +83,62 @@ object PriceCacheManager {
             }
         } catch (_: Exception) {
             return coins
+        }
+    }
+
+    /**
+     * Rank, ATH/ATL with their dates and supply, as last loaded from a live market source.
+     * Saved together so an ATH can never be restored without the day it happened.
+     */
+    fun saveMeta(coins: List<CryptoCoin>) {
+        val p = prefs ?: return
+        try {
+            val json = JSONObject()
+            for (coin in coins) {
+                if (!coin.hasLiveMeta) continue
+                json.put(coin.id.lowercase(), JSONObject().apply {
+                    put("rank", coin.rank)
+                    put("ath", coin.athUsd)
+                    put("athDate", coin.athDate)
+                    put("atl", coin.atlUsd)
+                    put("atlDate", coin.atlDate)
+                    put("circ", coin.circulatingSupply)
+                    put("total", coin.totalSupply)
+                    put("max", coin.maxSupply ?: 0.0)
+                    put("at", coin.metaUpdatedAtMs)
+                })
+            }
+            p.edit()
+                .putString("cached_meta_json", json.toString())
+                .putInt("meta_version", CACHE_VERSION)
+                .apply()
+        } catch (_: Exception) {}
+    }
+
+    fun applyCachedMeta(coins: List<CryptoCoin>): List<CryptoCoin> {
+        val p = prefs ?: return coins
+        if (p.getInt("meta_version", 0) != CACHE_VERSION) return coins
+        val str = p.getString("cached_meta_json", null) ?: return coins
+        return try {
+            val json = JSONObject(str)
+            coins.map { coin ->
+                val m = json.optJSONObject(coin.id.lowercase()) ?: return@map coin
+                val athDate = m.optString("athDate", "")
+                val ath = m.optDouble("ath", 0.0)
+                coin.copy(
+                    rank = m.optInt("rank", coin.rank).takeIf { it > 0 } ?: coin.rank,
+                    athUsd = if (ath > 0.0 && athDate.isNotBlank()) ath else 0.0,
+                    athDate = if (ath > 0.0 && athDate.isNotBlank()) athDate else "",
+                    atlUsd = m.optDouble("atl", 0.0),
+                    atlDate = m.optString("atlDate", ""),
+                    circulatingSupply = m.optDouble("circ", 0.0),
+                    totalSupply = m.optDouble("total", 0.0),
+                    maxSupply = m.optDouble("max", 0.0).takeIf { it > 0.0 },
+                    metaUpdatedAtMs = m.optLong("at", 0L)
+                )
+            }
+        } catch (_: Exception) {
+            coins
         }
     }
 }
