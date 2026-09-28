@@ -22,6 +22,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptoCycles-debug-${{ github.run_number }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --stacktrace
       - name: Upload test report
