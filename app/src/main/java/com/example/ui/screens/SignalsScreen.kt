@@ -1564,6 +1564,15 @@ fun SignalsScreen(
                 showProjection = false
             )
         }
+
+        item {
+            com.example.ui.components.VolumeProfileCard(
+                symbol = activeCoin.symbol,
+                livePrice = activeCoin.priceUsd,
+                currency = currency,
+                greek = isGreek
+            )
+        }
         }
 
         // Mandatory Financial & Regulatory Disclaimer (Glassmorphic Container with Subtle Amber/Gold Warning Glow)
